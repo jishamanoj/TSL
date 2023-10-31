@@ -203,6 +203,7 @@ router.post('/resendOtp', async (req, res) => {
                 .then(async (response) => {
                     // Update the user's OTP in the database
                     user.otp = otp;
+                    user.verify = 'false'
                     await user.save();
 
                     res.status(200).send({ message: "OTP resent successfully" });
