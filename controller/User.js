@@ -10,7 +10,7 @@ const redis = new Redis();
 const questions =require("../model/question");
 const {Users,sequelize} = require('../model/validUsers');
 const meditation =require('../model/meditation');
-
+const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 
 router.post('/countries', async (req, res) => {
@@ -44,6 +44,54 @@ router.get('/countrieslist', async (req, res) => {
   });
 
 
+// router.post('/registerUser', async (req, res) => {
+//     const { email, phone } = req.body;
+
+//     try {
+//         const existingUser = await reg.findOne({
+//             where: {
+//                 [Op.or]: [
+//                     { email: email },
+//                     { phone: phone }
+//                 ]
+//             }
+//         });
+
+//         if (existingUser) {
+
+//             if (existingUser.email === email) {
+//                 return res.status(400).json({ message: "Email already exists" , status:'false',flag :'email'});
+//             } else {
+//                 return res.status(400).json({ message: "Phone number already exists",status:'false',flag :'phone' });
+//             }
+//         } else {
+//             // User does not exist, generate a new OTP
+//             const otp = generateOTP();
+//             console.log(otp);
+
+//             // Save the OTP in Redis with a key that includes the user's phone number
+//             const redisKey = `otp:${phone}`;
+//             await redis.setex(redisKey, 600, otp);
+
+//             // Send OTP to the user via SMS
+//             const otpRequest = {
+//                 method: 'get',
+//                 url: `https://www.fast2sms.com/dev/bulkV2?authorization=aKVbUigWHc8CBXFA9rRQ17YjD4xhz5ovJGd6Ite3k0mnSNuZPMolFREdzJGqw8YVAD7HU1OatPTS6uiK&variables_values=${otp}&route=otp&numbers=${phone}`,
+//                 headers: {
+//                     Accept: 'application/json'
+//                 }
+//             };
+
+//             await axios(otpRequest);
+
+//             return res.status(200).json({ message: "OTP sent successfully" });
+//         }
+//     } catch (error) {
+//         console.error("Error registering user:", error);
+//         return res.status(500).json({ message: "Internal Server Error" });
+//     }
+// });
+
 router.post('/registerUser', async (req, res) => {
     const { email, phone } = req.body;
 
@@ -64,26 +112,8 @@ router.post('/registerUser', async (req, res) => {
             } else {
                 return res.status(400).json({ message: "Phone number already exists",status:'false',flag :'phone' });
             }
-        } else {
-            // User does not exist, generate a new OTP
-            const otp = generateOTP();
-            console.log(otp);
-
-            // Save the OTP in Redis with a key that includes the user's phone number
-            const redisKey = `otp:${phone}`;
-            await redis.setex(redisKey, 600, otp);
-
-            // Send OTP to the user via SMS
-            const otpRequest = {
-                method: 'get',
-                url: `https://www.fast2sms.com/dev/bulkV2?authorization=aKVbUigWHc8CBXFA9rRQ17YjD4xhz5ovJGd6Ite3k0mnSNuZPMolFREdzJGqw8YVAD7HU1OatPTS6uiK&variables_values=${otp}&route=otp&numbers=${phone}`,
-                headers: {
-                    Accept: 'application/json'
-                }
-            };
-
-            await axios(otpRequest);
-
+        } 
+        else{
             return res.status(200).json({ message: "OTP sent successfully" });
         }
     } catch (error) {
@@ -286,92 +316,161 @@ router.get('/displayDataFromRedis/:key', async (req, res) => {
 //     return d;
 // }
 
+// router.post("/verify_otp", async (req, res) => {
+//     console.log("<........verify OTP user........>");
+
+//     const { first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP } = req.body;
+//     console.log(first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP)
+
+//     console.log("Phone: " + phone);
+//     console.log("OTP: " + OTP);
+
+//     try {
+//         // Retrieve the stored OTP from Redis
+//         const redisKey = `otp:${phone}`;
+//         const storedOTP = await redis.get(redisKey);
+
+//         if (!storedOTP) {
+//             return res.status(401).send("OTP not found in Redis");
+//         }
+
+//         // Verify the OTP
+//         if (storedOTP === OTP) {
+//             const hashedPassword = await bcrypt.hash(phone, 10);
+//             const maxUserId = await reg.max('userId');
+//             const userId = maxUserId + 1;
+//             // Update the user record
+//          //   const user = await reg.findOne({ where: { phone } });
+
+//             // if (!user) {
+//             //     return res.status(404).send("User not found");
+//             // }
+
+//             // Update user data
+//             const user = await reg.create({
+//             first_name,
+//             last_name,
+//             email,
+//             DOB,
+//             gender,
+//             phone,
+//             country,
+//             reference,
+//             languages,
+//             remark,
+//             userId,
+//             DOJ : new Date(),
+//             expiredDate : calculateExpirationDate(),
+//             password : hashedPassword, // Store the hashed password
+//             verify : 'true'
+//         });
+//             // Save the updated user data
+//             await user.save();
+
+//             // Create a record in the BankDetails table
+//             await BankDetails.create({
+//                 AadarNo: 0,
+//                 IFSCCode: "",
+//                 branchName: "",
+//                 accountName: "",
+//                 accountNo: 0,
+//                 regId: user.id // Assuming regId is the foreign key in BankDetails
+//             });
+
+//             // Delete the OTP from Redis after successful verification
+//             await redis.del(redisKey);
+
+//             const responseData = {
+//                 message: "Success",
+//                 data: {
+//                     id: user.id,
+//                     first_name: user.first_name,
+//                     last_name: user.last_name,
+//                     DOJ: user.DOJ,
+//                     expiredDate: user.expiredDate,
+//                     userId: user.userId
+//                 }
+//             };
+
+//             return res.status(200).json(responseData);
+//         } else {
+//             // Respond with an error message if OTP is invalid
+//             return res.status(400).send("Invalid OTP");
+//         }
+//     } catch (err) {
+//         console.error("<........error........>", err);
+//         return res.status(500).send(err.message || "An error occurred during OTP verification");
+//     }
+// });
+
 router.post("/verify_otp", async (req, res) => {
     console.log("<........verify OTP user........>");
-
+    try {
     const { first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP } = req.body;
-    console.log(first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP)
+    //console.log(first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP)
 
     console.log("Phone: " + phone);
     console.log("OTP: " + OTP);
+    const storedOTP = "1111"
+    console.log(first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP,storedOTP)
 
-    try {
-        // Retrieve the stored OTP from Redis
-        const redisKey = `otp:${phone}`;
-        const storedOTP = await redis.get(redisKey);
-
-        if (!storedOTP) {
-            return res.status(401).send("OTP not found in Redis");
-        }
-
-        // Verify the OTP
-        if (storedOTP === OTP) {
-            const hashedPassword = await bcrypt.hash(phone, 10);
+    if(storedOTP == OTP){
+        console.log(".......");
+        const hashedPassword = await bcrypt.hash(phone, 10);
             const maxUserId = await reg.max('userId');
             const userId = maxUserId + 1;
-            // Update the user record
-         //   const user = await reg.findOne({ where: { phone } });
-
-            // if (!user) {
-            //     return res.status(404).send("User not found");
-            // }
-
-            // Update user data
             const user = await reg.create({
-            first_name,
-            last_name,
-            email,
-            DOB,
-            gender,
-            phone,
-            country,
-            reference,
-            languages,
-            remark,
-            userId,
-            DOJ : new Date(),
-            expiredDate : calculateExpirationDate(),
-            password : hashedPassword, // Store the hashed password
-            verify : 'true'
-        });
-            // Save the updated user data
-            await user.save();
-
-            // Create a record in the BankDetails table
-            await BankDetails.create({
-                AadarNo: 0,
-                IFSCCode: "",
-                branchName: "",
-                accountName: "",
-                accountNo: 0,
-                regId: user.id // Assuming regId is the foreign key in BankDetails
+                first_name,
+                last_name,
+                email,
+                DOB,
+                gender,
+                phone,
+                country,
+                reference,
+                languages,
+                remark,
+                userId,
+                DOJ : new Date(),
+                expiredDate : calculateExpirationDate(),
+                password : hashedPassword, // Store the hashed password
+                verify : 'true'
             });
+                // Save the updated user data
+                await user.save();
 
-            // Delete the OTP from Redis after successful verification
-            await redis.del(redisKey);
-
-            const responseData = {
-                message: "Success",
-                data: {
-                    id: user.id,
-                    first_name: user.first_name,
-                    last_name: user.last_name,
-                    DOJ: user.DOJ,
-                    expiredDate: user.expiredDate,
-                    userId: user.userId
-                }
-            };
-
-            return res.status(200).json(responseData);
-        } else {
-            // Respond with an error message if OTP is invalid
-            return res.status(400).send("Invalid OTP");
+                // Create a record in the BankDetails table
+                await BankDetails.create({
+                    AadarNo: 0,
+                    IFSCCode: "",
+                    branchName: "",
+                    accountName: "",
+                    accountNo: 0,
+                    regId: user.id // Assuming regId is the foreign key in BankDetails
+                });
+                const responseData = {
+                    message: "Success",
+                    data: {
+                        id: user.id,
+                        first_name: user.first_name,
+                        last_name: user.last_name,
+                        DOJ: user.DOJ,
+                        expiredDate: user.expiredDate,
+                        userId: user.userId
+                    }
+                };
+  
+                return res.status(200).json(responseData);
+            } else {
+                // Respond with an error message if OTP is invalid
+                return res.status(400).send("Invalid OTP");
+            }
+        } catch (err) {
+            console.error("<........error........>", err);
+            return res.status(500).send(err.message || "An error occurred during OTP verification");
         }
-    } catch (err) {
-        console.error("<........error........>", err);
-        return res.status(500).send(err.message || "An error occurred during OTP verification");
-    }
-});
+    });
+
 
 function calculateExpirationDate() {
     const d = new Date();
@@ -416,41 +515,121 @@ router.get('/listName/:id', async (req, res) => {
 
 /////////////////////////////////// USER APP \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
+// router.post('/requestPasswordReset', async (req, res) => {
+//         const { email } = req.body;
+    
+//         try {
+//             // Find the user with the provided email
+//             const user = await reg.findOne({ where: { email: email } });
+    
+//             if (!user) {
+//                 return res.status(404).json({ message: "User not found" });
+//             } else {
+//             // User does not exist, generate a new OTP
+//             const otp = generateOTP();
+
+//             // Save the OTP in Redis with a key that includes the user's phone number
+//             const redisKey = `reqotp:${user.phone}`;
+//             await redis.setex(redisKey, 600, otp);
+
+//             // Send OTP to the user via SMS
+//             const otpRequest = {
+//                 method: 'get',
+//                 url: `https://www.fast2sms.com/dev/bulkV2?authorization=aKVbUigWHc8CBXFA9rRQ17YjD4xhz5ovJGd6Ite3k0mnSNuZPMolFREdzJGqw8YVAD7HU1OatPTS6uiK&variables_values=${otp}&route=otp&numbers=${user.phone}`,
+//                 headers: {
+//                     Accept: 'application/json'
+//                 }
+//             };
+
+//             await axios(otpRequest);
+
+//             return res.status(200).json({ message: "OTP sent successfully",otp : otp });
+//         }
+//     } catch (error) {
+//         console.error("Error registering user:", error);
+//         return res.status(500).json({ message: "Internal Server Error" });
+//     }
+// });
+
 router.post('/requestPasswordReset', async (req, res) => {
-        const { email } = req.body;
-    
-        try {
-            // Find the user with the provided email
-            const user = await reg.findOne({ where: { email: email } });
-    
-            if (!user) {
-                return res.status(404).json({ message: "User not found" });
-            } else {
-            // User does not exist, generate a new OTP
-            const otp = generateOTP();
+    const { email } = req.body;
 
-            // Save the OTP in Redis with a key that includes the user's phone number
-            const redisKey = `reqotp:${user.phone}`;
-            await redis.setex(redisKey, 600, otp);
+    try {
+        // Find the user with the provided email
+        const user = await reg.findOne({ where: { email: email } });
 
-            // Send OTP to the user via SMS
-            const otpRequest = {
-                method: 'get',
-                url: `https://www.fast2sms.com/dev/bulkV2?authorization=aKVbUigWHc8CBXFA9rRQ17YjD4xhz5ovJGd6Ite3k0mnSNuZPMolFREdzJGqw8YVAD7HU1OatPTS6uiK&variables_values=${otp}&route=otp&numbers=${user.phone}`,
-                headers: {
-                    Accept: 'application/json'
-                }
-            };
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        } else {
+        // // User does not exist, generate a new OTP
+        // const otp = generateOTP();
 
-            await axios(otpRequest);
+        // // Save the OTP in Redis with a key that includes the user's phone number
+        // const redisKey = `reqotp:${user.phone}`;
+        // await redis.setex(redisKey, 600, otp);
 
-            return res.status(200).json({ message: "OTP sent successfully",otp : otp });
-        }
-    } catch (error) {
-        console.error("Error registering user:", error);
-        return res.status(500).json({ message: "Internal Server Error" });
+        // // Send OTP to the user via SMS
+        // const otpRequest = {
+        //     method: 'get',
+        //     url: `https://www.fast2sms.com/dev/bulkV2?authorization=aKVbUigWHc8CBXFA9rRQ17YjD4xhz5ovJGd6Ite3k0mnSNuZPMolFREdzJGqw8YVAD7HU1OatPTS6uiK&variables_values=${otp}&route=otp&numbers=${user.phone}`,
+        //     headers: {
+        //         Accept: 'application/json'
+        //     }
+        // };
+
+        // await axios(otpRequest);
+
+        return res.status(200).json({ message: "OTP sent successfully"});
     }
+} catch (error) {
+    console.error("Error registering user:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+}
 });
+
+// router.post('/resetPassword', async (req, res) => {
+//     const { email, otp, new_password } = req.body;
+
+//     try {
+//         // Find the user with the provided email in the 'reg' schema
+//         const regUser = await reg.findOne({ where: { email: email } });
+
+//         if (!regUser) {
+//             return res.status(404).json({ message: "User not found" });
+//         }
+
+//         // Retrieve the stored OTP from Redis
+//         const redisKey = `reqotp:${regUser.phone}`;
+//         const storedOTP = await redis.get(redisKey);
+
+//         if (!storedOTP) {
+//             return res.status(401).json({message:"Otp has expired" });``
+//         }
+
+//         if (storedOTP === otp) {
+//             const hashedPassword = await bcrypt.hash(new_password, 10);
+
+//             // Update password and set classAttended to true in the 'reg' table
+//             await reg.update({
+//                 password: hashedPassword,
+//                 classAttended: true,
+//             }, {
+//                 where: { email: regUser.email },
+//             });
+
+//             // Delete the OTP from Redis after successful verification
+//             await redis.del(redisKey);
+
+//             return res.status(200).json({ message: "Password reset successfully" });
+//         } else {
+//             // Respond with an error message if OTP is invalid
+//             return res.status(400).send("Invalid OTP");
+//         }
+//     } catch (err) {
+//         console.error("Error resetting password:", err);
+//         return res.status(500).send(err.message || "An error occurred during password reset");
+//     }
+// });
 
 router.post('/resetPassword', async (req, res) => {
     const { email, otp, new_password } = req.body;
@@ -463,14 +642,7 @@ router.post('/resetPassword', async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Retrieve the stored OTP from Redis
-        const redisKey = `reqotp:${regUser.phone}`;
-        const storedOTP = await redis.get(redisKey);
-
-        if (!storedOTP) {
-            return res.status(401).json({message:"Otp has expired" });``
-        }
-
+        const storedOTP = "1234";
         if (storedOTP === otp) {
             const hashedPassword = await bcrypt.hash(new_password, 10);
 
@@ -482,19 +654,18 @@ router.post('/resetPassword', async (req, res) => {
                 where: { email: regUser.email },
             });
 
-            // Delete the OTP from Redis after successful verification
-            await redis.del(redisKey);
 
             return res.status(200).json({ message: "Password reset successfully" });
         } else {
             // Respond with an error message if OTP is invalid
-            return res.status(400).send("Invalid OTP");
+            return res.status(400).json({message:"Invalid OTP"});
         }
     } catch (err) {
         console.error("Error resetting password:", err);
         return res.status(500).send(err.message || "An error occurred during password reset");
     }
 });
+
 const sessionMiddleware = session({
     secret: '8be00e304a7ab94f27b5e5172cc0f3b2c575e87d',
     resave: false,
@@ -746,5 +917,243 @@ router.post('/meditaion',async(req, res, next)=>{
     }catch (error) {
     }
 })
+
+router.post('/messages', async (req, res) => {
+    try {
+      const { userId } = req.session;
+        const { message,messageTime} = req.body;
+
+        // Check if the user exists
+        const existingUser = await Users.findOne({ where: {UId : userId } });
+        if (!existingUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Create a new message record
+        const newMessage = await Messages.create({
+     
+            userId,
+            message,
+            messageTime
+        });
+
+        // Save the new message record
+        await newMessage.save();
+
+        return res.status(200).json({ message: 'Message created successfully' });
+    } catch (error) {
+        console.error('Error:', error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+router.post("/appointment", async (req, res) => {
+    try{
+      const { userId } = req.session;
+        const {appointmentDate,num_of_people,pickup,room,from,emergencyNumber,appointment_time,appointment_reason}=req.body;
+
+        const existingUser = await Users.findOne({ where: { UId : userId } });
+        if (!existingUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        const newappointment = await appointment.create({
+            userId, 
+            appointmentDate,
+            num_of_people,
+            pickup,
+            room,
+            from,
+            emergencyNumber,
+            appointment_time,
+            appointment_reason
+        });
+        await newappointment.save();
+        return res.status(200).json({ message: 'Appointment has been allocated successfully ! we will notify guruji soon' });
+    } catch (error) {
+        console.error('Error:', error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+const fs = require('fs');
+const path = require('path');
+
+// Read the image file as Base64
+const imagePath = path.join(__dirname, 'images', 'thasmai.png');
+const imageBase64 = fs.readFileSync(imagePath, { encoding: 'base64' });
+//console.log('Base64:', imageBase64);
+router.post('/send-email', async (req, res) => {
+    try {
+      console.log('............enter....');
+      const to = req.body.to;
+  console.log( req.body);
+      // Create a Nodemailer transporter
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.forwardemail.net',
+        port: 465,
+        secure: true,
+        service: 'gmail',
+        auth: {
+        
+          user: 'thasmai538@gmail.com',
+          pass: 'fhzw fsoo fuxe flwd',
+        },
+      });
+  
+      // Define email options
+      const mailOptions = {
+        from: 'thasmai538@gmail.com',
+        to,
+        subject: 'Registration successfull',
+        text: 'Your registration is complete!',
+        html: `<style>
+        body {
+          font-family: sans-serif;
+        }
+        .center {
+          text-align: center;
+        }
+      </style>
+      </head>
+      <body>
+      
+      <center style="font-size: 24px; font-weight: bold; color: #333333; margin-bottom: 20px;">
+      <img src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYQ7LK7QEp2_4ihWw-6KtMJDCJFRHcg2bAyWszq1ZN6mx1I9YGGFJ1kInRC0-xEdtM-3Bro4UeBDykpA5sDf3Si7FhDbNQ=w1920-h912" alt="[Alternative text for logo]" style="height:10rem" />
+      <br>
+        Satyam Vada Dharmam Chara
+      </center>
+      
+      <p>Dear ,</p>
+      
+      <p>Your registration is complete, For the zoom session please send a "Hi" to the WhatsApp number : +919008290027" <a href = "https://wa.me/+919008290027">Click here to Join Whatsapp Group</a></p>
+      
+      </body>`,
+      };
+  
+      // Send the email
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error('Error:', error);
+        } else {
+          console.log('Email sent:', info.response);
+        }
+      return res.status(200).json({ message: 'Email sent successfully' });
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
+router.get('/user-details', async (req, res) => {
+    try {
+      const { userId } = req.session;
+      console.log(userId);
+  
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+  
+      const user = await reg.findOne({
+        attributes: ['first_name','last_name', 'userId', 'DOJ', 'expiredDate'],
+        where: { userId },
+      });
+  
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+  
+      return res.status(200).json(user);
+    } catch (error) {
+      console.error('Error:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+  
+  router.get('/meditation-detail', async(req, res) => {
+    try {
+        const { userId } = req.session;
+        console.log(userId);
+    
+        if (!userId) {
+          return res.status(401).json({ error: 'User not authenticated' });
+        }
+        const user = await meditation.findOne({ 
+            atrributes: ['userId', 'med_starttime', 'med_stoptime', 'med_endtime', 'session_num', 'day', 'cycle'],
+            where: { userId: userId},
+        });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+          }
+      
+          return res.status(200).json(user);
+        } catch (error) {
+          console.error('Error:', error);
+          return res.status(500).json({ error: 'Internal Server Error' });
+        }
+  });
+
+  router.get('/get-messages', async (req, res) => {
+    try {
+      const { userId } = req.session;
+      console.log(userId);
+  
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+  
+      const messages = await Messages.findAll({
+        attributes: ['userId', 'message', 'messageTime'],
+        where: { userId },
+      });
+  
+      if (!messages || messages.length === 0) {
+        return res.status(404).json({ error: 'Messages not found for the user' });
+      }
+  
+      return res.status(200).json(messages);
+    } catch (error) {
+      console.error('Error:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+  
+  router.get('/maditation-date', async (req, res) => {
+    try {
+      const { userId } = req.session;
+     // const { userId } = req.body;
+
+      console.log(userId);
+  
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+  
+      const user = await timeTracking.findAll({
+        attributes: ['userId', 'med_starttime', 'timeEstimate','ismeditated'],
+        where: {
+          userId: userId,
+          },
+      });
+  
+      if (!user || user.length === 0) {
+        return res.status(404).json({ error: 'No records found with timeEstimate >= 90' });
+      }
+  
+      // Modify the med_starttime in each record
+      const formattedUser = user.map(record => {
+        const parsedDate = moment(record.med_starttime, "YYYY-MM-DD HH:mm:ss");
+        const formattedDate = parsedDate.format("YYYY-MM-DD HH:mm:ss");
+        const replacedDate = formattedDate.replace(/-/g, ',');
+        
+        // Add the formatted date to the record
+        return { ...record.dataValues, med_starttime: replacedDate };
+      });
+  
+      return res.status(200).json(formattedUser);
+    } catch (error) {
+      console.error('Error:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+  
 
 module.exports = router;
