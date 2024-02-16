@@ -1,13 +1,18 @@
+
 require('dotenv').config();
 const { DataTypes, Sequelize } = require('sequelize');
-//const bcrypt = require('bcrypt');
 const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
     dialect: process.env.DB_DIALECT,
-        host: process.env.DB_HOST,
+    host: process.env.DB_HOST,
     logging: false,
 
 });
 const reg = sequelize.define('reg', {
+    UserId: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
     first_name: { type: DataTypes.STRING,defaultValue: ''},
     last_name: { type: DataTypes.STRING,defaultValue: ''},
     DOB: { type: DataTypes.STRING,defaultValue: '' },
@@ -31,12 +36,10 @@ const reg = sequelize.define('reg', {
     languages: {type:DataTypes.STRING,defaultValue: ''},
     remark: { type: DataTypes.TEXT,defaultValue: '' },
     verify: { type: DataTypes.STRING, defaultValue: 'false' },
-    userId: {
-        type: DataTypes.INTEGER,
-        defaultValue: 4000,
-        
+    UId: {
+        type: DataTypes.INTEGER,      
       },
-    DOJ: { type: DataTypes.DATE, allowNull: true },
+    DOJ: { type: DataTypes.STRING},
     expiredDate: { type: DataTypes.DATE, allowNull: true },
     password: {
         type: DataTypes.STRING,
@@ -44,19 +47,26 @@ const reg = sequelize.define('reg', {
         
     },
     classAttended: { type: DataTypes.STRING, defaultValue: 'false' },
+    ans : { type: DataTypes.STRING },
+    other: { type: DataTypes.STRING},
+    profilePicUrl: { type: DataTypes.STRING, allowNull: true }
  });
-const BankDetails = sequelize.define('bankDetails', {
-    AadarNo: { type: DataTypes.INTEGER,defaultValue:0 },
-    IFSCCode: { type: DataTypes.STRING,defaultValue:""},
-    branchName: { type: DataTypes.STRING,defaultValue:""},
-    accountName: { type: DataTypes.STRING,defaultValue:""},
-    accountNo: { type: DataTypes.INTEGER,defaultValue:0},
-});
+// const BankDetails = sequelize.define('bankDetails', {
+//     AadarNo: { type: DataTypes.INTEGER,defaultValue:0 },
+//     IFSCCode: { type: DataTypes.STRING,defaultValue:""},
+//     branchName: { type: DataTypes.STRING,defaultValue:""},
+//     accountName: { type: DataTypes.STRING,defaultValue:""},
+//     accountNo: { type: DataTypes.INTEGER,defaultValue:0},
+//     UId: {
+//         type: DataTypes.INTEGER,
+//         defaultValue: 0,
+//       },
+// });
+// BankDetails.belongsTo(reg, { foreignKey: 'UId' });
+//reg.hasOne(BankDetails);
 
-reg.hasOne(BankDetails);
 
-
-sequelize.sync()
+sequelize.sync({alter: false})
     .then((data) => {
        // console.log(data);
         console.log('reg table created');
@@ -69,7 +79,7 @@ sequelize.sync()
     
 
 
-module.exports = { reg, BankDetails };
+module.exports = { reg,sequelize };
 
 
 

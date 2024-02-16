@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const { DataTypes, Sequelize } = require('sequelize');
 const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
@@ -7,20 +6,21 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
     logging: false,
 
 });
-const country = sequelize.define('country', {
-    name: { type: DataTypes.STRING },
-    code: { type: DataTypes.STRING },
-    phonecode: { type: DataTypes.STRING },
-    flag: { type: DataTypes.STRING }
+const broadcast = sequelize.define('broadcast', {
+
+    Broadcast_message: { type: DataTypes.STRING },
+    priority:{type: DataTypes.STRING},
+    time:{type: DataTypes.STRING},
+   
 },
  {
     timestamps: false,
 })
-country.sync({alter: true}).then((data)=>{
-    console.log("country table create ");
+broadcast.sync({alter: true}).then((data)=>{
+    console.log("broadcast table create ");
 })
 .catch((err)=>{
     console.log(err);
 }
 );
-module.exports = country;
+module.exports = broadcast;

@@ -1,12 +1,10 @@
 
-
 require('dotenv').config();
 const { DataTypes, Sequelize } = require('sequelize');
-
 const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
-  dialect: process.env.DB_DIALECT,
-      host: process.env.DB_HOST,
-  logging: false,
+    dialect: process.env.DB_DIALECT,
+    host: process.env.DB_HOST,
+    logging: false,
 
 });
 
@@ -35,6 +33,10 @@ const Users = sequelize.define(
       allowNull: true,
     },
     email: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    DOJ:{
       type: DataTypes.STRING(50),
       allowNull: true,
     },
@@ -89,6 +91,10 @@ const Users = sequelize.define(
     },
     UId:{
         type: DataTypes.INTEGER,
+    },
+    user_Status:{
+      type: DataTypes.STRING,
+      
     }
   },
   {

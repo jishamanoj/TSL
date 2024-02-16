@@ -1,19 +1,21 @@
 
 require('dotenv').config();
+
+require('dotenv').config();
 const { DataTypes, Sequelize } = require('sequelize');
-//const bcrypt = require('bcrypt');
 const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
     dialect: process.env.DB_DIALECT,
-        host: process.env.DB_HOST,
+    host: process.env.DB_HOST,
     logging: false,
 
 });
 const timeTracking = sequelize.define('timeTracking',{
-    userId: { type: DataTypes.INTEGER},
+    UId: { type: DataTypes.INTEGER},
     med_starttime: { type: DataTypes.STRING},
     med_stoptime: { type: DataTypes.STRING},
    // med_endtime: { type: DataTypes.STRING},
     timeEstimate: { type: DataTypes.STRING},
+    ismeditated : { type: DataTypes.INTEGER},
 });
 sequelize.sync({alter:true})
     .then((data) => {

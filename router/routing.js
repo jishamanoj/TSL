@@ -5,7 +5,8 @@ const cors = require('cors');
 const app = express();
 //app.use(bodyParser())
 app.use(cors())
-//app.use('/registrations',require('../controller/userController'));
-//app.use('/POC',require('../controller/poc'));
+app.use('/admin',require('../controller/AdminController'));
+app.use('/superadmin',require('../controller/superAdminController'));
 app.use('/User',require('../controller/User'));
+//app.use('/payment',require('../controller/count'));
 module.exports = app;

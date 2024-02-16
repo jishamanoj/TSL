@@ -1,17 +1,16 @@
+
 require('dotenv').config();
 const { DataTypes, Sequelize } = require('sequelize');
-//const bcrypt = require('bcrypt');
 const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
     dialect: process.env.DB_DIALECT,
-        host: process.env.DB_HOST,
+    host: process.env.DB_HOST,
     logging: false,
-
 
 });
 
 const meditation = sequelize.define('meditation',{
-    userId: { type: DataTypes.INTEGER},
-    session_num: { type: DataTypes.STRING,defaultValue:0},
+    UId: { type: DataTypes.INTEGER},
+    session_num: { type: DataTypes.INTEGER,defaultValue:0},
     day : { type: DataTypes.INTEGER,defaultValue:0  },
     cycle : { type: DataTypes.INTEGER,defaultValue: 0   },
     med_starttime : { type: DataTypes.STRING},

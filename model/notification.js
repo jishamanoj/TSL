@@ -7,20 +7,19 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
     logging: false,
 
 });
-const country = sequelize.define('country', {
-    name: { type: DataTypes.STRING },
-    code: { type: DataTypes.STRING },
-    phonecode: { type: DataTypes.STRING },
-    flag: { type: DataTypes.STRING }
+const notification = sequelize.define('notification', {
+    UId: { type: DataTypes.STRING },
+    token: { type: DataTypes.STRING },
+   
 },
  {
     timestamps: false,
 })
-country.sync({alter: true}).then((data)=>{
-    console.log("country table create ");
+notification.sync({alter: true}).then((data)=>{
+    console.log("notification table create ");
 })
 .catch((err)=>{
     console.log(err);
 }
 );
-module.exports = country;
+module.exports = notification;
