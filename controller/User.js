@@ -1210,9 +1210,9 @@ router.post("/appointment", async (req, res) => {
   }
 });
  
-
 router.post('/send-email', async (req, res) => {
   try {
+    const {first_name,last_name,UId,DOJ,expiredDate} = req.body
     const to = req.body.to
     const config = await applicationconfig.findOne(); // Retrieve a single row from the table
     const prompt = config ? config.reg_email_prompt : null;
@@ -1239,301 +1239,263 @@ router.post('/send-email', async (req, res) => {
       text: 'Your registration is complete!',
       html: `
 
-<head>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Kalnia:wght@100;200;300;400;500;600;700&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-<style>
+      <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Kalnia:wght@100;200;300;400;500;600;700&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+      <style>
+          .headers {
+              text-align: center;
+              height: auto;
+              padding: 20px 0;
+          }
+          .message {
+              text-align: justify;
+              width: 90%;
+              max-width: 400px;
+              margin: 0 auto;
+              padding: 10px;
+              box-sizing: border-box;
+          }
+          .message p {
+              margin: 5px 0;
+          }
 
-*{
-max-width: 100%;
-}
+          .whatsapp-icon {
+              height: 40px;
+              width: 40px;
+              border-radius: 100%;
+         }
 
+          .whatsapp-link {
+              margin-top: 20px;
+              color: rgb(37, 61, 183);
+              font-weight: 600;
+              font-size: 1rem;
+          } 
 
-.header-container{
+      .card-container{
 
-text-align: center;
-}
+        text-align: center;
 
-
-.header{
-  font-size: 1.9rem;
-  margin: 0;
-}
-
-
-.message-container{
-  width: 600px;
-
-}
-.message{
-text-align: left;
-  color: #4F4539;
-}
-.name{
-text-align: left;;
-}
-
-
-
-.links{
-
-text-align: center;
-
-}
-
+      }
 
 
+      .reg-success-card {
+        background-image: url('https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYSTd0j36gM01xV3QywOEHBov73Q1zg8U0UhZkjZVVYIfUMudrzZnOqkbds3v3-Hnux7O_NJYMJEgyWlMO3V9LMiQ6gVeA=w1920-h922');
+        background-repeat: no-repeat;
+        background-color: rgb(62, 61, 91);
+        background-size: cover;
+        border-radius: 19px;
+        height: 240px;
+        width: 400px;
+        text-align: center;
+        margin:50px auto;
+      }
 
-.whatsapp-link{
-margin: 80px 0 50px;
-color: rgb(37, 61, 183);
-font-weight: 500;
-font-size: 1rem;
-} 
+      .reg-success-card-head {
+        margin: 0;
+        padding: 3% 0 0;
+        height: 30%;
+        width: 100%;
+      }
 
-.whatsapp-icon{
-  height: 60px;
-  width: 60px;
-  border-radius: 100%;
-}
+      .reg-card-number {
+        text-align: left;
+        color: white;
+        padding-left: 25px;
+      }
 
+      .reg-card-number p {
+        font-size: 0.6rem;
+        margin: 0;
+        text-wrap: nowrap;
+      }
 
+      .reg-card-number h1 {
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin: 0;
+      }
 
-.card-container{
-height: 300px;
-text-align: center;
+      .reg-card-logo {
+        width: 12%;
+        padding-right: 25px;
+      }
 
-}
+      .logo-container{
+        text-align: right;
+      }
 
+      .reg-success-card-content {
+        height: 30%;
+      }
 
-.reg-success-card {
-background-image: url('https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYSTd0j36gM01xV3QywOEHBov73Q1zg8U0UhZkjZVVYIfUMudrzZnOqkbds3v3-Hnux7O_NJYMJEgyWlMO3V9LMiQ6gVeA=w1920-h922');
-background-repeat: no-repeat;
-background-color: rgb(62, 61, 91);
-background-size: cover;
-border-radius: 19px;
-height: 240px;
-width: 400px;
-text-align: center;
-margin:50px auto;
-}
+      .content-chip{
+        width: 20%;
+      }
 
-.reg-success-card-head {
-margin: 0;
-padding: 3% 0 0;
-height: 30%;
-width: 100%;
-}
+      .chip {
+        width: 40%;
+      }
 
-.reg-card-number {
-text-align: left;
-color: white;
-padding-left: 25px;
-}
+      .center-content{
+        text-align: left;
+        width: 60%;
+      }
 
-.reg-card-number p {
-font-size: 0.6rem;
-margin: 0;
-text-wrap: nowrap;
-}
+      .reg-success-card-content div {
+        margin: 0;
+        padding: 0;
+        text-align: center;
+      }
 
-.reg-card-number h1 {
-font-size: 1.1rem;
-font-weight: bold;
-margin: 0;
-}
+      .reg-card-star-life-logo {
+        width: 35%;
+        margin: 0;
+        padding: 0;
+      }
 
-.reg-card-logo {
-width: 12%;
-padding-right: 25px;
-}
+      .reg-card-contact-number {
+        font-size: 0.8rem;
+        font-weight: bold;
+        margin: 0;
+        color: #fff;
+      }
 
-.logo-container{
-text-align: right;
-}
+      .reg-card-success-message {
+        color: #f4e893;
+        font-size: 1.1rem;
+        margin: 3px 0;
+      }
 
-.reg-success-card-content {
-height: 30%;
-}
+      .empty-cell{
+        width: 20%;
+      }
 
-.content-chip{
-width: 20%;
-}
+      .reg-success-card-footer {
+        margin: 0;
+        padding: 0 0 3%;
+        width: 100%;
+        height: 40%;
+      }
 
-.chip {
-width: 40%;
-}
+      .card-holder-group {
+        text-align: left;
+        color: white;
+        padding-left: 25px;
+      }
 
-.center-content{
-text-align: left;
-width: 60%;
-}
+      .card-holder-name p {
+        font-size: 0.6rem;
+        margin: 0;
+      }
 
-.reg-success-card-content div {
-margin: 0;
-padding: 0;
-text-align: center;
-}
+      .card-holder-name h2 {
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin: 0;
+      }
 
-.reg-card-star-life-logo {
-width: 35%;
-margin: 0;
-padding: 0;
-}
+      .reg-card-validity{
+       padding-right: 25px;
+       text-align: right;
+      }
 
-.reg-card-contact-number {
-font-size: 0.8rem;
-font-weight: bold;
-margin: 0;
-color: #fff;
-}
-
-.reg-card-success-message {
-color: #f4e893;
-font-size: 1.1rem;
-margin: 3px 0;
-}
-
-.empty-cell{
-width: 20%;
-}
-
-.reg-success-card-footer {
-margin: 0;
-padding: 0 0 3%;
-width: 100%;
-height: 40%;
-}
-
-.card-holder-group {
-text-align: left;
-color: white;
-padding-left: 25px;
-}
-
-.card-holder-name p {
-font-size: 0.6rem;
-margin: 0;
-}
-
-.card-holder-name h2 {
-font-size: 1.1rem;
-font-weight: bold;
-margin: 0;
-}
-
-.reg-card-validity{
-padding-right: 25px;
-text-align: right;
-}
-
-.reg-card-validity p {
-font-size: 0.6rem;
-margin: auto;
-color: #ffffff;
-}
-
-
-
-</style>
-</head>
-
-<body>
-<div style="width: 100vw; height:100vh;">
-<div class="header-container">
-   <h2 class="header">Welcome to Thasmai</h2>
-   <p class="header-sub">Sathyam Vada || Dharmam Chara</p>
-</div>
-<br/>
-<center><div class="message-container">
-<div class="message">
-<p class="name">Hi  Akhila,</p>
-<p>Congratulations ! Registration complete.Your register number :1440.</p>
-<p>To receive further details about the  introduction class(zoom session):  </p> 
-<p>Please send a “hi” to number ‘+91 9900829007’. </p>
-<br/>
-<p style="text-align:center;">  Thank you for taking the first step.</p>
-<br/>
-</div>
-</div>
-</center>
-
-
-<div class="links ">
-<img class="whatsapp-icon" src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYThty8mPHdkIABjYMVL821Q0VxtVF0m6oDNiL8iTxSom5YqLnrvMbN1GVyD23EhCSXBA-qFjkstBWa7BG4O3Rbm0kAh1w=w1920-h922" alt="">
-
-<a class="whatsapp-link" href="https://wa.me/+919008290027">Click here to Join  Whatsapp Group</a> 
-</p>
-</div>
+      .reg-card-validity p {
+        font-size: 0.6rem;
+        margin: auto;
+        color: #ffffff;
+      }
 
 
 
 
-<!-- ertyu--------------------------------------------------------------------------- -->
-<div class="card-container" >
+      </style>
+  </head>
 
+  <body>
+  <div class="headers">
+      <h1 style="margin: 0;">Welcome to Thasmai</h1>
+      <p style="margin: 5px 0;">Sathyam Vada || Dharmam Chara</p>
+  </div>
+  <div class="message" style="color: #4F4539;">
+      <p>Hi ${first_name} ${last_name},</p>
+      <p>Congratulations! Registration complete. Your register number: ${UId}.</p>
+      <p>To receive further details about the introduction class (zoom session): Please send a “hi” to number ‘+91 9900829007’. Thank you for taking the first step.</p>
 
+      <p class="whatsapp-link"></p>
+      <img class="whatsapp-icon" src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYThty8mPHdkIABjYMVL821Q0VxtVF0m6oDNiL8iTxSom5YqLnrvMbN1GVyD23EhCSXBA-qFjkstBWa7BG4O3Rbm0kAh1w=w1920-h922" alt="">
 
-<div class="reg-success-card">
-  <table  class="reg-success-card-head">
-    <tr>
-    <td class="reg-card-number">
-      <p>Card Number</p>
-      <!-- <h1>{data.userId}</h1> -->
-      <h1>24</h1>
-    </td>
-       <td class="logo-container">
-    <img class="reg-card-logo" src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYR_f8knFIgYTA9_3I1rK7UwAPR7n13UuKSN9hD8Gg3FQsAG-eZI2jPBoZJtn0NQyUlgk7hlzNsPdrzwJ_aAVh-vRo-C=w1920-h922" alt="Thasmai logo" />
-  </td> 
-  </tr>
-  </table>
-
-  <table class="reg-success-card-content">
-    <tr>
-      <td class="content-chip">
-    <img class="chip" src="https://lh3.googleusercontent.com/u/4/drive-viewer/AEYmBYTxR0xtWDAc6vsYvzTczVpqRnS46VUeCY9KsKUSAC-ea8rSuQBUWzSF462QKYxoYavYUH5VhcgPdJRQwngVx6ZTG3Hb=w1920-h922" alt="chip" />
-  </td>
-  <td class="center-content">
-    <div>
-      <img class="reg-card-star-life-logo" src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYQevim8IaLnDiUWrPZygsD8d0yQUjT0St4SddRBzjjlYq0v8RrVMWUcINin-htMG7MS4_KrtxOLDQwjihA2nDPWCkSk=w1920-h922" alt="star-life-img" />
-      <h3 class="reg-card-success-message">Registration Successful</h3>
-      <p class="reg-card-contact-number">
-        <span>Contact: +91 9008290027</span>
+          <a class="whatsapp-link" href="https://wa.me/+919008290027">Click here to Join Whatsapp Group</a>
       </p>
-      <!-- <a class="success-page-link" href="/registrationSuccess">OK</a> -->
-    </div>
-  </td>
-  <td class="empty-cell"></td>
-  </tr>
+  </div>
 
-  </table>
+ <!-- ertyu--------------------------------------------------------------------------- -->
+ <div class="card-container">
 
-  <table class="reg-success-card-footer">
-    <tr>
-    <td class="card-holder-group">
-      <div class="card-holder-name">
-        <p>Cardholder Name</p>
-        <!-- <h2>{data.first_name} {data.last_name}</h2> -->
-        <h2>Krishnadas R</h2>
-        <!-- <p>DOJ: {dayOfJoining + "/" + monthOfJoining + "/" + yearOfJoining}</p> -->
-        <p>DOJ:19/01/24</p>
+
+
+  <div class="reg-success-card">
+    <table  class="reg-success-card-head">
+      <tr>
+      <td class="reg-card-number">
+        <p>Card Number</p>
+        <!-- <h1>{data.userId}</h1> -->
+        <h1>${UId}</h1>
+      </td>
+         <td class="logo-container">
+      <img class="reg-card-logo" src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYR_f8knFIgYTA9_3I1rK7UwAPR7n13UuKSN9hD8Gg3FQsAG-eZI2jPBoZJtn0NQyUlgk7hlzNsPdrzwJ_aAVh-vRo-C=w1920-h922" alt="Thasmai logo" />
+    </td> 
+    </tr>
+    </table>
+
+    <table class="reg-success-card-content">
+      <tr>
+        <td class="content-chip">
+      <img class="chip" src="https://lh3.googleusercontent.com/u/4/drive-viewer/AEYmBYTxR0xtWDAc6vsYvzTczVpqRnS46VUeCY9KsKUSAC-ea8rSuQBUWzSF462QKYxoYavYUH5VhcgPdJRQwngVx6ZTG3Hb=w1920-h922" alt="chip" />
+    </td>
+    <td class="center-content">
+      <div>
+        <img class="reg-card-star-life-logo" src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYQevim8IaLnDiUWrPZygsD8d0yQUjT0St4SddRBzjjlYq0v8RrVMWUcINin-htMG7MS4_KrtxOLDQwjihA2nDPWCkSk=w1920-h922" alt="star-life-img" />
+        <h3 class="reg-card-success-message">Registration Successful</h3>
+        <p class="reg-card-contact-number">
+          <span>Contact: +91 9008290027</span>
+        </p>
+        <!-- <a class="success-page-link" href="/registrationSuccess">OK</a> -->
       </div>
     </td>
+    <td class="empty-cell"></td>
+    </tr>
 
-    <td class="reg-card-validity">
-      <!-- <p>VALID: {expiry.day}/{expiry.month}/{expiry.year}</p> -->
-      <p>VALID:19/1/2030</p>
-    </td>
-  </tr>
-  </table>
-</div>
- <!--end of card container-->  
- <div>
+    </table>
+
+    <table class="reg-success-card-footer">
+      <tr>
+      <td class="card-holder-group">
+        <div class="card-holder-name">
+          <p>Cardholder Name</p>
+          <!-- <h2>{data.first_name} {data.last_name}</h2> -->
+          <h2>${first_name} ${last_name}</h2>
+          <!-- <p>DOJ: {dayOfJoining + "/" + monthOfJoining + "/" + yearOfJoining}</p> -->
+          <p>DOJ:${DOJ}</p>
+        </div>
+      </td>
+
+      <td class="reg-card-validity">
+        <!-- <p>VALID: {expiry.day}/{expiry.month}/{expiry.year}</p> -->
+        <p>VALID:${expiredDate}</p>
+      </td>
+    </tr>
+    </table>
+  </div>
+   <!--end of card container--> 
+
+
+   <div>
   <p>Click the link below to download our app</p>
   <a href="https://drive.google.com/file/d/141saKTf7UyUfLTiNXBiE-_YlmJMbjtBc/view?usp=sharing" target = "_blank" style = "width:100px; height:20px; padding :10px; background-color:  #219cc9; text-decoration: none; color:white;">Download</a>
- </div>
-
  </div>
 </body>`,
     };
@@ -1670,99 +1632,108 @@ router.get('/meditation-date', async (req, res) => {
   }
 });
 
-  router.get('/getBankDetails/:userId', async (req, res) => {
-    try {
-      const userId = parseInt(req.params.UId);
-  
-      // Fetch the 'reg' record with associated 'BankDetails'
-      const userData = await reg.findOne({
-        where: { userId },
-        include: [BankDetails], // Include the associated BankDetails
-      });
-  
-      if (!userData) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-  
-      // Access the BankDetails from the retrieved data
-      const userBankDetails = userData.BankDetail; // assuming you've defined it as "BankDetail" in the reg model
-  
-      res.json({ userData, userBankDetails });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal server error' });
+router.get('/getBankDetails/:userId', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.UId);
+
+    // Fetch the 'reg' record with associated 'BankDetails'
+    const userData = await reg.findOne({
+      where: { userId },
+      include: [BankDetails], // Include the associated BankDetails
+    });
+
+    if (!userData) {
+      return res.status(404).json({ message: 'User not found' });
     }
-  });
-  router.get('/getbroadcast-message', async (req, res) => {
-    try {
-      const messages = await Broadcast.findAll();
-      res.json({ messages });
-    } catch (error) {
-      console.error('Error:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  
-router.get('/reg-confiq', async (req, res) => {
-  try{
-  const config = await applicationconfig.findAll();
-  res.json({ config });
+
+    // Access the BankDetails from the retrieved data
+    const userBankDetails = userData.BankDetail; // assuming you've defined it as "BankDetail" in the reg model
+
+    res.json({ userData, userBankDetails });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
   }
-  catch (error) {
+});
+router.get('/getbroadcast-message', async (req, res) => {
+  try {
+    const messages = await Broadcast.findAll();
+    res.json({ messages });
+  } catch (error) {
+    console.error('Error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.get('/list-appointment', async(req,res) =>{
-  try{
-    const { phone } = req.query;
+router.get('/reg-confiq', async (req, res) => {
+try{
+const config = await applicationconfig.findAll();
+res.json({ config });
+}
+catch (error) {
+  res.status(500).json({ error: 'Internal server error' });
+}
+});
 
-    if(!phone) {
-       
-      return res.status(401).json({error:'User not authenticated'});
-    }
-    //console.log('get appointment list');
-    // find the appointment
-    const list = await appointment.findAll({where:{phone},});
-    res.status(200).json({message:'Fetching appointments',list });
-  } catch(error) {
-    console.log(error);
-    res.status(500).json({message:'internal server error'});
+router.get('/list-appointment', async(req,res) =>{
+try{
+  const { phone } = req.query;
+
+  if(!phone) {
+     
+    return res.status(401).json({error:'User not authenticated'});
   }
+  //console.log('get appointment list');
+  // find the appointment
+  const list = await appointment.findAll({where:{phone},});
+  res.status(200).json({message:'Fetching appointments',list });
+} catch(error) {
+  console.log(error);
+  res.status(500).json({message:'internal server error'});
+}
 });
 
 router.delete('/appointment/:id', async(req,res) =>{
-  const { phone} = req.body;
-  const id = req.params.id;
-  try{
+const { phone} = req.body;
+const id = req.params.id;
+try{
 
-    //console.log('delete appointment');
-   // find the appointment
-    const data = await appointment.findOne({ where:{id}});
+  //console.log('delete appointment');
+ // find the appointment
+  const data = await appointment.findOne({ where:{id}});
 
-    if(!phone) {
-      return res.status(404).json({error:'User not authenticated'});
-    }
-    // delete appointment
-    await data.destroy();
-    return res.status(200).json('delete appointment');
-
-  } catch(error){
-    return res.status(500).json({message:'internal server error'});
+  if(!phone) {
+    return res.status(404).json({error:'User not authenticated'});
   }
+  // delete appointment
+  await data.destroy();
+  return res.status(200).json('delete appointment');
+
+} catch(error){
+  return res.status(500).json({message:'internal server error'});
+}
 });
 
 router.get('/show', async (req, res) => {
-  try {
-      
-      const config = await applicationconfig.findOne(); // Retrieve a single row from the table
-      const prompt = config ? config.reg_email_prompt : null; // Access the reg_email_prompt property
-      console.log(prompt);
-      res.status(200).json({ prompt });
-  } catch (error) {
-      console.error('Error:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
-  }
+try {
+    
+    const config = await applicationconfig.findOne(); // Retrieve a single row from the table
+    const prompt = config ? config.reg_email_prompt : null; // Access the reg_email_prompt property
+    console.log(prompt);
+    res.status(200).json({ prompt });
+} catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+}
+});
+
+router.get('/list-all-appointment' , async(req, res) =>{
+try{
+  const data = await appointment.findAll();
+  res.json(data);
+} catch ( error){
+  res.status(500).json({ message:' internal server error'});
+}
 });
 
 
