@@ -67,7 +67,6 @@ router.get('/getAllUsers', async (req, res) => {
 
 
 
-
 router.post('/countries', async (req, res) => {
     const data = req.body; // Assuming req.body is an array of objects
 
@@ -445,40 +444,81 @@ function calculateExpirationDate() {
     return d;
 }
 
-
 router.get('/listName/:UId', async (req, res) => {
   try {
-      const { UId } = req.params;
+    const { UId } = req.params;
 
-      // Find the member with the provided id
-      const selectedMember = await reg.findByPk(UId);
+    // Find the member with the provided UId
+    const selectedMember = await reg.findOne({
+      where: {
+        UId: UId,
+      },
+    });
 
-      if (!selectedMember) {
-          return res.status(404).json({ error: 'Member not found' });
-      }
+    if (!selectedMember) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
 
-      // Fetch the next 4 members including the selected member based on the id in ascending order
-      const members = await reg.findAll({
-          where: {
-            UId: {
-                  [Op.gte]: selectedMember.UserId, // Greater than or equal to the selected member's id
-              },
-          },
-          order: [['UId', 'DESC']], 
-          limit: 5, 
-          attributes: ['first_name', 'last_name'], 
-      });
+    // Fetch the next 4 members including the selected member based on the UId in descending order
+    const members = await reg.findAll({
+      where: {
+        UId: {
+          [Op.lte]: selectedMember.UId, // Less than or equal to the selected member's UId
+        },
+        // Add additional conditions here
+        // Example: status: 'active', age: { [Op.gt]: 18 }
+      },
+      order: [['UId', 'DESC']], // Order by UId in descending order
+      limit: 5, // Limit to 5 members
+      attributes: ['first_name', 'last_name'], // Include only these attributes in the result
+    });
 
-      const processedData = members.map(user => ({
-          name: `${user.first_name} ${user.last_name}`,
-      }));
+    const processedData = members.map(user => ({
+      name: `${user.first_name} ${user.last_name}`,
+    }));
 
-      res.status(200).json(processedData);
+    res.status(200).json(processedData);
   } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'An error occurred' });
+    console.error(error);
+    res.status(500).json({ error: 'An error occurred' });
   }
 });
+
+
+
+// router.get('/listName/:UId', async (req, res) => {
+//   try {
+//       const { UId } = req.params;
+
+//       // Find the member with the provided id
+//       const selectedMember = await reg.findByPk(UId);
+
+//       if (!selectedMember) {
+//           return res.status(404).json({ error: 'Member not found' });
+//       }
+
+//       // Fetch the next 4 members including the selected member based on the id in ascending order
+//       const members = await reg.findAll({
+//           where: {
+//             UId: {
+//                   [Op.gte]: selectedMember.UserId, // Greater than or equal to the selected member's id
+//               },
+//           },
+//           order: [['UId', 'DESC']], 
+//           limit: 5, 
+//           attributes: ['first_name', 'last_name'], 
+//       });
+
+//       const processedData = members.map(user => ({
+//           name: `${user.first_name} ${user.last_name}`,
+//       }));
+
+//       res.status(200).json(processedData);
+//   } catch (error) {
+//       console.error(error);
+//       res.status(500).json({ error: 'An error occurred' });
+//   }
+// });
 
 /////////////////////////////////// USER APP \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -1147,7 +1187,7 @@ router.post('/meditation', async (req, res) => {
 router.post('/messages', async (req, res) => {
   try {
       const { UId } = req.session;
-      const { message, messageTime,message_priority } = req.body;
+      const { message, messageTime,message_priority,isAdminMessage } = req.body;
 
       // Check if the user exists
       const existingUser = await Users.findOne({ where: { UId } });
@@ -1160,7 +1200,8 @@ router.post('/messages', async (req, res) => {
           UId,
           message,
           messageTime,
-          message_priority
+          message_priority,
+          isAdminMessage
       });
 
       // Save the new message record
@@ -1225,20 +1266,20 @@ router.post('/send-email', async (req, res) => {
       secure: true,
       service: 'gmail',
       auth: {
-
-        user: 'thasmai538@gmail.com',
-        pass: 'fhzw fsoo fuxe flwd',
+ 
+        user: 'thasmaistarlife@gmail.com',
+        pass: 'ndkj dxdq kxca zplg',
       },
     });
-
+ 
     // Define email options
     const mailOptions = {
-      from: 'thasmai538@gmail.com',
+      from: 'thasmaistarlife@gmail.com',
       to,
       subject: 'Thasmai Star Life : Registration Success Email',
       text: 'Your registration is complete!',
       html: `
-
+ 
       <head>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1261,29 +1302,29 @@ router.post('/send-email', async (req, res) => {
           .message p {
               margin: 5px 0;
           }
-
+ 
           .whatsapp-icon {
               height: 40px;
               width: 40px;
               border-radius: 100%;
          }
-
+ 
           .whatsapp-link {
               margin-top: 20px;
               color: rgb(37, 61, 183);
               font-weight: 600;
               font-size: 1rem;
           } 
-
+ 
       .card-container{
-
+ 
         text-align: center;
-
+ 
       }
-
-
+ 
+ 
       .reg-success-card {
-        background-image: url('https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYSTd0j36gM01xV3QywOEHBov73Q1zg8U0UhZkjZVVYIfUMudrzZnOqkbds3v3-Hnux7O_NJYMJEgyWlMO3V9LMiQ6gVeA=w1920-h922');
+        background-image: url('https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYTWA0bZqZRaGcd2yXoQu_AzBPv36ZDRHbeYm7rcVap0nQ1Dk16LUmtFnuWfmfdMGGkrVmZpw2Hg37ay2o6qgG-WAV6D=w1920-h922');
         background-repeat: no-repeat;
         background-color: rgb(62, 61, 91);
         background-size: cover;
@@ -1293,128 +1334,128 @@ router.post('/send-email', async (req, res) => {
         text-align: center;
         margin:50px auto;
       }
-
+ 
       .reg-success-card-head {
         margin: 0;
         padding: 3% 0 0;
         height: 30%;
         width: 100%;
       }
-
+ 
       .reg-card-number {
         text-align: left;
         color: white;
         padding-left: 25px;
       }
-
+ 
       .reg-card-number p {
         font-size: 0.6rem;
         margin: 0;
         text-wrap: nowrap;
       }
-
+ 
       .reg-card-number h1 {
         font-size: 1.1rem;
         font-weight: bold;
         margin: 0;
       }
-
+ 
       .reg-card-logo {
         width: 12%;
         padding-right: 25px;
       }
-
+ 
       .logo-container{
         text-align: right;
       }
-
+ 
       .reg-success-card-content {
         height: 30%;
       }
-
+ 
       .content-chip{
         width: 20%;
       }
-
+ 
       .chip {
         width: 40%;
       }
-
+ 
       .center-content{
         text-align: left;
         width: 60%;
       }
-
+ 
       .reg-success-card-content div {
         margin: 0;
         padding: 0;
         text-align: center;
       }
-
+ 
       .reg-card-star-life-logo {
         width: 35%;
         margin: 0;
         padding: 0;
       }
-
+ 
       .reg-card-contact-number {
         font-size: 0.8rem;
         font-weight: bold;
         margin: 0;
         color: #fff;
       }
-
+ 
       .reg-card-success-message {
         color: #f4e893;
         font-size: 1.1rem;
         margin: 3px 0;
       }
-
+ 
       .empty-cell{
         width: 20%;
       }
-
+ 
       .reg-success-card-footer {
         margin: 0;
         padding: 0 0 3%;
         width: 100%;
         height: 40%;
       }
-
+ 
       .card-holder-group {
         text-align: left;
         color: white;
         padding-left: 25px;
       }
-
+ 
       .card-holder-name p {
         font-size: 0.6rem;
         margin: 0;
       }
-
+ 
       .card-holder-name h2 {
         font-size: 1.1rem;
         font-weight: bold;
         margin: 0;
       }
-
+ 
       .reg-card-validity{
        padding-right: 25px;
        text-align: right;
       }
-
+ 
       .reg-card-validity p {
         font-size: 0.6rem;
         margin: auto;
         color: #ffffff;
       }
-
-
-
-
+ 
+ 
+ 
+ 
       </style>
   </head>
-
+ 
   <body>
   <div class="headers">
       <h1 style="margin: 0;">Welcome to Thasmai</h1>
@@ -1424,19 +1465,19 @@ router.post('/send-email', async (req, res) => {
       <p>Hi ${first_name} ${last_name},</p>
       <p>Congratulations! Registration complete. Your register number: ${UId}.</p>
       <p>To receive further details about the introduction class (zoom session): Please send a “hi” to number ‘+91 9900829007’. Thank you for taking the first step.</p>
-
+ 
       <p class="whatsapp-link"></p>
-      <img class="whatsapp-icon" src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYThty8mPHdkIABjYMVL821Q0VxtVF0m6oDNiL8iTxSom5YqLnrvMbN1GVyD23EhCSXBA-qFjkstBWa7BG4O3Rbm0kAh1w=w1920-h922" alt="">
-
+      <img class="whatsapp-icon" src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYSnIUgsI2fYvK6_gntrPiT71yOQNKVBOjFaRj6IBkTqFB6XeOj2ucTd_zVvb8P_mCNQTc44g-MWkvmQctQ0q9-7WXEzyw=w1920-h922" alt="">
+ 
           <a class="whatsapp-link" href="https://wa.me/+919008290027">Click here to Join Whatsapp Group</a>
       </p>
   </div>
-
+ 
  <!-- ertyu--------------------------------------------------------------------------- -->
  <div class="card-container">
-
-
-
+ 
+ 
+ 
   <div class="reg-success-card">
     <table  class="reg-success-card-head">
       <tr>
@@ -1446,19 +1487,19 @@ router.post('/send-email', async (req, res) => {
         <h1>${UId}</h1>
       </td>
          <td class="logo-container">
-      <img class="reg-card-logo" src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYR_f8knFIgYTA9_3I1rK7UwAPR7n13UuKSN9hD8Gg3FQsAG-eZI2jPBoZJtn0NQyUlgk7hlzNsPdrzwJ_aAVh-vRo-C=w1920-h922" alt="Thasmai logo" />
+      <img class="reg-card-logo" src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYSV8OQTMueB3tVPRLnS4G7ogutUDfJ8bxG0aSVEgoCF4ULoC0kMv1jqRjuwX-39JSXFw34gAhoiARJ444BG7wiyiaW4=w1227-h922" alt="Thasmai logo" />
     </td> 
     </tr>
     </table>
-
+ 
     <table class="reg-success-card-content">
       <tr>
         <td class="content-chip">
-      <img class="chip" src="https://lh3.googleusercontent.com/u/4/drive-viewer/AEYmBYTxR0xtWDAc6vsYvzTczVpqRnS46VUeCY9KsKUSAC-ea8rSuQBUWzSF462QKYxoYavYUH5VhcgPdJRQwngVx6ZTG3Hb=w1920-h922" alt="chip" />
+      <img class="chip" src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYSDv_6wQFPu6a321tH8lrNiPqVRhyOKOiWiTwK4dFhf7LqPyqu3JHwoUjeeZK4Lf2PwKqhcMHATBrJ7i_uVzbNcNpbZHQ=w1920-h922" alt="chip" />
     </td>
     <td class="center-content">
       <div>
-        <img class="reg-card-star-life-logo" src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYQevim8IaLnDiUWrPZygsD8d0yQUjT0St4SddRBzjjlYq0v8RrVMWUcINin-htMG7MS4_KrtxOLDQwjihA2nDPWCkSk=w1920-h922" alt="star-life-img" />
+        <img class="reg-card-star-life-logo" src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYQNvO2hAP--VETE3_IPAsKI5McAw4EhsbXPVCbTbvfbN9k_jLs4lHTJWhWJwweNuRdxERjL5p8PfXPfO4X28PS_IYVF_g=w1920-h922" alt="star-life-img" />
         <h3 class="reg-card-success-message">Registration Successful</h3>
         <p class="reg-card-contact-number">
           <span>Contact: +91 9008290027</span>
@@ -1468,9 +1509,9 @@ router.post('/send-email', async (req, res) => {
     </td>
     <td class="empty-cell"></td>
     </tr>
-
+ 
     </table>
-
+ 
     <table class="reg-success-card-footer">
       <tr>
       <td class="card-holder-group">
@@ -1482,7 +1523,7 @@ router.post('/send-email', async (req, res) => {
           <p>DOJ:${DOJ}</p>
         </div>
       </td>
-
+ 
       <td class="reg-card-validity">
         <!-- <p>VALID: {expiry.day}/{expiry.month}/{expiry.year}</p> -->
         <p>VALID:${expiredDate}</p>
@@ -1491,15 +1532,15 @@ router.post('/send-email', async (req, res) => {
     </table>
   </div>
    <!--end of card container--> 
-
-
+ 
+ 
    <div>
   <p>Click the link below to download our app</p>
-  <a href="https://drive.google.com/file/d/141saKTf7UyUfLTiNXBiE-_YlmJMbjtBc/view?usp=sharing" target = "_blank" style = "width:100px; height:20px; padding :10px; background-color:  #219cc9; text-decoration: none; color:white;">Download</a>
+  <a href="https://drive.google.com/file/d/1QkYpKY_v6epzn9SmkP7stkhKFp4to_DZ/view" target = "_blank" style = "width:100px; height:20px; padding :10px; background-color:  #219cc9; text-decoration: none; color:white;">Download</a>
  </div>
 </body>`,
     };
-
+ 
     // Send the email
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
@@ -1569,8 +1610,8 @@ router.get('/meditation-detail', async (req, res) => {
 
 router.get('/get-messages', async (req, res) => {
   try {
-      const  { UId } = req.query;
-      console.log('UId', UId);
+      const  { UId } = req.session;
+      //console.log('UId', UId);
      // const { UId } = req.body;
 
       if (!UId) {
@@ -1578,7 +1619,7 @@ router.get('/get-messages', async (req, res) => {
       }
 
       const messages = await Messages.findAll({
-          attributes: ['UId', 'message', 'messageTime'],
+          attributes: ['UId', 'message', 'messageTime','isAdminMessage','messagetype'],
           where: { UId: UId },
       });
 
