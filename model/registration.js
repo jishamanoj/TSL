@@ -51,20 +51,6 @@ const reg = sequelize.define('reg', {
     other: { type: DataTypes.STRING},
     profilePicUrl: { type: DataTypes.STRING, allowNull: true }
  });
-// const BankDetails = sequelize.define('bankDetails', {
-//     AadarNo: { type: DataTypes.INTEGER,defaultValue:0 },
-//     IFSCCode: { type: DataTypes.STRING,defaultValue:""},
-//     branchName: { type: DataTypes.STRING,defaultValue:""},
-//     accountName: { type: DataTypes.STRING,defaultValue:""},
-//     accountNo: { type: DataTypes.INTEGER,defaultValue:0},
-//     UId: {
-//         type: DataTypes.INTEGER,
-//         defaultValue: 0,
-//       },
-// });
-// BankDetails.belongsTo(reg, { foreignKey: 'UId' });
-//reg.hasOne(BankDetails);
-
 
 sequelize.sync({alter: false})
     .then((data) => {
