@@ -24,7 +24,7 @@ const applicationconfig = require('../model/applicationConfig');
 const multer = require('multer');
 const admin = require('firebase-admin');
 const serviceAccount = require("../serviceAccountKey.json");
-
+const AdminMessage = require("../model/adminMessage");
 const storage = admin.storage().bucket();
 
 // Multer configuration for handling file uploads
@@ -704,6 +704,14 @@ router.post('/login', async (req, res) => {
     }
   
     try {
+        
+      const validUser = await reg.findOne({ where: {email},
+        })
+
+        if(!validUser){
+          res.status(401).json({message:"invalid user"})
+        }
+
         const user = await reg.findOne({
             where: {
                 email: email,
@@ -741,6 +749,7 @@ router.post('/login', async (req, res) => {
       res.status(500).json({ message: 'Internal server error' });
     }
   });
+
 
   router.get('/getUserById/:UId', async (req, res) => {
     try {
@@ -1051,8 +1060,8 @@ return res.status(200).json({ message: 'User deleted successfully' });
 
 router.post('/meditation', async (req, res) => {
   try {
-   // const { UId } = req.body;
-      const { UId } = req.session;
+    const { UId } = req.body;
+    //  const { UId } = req.session;
       const { startdatetime, stopdatetime } = req.body;
 
       console.log('Received UId:', UId);
@@ -1619,9 +1628,7 @@ router.get('/meditation-detail', async (req, res) => {
 router.get('/get-messages', async (req, res) => {
   try {
       const  { UId } = req.session;
-      //console.log('UId', UId);
-     // const { UId } = req.body;
-
+    
       if (!UId) {
           return res.status(401).json({ error: 'User not authenticated' });
       }
@@ -1795,6 +1802,47 @@ try{
   res.status(500).json({ message:' internal server error'});
 }
 });
+
+router.get('/get-message', async (req, res) => {
+  try {
+    const { UId } = req.query;
+
+    if (!UId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Fetch messages from Messages table
+    const messages = await Messages.findAll({
+      attributes: ['id', 'message', 'messageTime', 'isAdminMessage', 'messagetype'],
+      where: { UId: UId },
+    });
+
+    if (!messages || messages.length === 0) {
+      return res.status(404).json({ error: 'Messages not found for the user' });
+    }
+
+    // Fetch details from AdminMessage table based on messageId from Messages table
+    const adminMessages = await AdminMessage.findAll({
+      attributes: ['id', 'UId','message','messageTime','messageId','isAdminMessage'],
+      where: { messageId: messages.map(msg => msg.id) },
+    });
+
+    // Merge the results
+    const mergedMessages = messages.map(msg => {
+      const adminMsg = adminMessages.find(admMsg => admMsg.messageId === msg.id);
+      return {
+        ...msg.get({ plain: true }), // Convert Sequelize instance to plain object
+        adminMessage: adminMsg ? adminMsg.details : null,
+      };
+    });
+
+    return res.status(200).json(mergedMessages);
+  } catch (error) {
+    console.error('Error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 
 
 module.exports = router;

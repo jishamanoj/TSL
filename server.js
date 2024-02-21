@@ -22,7 +22,7 @@ const io = new Server(server, {
     console.log('Connection established');
   
     socket.on('fetchusers', () => {
-      sequelize.query("SELECT COUNT(id) AS count FROM regs", { type: QueryTypes.SELECT })
+      sequelize.query("SELECT COUNT(UserId) AS count FROM regs", { type: QueryTypes.SELECT })
         .then((results) => {
           socket.emit('usersupdate', { results });
         })
@@ -44,5 +44,5 @@ sequelize.authenticate()
     });
 
     server.listen(process.env.SERVER_PORT, () => {
-    console.log('Listening on port 3000');
+    console.log('Listening on port 5000');
 });
