@@ -19,11 +19,49 @@ const admin =require('firebase-admin');
 const serviceAccount = require("../serviceAccountKey.json");
 const appointment =require('../model/appointment');
 const supportcontact =require('../model/supportContactConfig');
+const Admin = require('../model/adminlogin');
+const bcrypt = require('bcrypt');
+const adminMessage = require('../model/adminMessage');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: "gs://thasmai-star-life.appspot.com"
 });
 
+router.post('/login', async (req, res) => {
+  console.log("..................enter...........")
+  try {
+    console.log("login");
+    const { userName, password } = req.body;
+    console.log(userName, password);
+
+    const user = await Admin.findOne({
+      where: {
+        userName,
+        // role,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Invalid password' });
+    }
+
+    // if (user.role !== role) {
+    //   return res.status(403).json({ message: 'Invalid role for the user' });
+    // }
+
+    return res.status(200).json({ message: 'Login successful',user});
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
 
 router.get('/register-count', async (req, res) => {
   try {
@@ -1006,6 +1044,7 @@ router.post('/broadcast-messages', async (req, res) => {
 
 
 ///////////////////////////////////////////////////////// configarations///////////////////////////////////////
+
 router.get('/financialconfig', async (req,res) => {
   try {
      // console.log("get financialconfig data");
@@ -1359,4 +1398,45 @@ router.put('/discount/:UId', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+///////////////////////////messages////////////////////////////////
+router.post('/admin-messages', async (req, res) => {
+  try {
+    const { UId, message, messageTime, messageId, isAdminMessage } = req.body;
+    
+    // Create a new message entry
+    const newMessage = await adminMessage.create({
+      UId,
+      message,
+      messageTime,
+      messageId,
+      isAdminMessage,
+    });
+
+    res.status(201).json({ message: 'Message created successfully', data: newMessage });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+// GET endpoint to retrieve a message by messageId
+router.get('/messages/:messageId', async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const message = await adminMessage.findOne({ where: { messageId } });
+    
+    if (!message) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    res.status(200).json(message);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 module.exports = router;
+
+
+

@@ -520,6 +520,8 @@ router.get('/listName/:UId', async (req, res) => {
 //   }
 // });
 
+
+
 /////////////////////////////////// USER APP \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 // router.post('/requestPasswordReset', async (req, res) => {
@@ -1046,6 +1048,7 @@ return res.status(200).json({ message: 'User deleted successfully' });
 //     }
 // });
  
+
 router.post('/meditation', async (req, res) => {
   try {
    // const { UId } = req.body;
@@ -1217,39 +1220,44 @@ router.post('/messages', async (req, res) => {
 
 router.post("/appointment", async (req, res) => {
   try {
-      
-      const {phone, appointmentDate, num_of_people, pickup, room, from, emergencyNumber, appointment_time, appointment_reason , register_date } = req.body;
+    const { appointmentDate, num_of_people, pickup, days, from, emergencyNumber, appointment_time, appointment_reason, register_date } = req.body;
+    const { UId } = req.session;
 
-      const existingUser = await reg.findOne({ where: { phone } });
-      if (!existingUser) {
-          return res.status(404).json({ error: 'User not found' });
-      }
+    // Check if the user is authenticated
+    if (!UId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
 
-      const newappointment = await appointment.create({
-          UId : existingUser.UId,
-          phone,
-          appointmentDate,
-          num_of_people,
-          pickup,
-          room,
-          from,
-          emergencyNumber,
-          appointment_time,
-          appointment_reason,
-          register_date,
-          user_name : existingUser.first_name +" "+ existingUser.last_name,
-          appointment_status:"pending",
+    // Find the existing user by UId
+    const existingUser = await reg.findOne({ where: { UId } });
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
-      });
+    // Create a new appointment
+    const newAppointment = await appointment.create({
+      UId: existingUser.UId,
+      phone: existingUser.phone, // Assuming phone is a field in the reg model
+      appointmentDate,
+      num_of_people,
+      pickup,
+      days,
+      from,
+      emergencyNumber,
+      appointment_time,
+      appointment_reason,
+      register_date,
+      user_name: `${existingUser.first_name} ${existingUser.last_name}`,
+      appointment_status: "Not Arrived",
+    });
 
-      await newappointment.save();
-
-      return res.status(200).json({ message: 'Appointment has been allocated successfully! We will notify guruji soon.' });
+    return res.status(200).json({ message: 'Appointment has been allocated successfully! We will notify guruji soon.' });
   } catch (error) {
-      console.error('Error:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
  
 router.post('/send-email', async (req, res) => {
   try {
@@ -1716,44 +1724,55 @@ catch (error) {
 }
 });
 
-router.get('/list-appointment', async(req,res) =>{
-try{
-  const { phone } = req.query;
+router.get('/list-appointment', async (req, res) => {
+  try {
+    const { UId } = req.session;
 
-  if(!phone) {
-     
-    return res.status(401).json({error:'User not authenticated'});
+    // Check if the user is authenticated
+    if (!UId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Find appointments for the authenticated user
+    const appointments = await appointment.findAll({ where: { UId } });
+
+    // Respond with the list of appointments
+    return res.status(200).json({ message: 'Fetching appointments', appointments });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
-  //console.log('get appointment list');
-  // find the appointment
-  const list = await appointment.findAll({where:{phone},});
-  res.status(200).json({message:'Fetching appointments',list });
-} catch(error) {
-  console.log(error);
-  res.status(500).json({message:'internal server error'});
-}
 });
 
-router.delete('/appointment/:id', async(req,res) =>{
-const { phone} = req.body;
-const id = req.params.id;
-try{
 
-  //console.log('delete appointment');
- // find the appointment
-  const data = await appointment.findOne({ where:{id}});
+router.delete('/appointment', async (req, res) => {
+  const { id } = req.query;
+  const UId = req.session.UId; // Assuming UId is stored in req.session
+  
+  try {
+    // Check if the user is authenticated
+    if (!UId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
 
-  if(!phone) {
-    return res.status(404).json({error:'User not authenticated'});
+    // Find the appointment
+    const appointmentData = await appointment.findOne({ where: { id } });
+
+    // Check if the appointment exists
+    if (!appointmentData) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+
+    await appointmentData.destroy();
+    
+    // Respond with a success message
+    return res.status(200).json({ message: 'Appointment deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
-  // delete appointment
-  await data.destroy();
-  return res.status(200).json('delete appointment');
-
-} catch(error){
-  return res.status(500).json({message:'internal server error'});
-}
 });
+
 
 router.get('/show', async (req, res) => {
 try {

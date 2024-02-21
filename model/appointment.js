@@ -13,7 +13,7 @@ const appointment = sequelize.define('appointment',{
    num_of_people : { type: DataTypes.INTEGER},
    pickup : { type: DataTypes.BOOLEAN},
    from : { type: DataTypes.STRING},
-   room: { type: DataTypes.STRING},
+   days: { type: DataTypes.STRING},
    emergencyNumber : { type: DataTypes.STRING},
    //appointment_time: { type: DataTypes.STRING},
    appointment_reason: { type: DataTypes.TEXT},
