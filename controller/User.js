@@ -1804,43 +1804,42 @@ try{
 }
 });
 
-router.get('/get-message', async (req, res) => {
+router.get('/fetch-details/:UId', async (req, res) => {
   try {
-    const { UId } = req.query;
+      const { UId } = req.params;
 
-    if (!UId) {
-      return res.status(401).json({ error: 'User not authenticated' });
-    }
+      // Validate UId
+      if (!UId) {
+          return res.status(400).json({ error: 'UId parameter is required' });
+      }
 
-    // Fetch messages from Messages table
-    const messages = await Messages.findAll({
-      attributes: ['id', 'message', 'messageTime', 'isAdminMessage', 'messagetype'],
-      where: { UId: UId },
-    });
+      // Fetch details from both tables
+      const Messages = await message.findAll({
+          attributes: ['id', 'UId', 'message', 'messageTime', 'isAdminMessage', 'messagetype'],
+          where: { UId },
+          order: [
+              ['messageTime', 'ASC'] // Order by time in ascending order
+          ]
+      });
 
-    if (!messages || messages.length === 0) {
-      return res.status(404).json({ error: 'Messages not found for the user' });
-    }
+      const adminMessages = await AdminMessage.findAll({
+          attributes: ['id', 'UId', 'message', 'messageTime', 'isAdminMessage'],
+          where: { UId },
+          order: [
+              ['messageTime', 'ASC'] // Order by time in ascending order
+          ]
+      });
 
-    // Fetch details from AdminMessage table based on messageId from Messages table
-    const adminMessages = await AdminMessage.findAll({
-      attributes: ['id', 'UId','message','messageTime','messageId','isAdminMessage'],
-      where: { messageId: messages.map(msg => msg.id) },
-    });
+      // Merge the results
+      const mergedDetails = [...Messages, ...adminMessages];
 
-    // Merge the results
-    const mergedMessages = messages.map(msg => {
-      const adminMsg = adminMessages.find(admMsg => admMsg.messageId === msg.id);
-      return {
-        ...msg.get({ plain: true }), // Convert Sequelize instance to plain object
-        adminMessage: adminMsg ? adminMsg.details : null,
-      };
-    });
+      // Sort the merged details by messageTime
+      mergedDetails.sort((a, b) => new Date(a.messageTime) - new Date(b.messageTime));
 
-    return res.status(200).json(mergedMessages);
+      return res.status(200).json(mergedDetails);
   } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+      console.error('Error:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 

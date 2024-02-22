@@ -276,6 +276,31 @@ router.get('/messages', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+//////////////////////////////////meditater//////////////////////////
+
+router.get('/list-meditators', async (req, res) => {
+  try {
+    console.log(".................enter...............");
+    // Pagination parameters
+    const page = req.query.page || 1; // Current page, default is 1
+    const limit =  10; // Number of records per page
+    const offset = (page - 1) * limit; // Calculate offset based on page number
+
+    // Step 1: Fetch the list of users with pagination
+    const usersList = await Users.findAll({
+      attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'user_Status'],
+      limit: limit,
+      offset: 10,
+    });
+
+    res.json({ usersList });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
 
 
 router.get('/searchfield', async (req, res) => {
@@ -1332,7 +1357,7 @@ router.get('/list-appointment/:id', async (req, res) => {
 });
 router.put('/update-payment/:id', async (req, res) => {
   const id = req.params.id;  // Corrected to access the ID from the parameters
-  const { check_out, payment, payment_method, appointment_status } = req.body;
+  const { check_out, payment, payment_method, appointment_status,appointmentDate } = req.body;
 
   try {
       if (!id) {
@@ -1343,7 +1368,8 @@ router.put('/update-payment/:id', async (req, res) => {
           check_out,
           payment,
           payment_method,
-          appointment_status
+          appointment_status,
+          appointmentDate
       };
 
       const updatedAppointment = await appointment.update(dataToUpdate, {
