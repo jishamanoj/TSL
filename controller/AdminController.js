@@ -11,7 +11,7 @@ const questions =require("../model/question");
 const {Users,sequelize} = require('../model/validUsers');
 const appointment =require('../model/appointment');
 const bcrypt = require('bcrypt');
-
+const Admin = require("../model/adminlogin");
 
 
 
@@ -292,5 +292,29 @@ router.get('/search', async (req, res) => {
       return res.status(500).json({ status: 'error', message: 'Internal Server Error' });
     }
   });
+
+
+  router.post('/admin', async (req, res) => {
+      try {
+          const { username, role, password } = req.body;
+  
+          // Validate request body
+          if (!username || !role || !password) {
+              return res.status(400).json({ error: 'All fields are required' });
+          }
+  
+          // Hash the password
+          const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
+  
+          // Insert admin details into the database with hashed password
+          const newAdmin = await Admin.create({ username, role, password: hashedPassword });
+  
+          return res.status(201).json({ message: 'Admin details inserted successfully', admin: newAdmin });
+      } catch (error) {
+          console.error('Error:', error);
+          return res.status(500).json({ error: 'Internal Server Error' });
+      }
+  });
+  
 
   module.exports = router;

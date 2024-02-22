@@ -1321,8 +1321,8 @@ router.post('/send-email', async (req, res) => {
           }
  
           .whatsapp-icon {
-              height: 40px;
-              width: 40px;
+              height: 35px;
+              width: 35px;
               border-radius: 100%;
          }
  
@@ -1331,6 +1331,7 @@ router.post('/send-email', async (req, res) => {
               color: rgb(37, 61, 183);
               font-weight: 600;
               font-size: 1rem;
+              vertical-align: super;
           } 
  
       .card-container{
@@ -1349,7 +1350,7 @@ router.post('/send-email', async (req, res) => {
         height: 240px;
         width: 400px;
         text-align: center;
-        margin:50px auto;
+        margin: 20px auto;
       }
  
       .reg-success-card-head {
@@ -1476,14 +1477,14 @@ router.post('/send-email', async (req, res) => {
   <body>
   <div class="headers">
       <h1 style="margin: 0;">Welcome to Thasmai</h1>
-      <p style="margin: 5px 0;">Sathyam Vada || Dharmam Chara</p>
+      <p style="margin: 5px 0; font-weight: bold;">Sathyam Vada || Dharmam Chara</p>
   </div>
   <div class="message" style="color: #4F4539;">
       <p>Hi ${first_name} ${last_name},</p>
       <p>Congratulations! Registration complete. Your register number: ${UId}.</p>
       <p>To receive further details about the introduction class (zoom session): Please send a “hi” to number ‘+91 9900829007’. Thank you for taking the first step.</p>
  
-      <p class="whatsapp-link"></p>
+      <p class="whatsapp-link">
       <img class="whatsapp-icon" src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYSnIUgsI2fYvK6_gntrPiT71yOQNKVBOjFaRj6IBkTqFB6XeOj2ucTd_zVvb8P_mCNQTc44g-MWkvmQctQ0q9-7WXEzyw=w1920-h922" alt="">
  
           <a class="whatsapp-link" href="https://wa.me/+919008290027">Click here to Join Whatsapp Group</a>
@@ -1552,8 +1553,8 @@ router.post('/send-email', async (req, res) => {
  
  
    <div>
-  <p>Click the link below to download our app</p>
-  <a href="https://drive.google.com/file/d/1QkYpKY_v6epzn9SmkP7stkhKFp4to_DZ/view" target = "_blank" style = "width:100px; height:20px; padding :10px; background-color:  #219cc9; text-decoration: none; color:white;">Download</a>
+  <p>Please click the link below to download our app</p>
+  <a href="https://drive.google.com/file/d/1qmVCROV6XJW0jv_O3mDg_6E9ximhYW3t/view?usp=sharing" target = "_blank" style = "width:100px; height:20px; padding :10px; background-color: #FFB94D; text-decoration: none; color:black;">Download</a>
  </div>
 </body>`,
     };
