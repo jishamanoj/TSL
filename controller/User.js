@@ -572,7 +572,7 @@ router.post('/requestPasswordReset', async (req, res) => {
         const user = await reg.findOne({ where: { email: email } });
 
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(404).json({ message: "you are not register" });
         } else {
         // // User does not exist, generate a new OTP
         // const otp = generateOTP();
@@ -645,40 +645,55 @@ router.post('/requestPasswordReset', async (req, res) => {
 // });
 
 
+router.post('/verify-userotp', async (req, res) => {
+  try {
+    const { otp,email } = req.body;
+    const regUser = await reg.findOne({ where: { email: email } });
+
+    if (!regUser) {
+        return res.status(404).json({ message: "User not found" });
+    }
+    const storedOTP = "1234"; // This is just an example, replace it with the actual stored OTP
+
+    if (storedOTP === otp) {
+      return res.status(200).json({ message: 'OTP verified successfully' });
+    } else {
+      return res.status(400).json({ error: 'Invalid OTP' });
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
 
 router.post('/resetPassword', async (req, res) => {
-    const { email, otp, new_password } = req.body;
+  const { email, new_password } = req.body;
 
-    try {
-        // Find the user with the provided email in the 'reg' schema
-        const regUser = await reg.findOne({ where: { email: email } });
+  try {
+      // Find the user with the provided email in the 'reg' schema
+      const regUser = await reg.findOne({ where: { email: email } });
 
-        if (!regUser) {
-            return res.status(404).json({ message: "User not found" });
-        }
+      if (!regUser) {
+          return res.status(404).json({ message: "User not found" });
+      }
 
-        const storedOTP = "1234";
-        if (storedOTP === otp) {
-            const hashedPassword = await bcrypt.hash(new_password, 10);
+      const hashedPassword = await bcrypt.hash(new_password, 10);
 
-            // Update password and set classAttended to true in the 'reg' table
-            await reg.update({
-                password: hashedPassword,
-                classAttended: true,
-            }, {
-                where: { email: regUser.email },
-            });
+      // Update password and set classAttended to true in the 'reg' table
+      await reg.update({
+          password: hashedPassword,
+          classAttended: true,
+      }, {
+          where: { email: regUser.email },
+      });
 
-
-            return res.status(200).json({ message: "Password reset successfully" });
-        } else {
-            // Respond with an error message if OTP is invalid
-            return res.status(400).json({message:"Invalid OTP"});
-        }
-    } catch (err) {
-        console.error("Error resetting password:", err);
-        return res.status(500).send(err.message || "An error occurred during password reset");
-    }
+      return res.status(200).json({ message: "Password reset successfully" });
+  } catch (err) {
+      console.error("Error resetting password:", err);
+      return res.status(500).send(err.message || "An error occurred during password reset");
+  }
 });
 
 
@@ -705,11 +720,10 @@ router.post('/login', async (req, res) => {
   
     try {
         
-      const validUser = await reg.findOne({ where: {email},
-        })
+      const validUser = await reg.findOne({ where: {email}  })
 
         if(!validUser){
-          res.status(401).json({message:"invalid user"})
+          res.status(401).json({message:"Sorry ! your are not registered" });
         }
 
         const user = await reg.findOne({

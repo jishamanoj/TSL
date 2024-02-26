@@ -22,6 +22,7 @@ const supportcontact =require('../model/supportContactConfig');
 const Admin = require('../model/adminlogin');
 const bcrypt = require('bcrypt');
 const adminMessage = require('../model/adminMessage');
+const applicationconfig =require('../model/applicationConfig');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: "gs://thasmai-star-life.appspot.com"
@@ -293,15 +294,12 @@ router.get('/list-meditators', async (req, res) => {
       offset: 10,
     });
 
-    res.json({ usersList });
+    res.json( usersList );
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
-
-
 
 router.get('/searchfield', async (req, res) => {
   try {
@@ -331,7 +329,6 @@ router.get('/searchfield', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
 
 router.post('/coupon-distribute', async (req, res) => {
   try {
@@ -1082,7 +1079,8 @@ router.get('/financialconfig', async (req,res) => {
   }
 });
 
-router.put('/update-finconfig/:id', async (req, res) => {
+
+router.put('/update-configuration/:id', async (req, res) => {
   const id = req.params.id;
   const configdata = req.body;
 
@@ -1108,6 +1106,7 @@ router.put('/update-finconfig/:id', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 router.get('/appconfig',async(req,res) =>{
   try{
@@ -1197,7 +1196,7 @@ router.get('/list-users', async (req, res) => {
     const UIds = usersList.map(user => user.UId);
 
     // Step 2: Fetch the total sum of distributed_coupons for each UId
-    const distributionResults = await distribution.findAll({
+    const distributionResults = await Distribution.findAll({
       where: { UId: { [Op.in]: UIds } },
       attributes: ['UId', [sequelize.fn('sum', sequelize.col('distributed_coupons')), 'total_distributed_coupons']],
       group: ['UId'],
@@ -1306,11 +1305,13 @@ router.get('/search', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 ////////////////////////////appointments/////////////////////////////////
 
 router.get('/list-all-appointment', async (req, res) => {
   try {
     const appointmentData = await appointment.findAll();
+    //console.log(appointmentData);
 
     if (!appointmentData || appointmentData.length === 0) {
       return res.status(404).json({ message: 'No appointments found' });
@@ -1323,6 +1324,7 @@ router.get('/list-all-appointment', async (req, res) => {
     });
     const userCouponMap = new Map(userData.map(user => [user.UId, user.coupons]));
 
+
     const mergedResults = appointmentData.map(appointment => {
       const userCoupons = userCouponMap.get(appointment.UId) || 0;
       return {
@@ -1330,7 +1332,7 @@ router.get('/list-all-appointment', async (req, res) => {
         userCoupons,
       };
     });
-
+//console.log(mergedResults)
     res.json({ message: 'Success', data: mergedResults });
   } catch (error) {
     console.error(error);
