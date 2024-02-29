@@ -15,7 +15,7 @@ const moment = require('moment');
 const bcrypt = require('bcrypt');
 const timeTracking = require('../model/timeTracking');
 const Messages = require('../model/message');
-const appointment = require("../model/appointment");
+const Appointment = require("../model/appointment");
 const nodemailer = require('nodemailer');
 const meditation = require('../model/meditation');
 const message = require('../model/message');
@@ -25,6 +25,7 @@ const multer = require('multer');
 const admin = require('firebase-admin');
 const serviceAccount = require("../serviceAccountKey.json");
 const AdminMessage = require("../model/adminMessage");
+const distribution = require('../model/distribution');
 const storage = admin.storage().bucket();
 
 // Multer configuration for handling file uploads
@@ -765,42 +766,104 @@ router.post('/login', async (req, res) => {
   });
 
 
-  router.get('/getUserById/:UId', async (req, res) => {
-    try {
+
+// router.get('/getUserById/:UId', async (req, res) => {
+//     try {
+//         const { UId } = req.params;
+
+//         // Fetch user details by UId from the reg table
+//         const user = await reg.findOne({ where: { UId } });
+
+//         if (!user) {
+//             return res.status(404).json({ error: 'User not found' });
+//         }
+
+//         let profilePicUrl = null;
+//         if (user.profilePicUrl) {
+//             // If profilePicUrl exists, fetch the image URL from Firebase Storage
+//             const file = storage.file(user.profilePicUrl.split(storage.name + '/')[1]);
+//             const [exists] = await file.exists();
+//             if (exists) {
+//                 profilePicUrl = await file.getSignedUrl({
+//                     action: 'read',
+//                     expires: '03-01-2500' // Adjust expiration date as needed
+//                 });
+//             }
+//         }
+
+//         // Fetch only 'cycle' and 'day' fields from the meditation table based on the UId
+//         const meditationData = await meditation.findOne({
+//             where: { UId },
+//             attributes: ['cycle', 'day' , 'session_num']
+//         });
+
+//         // Send the response with user data including profilePicUrl and meditationData
+//         return res.status(200).json({
+//             user: {
+//                 ...user.toJSON(),
+//                 profilePicUrl,
+//                 meditationData // Include only 'cycle' and 'day' fields
+//             }
+//         });
+//     } catch (error) {
+//         console.error(error);
+//         return res.status(500).json({ error: 'Internal Server Error' });
+//     }
+// });
+
+
+router.get('/getUserById/:UId', async (req, res) => {
+  try {
       const { UId } = req.params;
-  
+
       // Fetch user details by UId from the reg table
       const user = await reg.findOne({ where: { UId } });
-  
+
       if (!user) {
-        return res.status(404).json({ error: 'User not found' });
+          return res.status(404).json({ error: 'User not found' });
       }
-  
+
       let profilePicUrl = null;
       if (user.profilePicUrl) {
-        // If profilePicUrl exists, fetch the image URL from Firebase Storage
-        const file = storage.file(user.profilePicUrl.split(storage.name + '/')[1]);
-        const [exists] = await file.exists();
-        if (exists) {
-          profilePicUrl = await file.getSignedUrl({
-            action: 'read',
-            expires: '03-01-2500' // Adjust expiration date as needed
-          });
-        }
+          // If profilePicUrl exists, fetch the image URL from Firebase Storage
+          const file = storage.file(user.profilePicUrl.split(storage.name + '/')[1]);
+          const [exists] = await file.exists();
+          if (exists) {
+              profilePicUrl = await file.getSignedUrl({
+                  action: 'read',
+                  expires: '03-01-2500' // Adjust expiration date as needed
+              });
+          }
       }
-  
-      // Send the response with user data including profilePicUrl
-      return res.status(200).json({
-        user: {
-          ...user.toJSON(),
-          profilePicUrl
-        }
+
+      // Fetch only 'cycle' and 'day' fields from the meditation table based on the UId
+      const meditationData = await meditation.findOne({
+          where: { UId },
+          attributes: ['cycle', 'day' , 'session_num']
       });
-    } catch (error) {
+
+      // Merge meditationData properties directly into the user object
+      const mergedUser = {
+          ...user.toJSON(),
+          profilePicUrl,
+          ...meditationData?.toJSON() // Use optional chaining to avoid errors if meditationData is null
+      };
+
+      // Remove null or undefined values from mergedUser
+      Object.keys(mergedUser).forEach(key => {
+          if (mergedUser[key] === null || mergedUser[key] === undefined) {
+              delete mergedUser[key];
+          }
+      });
+
+      // Send the response with merged user data
+      return res.status(200).json({ user: mergedUser });
+  } catch (error) {
       console.error(error);
       return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  });
+  }
+});
+
 
   router.put('/updateUser/:UId', upload.single('profilePic'), async (req, res) => {
     const UId = req.params.UId;
@@ -1258,7 +1321,7 @@ router.post("/appointment", async (req, res) => {
     }
 
     // Create a new appointment
-    const newAppointment = await appointment.create({
+    const newAppointment = await Appointment.create({
       UId: existingUser.UId,
       phone: existingUser.phone, // Assuming phone is a field in the reg model
       appointmentDate,
@@ -1756,7 +1819,7 @@ router.get('/list-appointment', async (req, res) => {
     }
 
     // Find appointments for the authenticated user
-    const appointments = await appointment.findAll({ where: { UId } });
+    const appointments = await Appointment.findAll({ where: { UId } });
 
     // Respond with the list of appointments
     return res.status(200).json({ message: 'Fetching appointments', appointments });
@@ -1778,7 +1841,7 @@ router.delete('/appointment', async (req, res) => {
     }
 
     // Find the appointment
-    const appointmentData = await appointment.findOne({ where: { id } });
+    const appointmentData = await Appointment.findOne({ where: { id } });
 
     // Check if the appointment exists
     if (!appointmentData) {
@@ -1811,7 +1874,7 @@ try {
 
 router.get('/list-all-appointment' , async(req, res) =>{
 try{
-  const data = await appointment.findAll();
+  const data = await Appointment.findAll();
   res.json(data);
 } catch ( error){
   res.status(500).json({ message:' internal server error'});
@@ -1856,6 +1919,37 @@ router.get('/fetch-details/:UId', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+router.put('/appointment-feedback/:id', async (req, res) => {
+  const id = req.params.id;  // Corrected to access the ID from the parameters
+  const feedback = req.body.feedback;
+
+  try {
+      if (!id) {
+          return res.status(400).json({ error: 'ID not found' });
+      }
+
+      const dataToUpdate = {
+        feedback
+      };
+
+      const updatedAppointment = await Appointment.update(dataToUpdate, {
+          where: { id: id } // Corrected to specify the appointment ID to update
+      });
+
+      if (updatedAppointment[0] === 1) {
+          return res.status(200).json({ message: 'Appointment updated successfully' });
+      } else {
+          return res.status(404).json({ error: 'Appointment not found' });
+      }
+  } catch (error) {
+      console.error('Error:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+
 
 
 

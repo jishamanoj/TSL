@@ -17,16 +17,20 @@ const { validationResult } = require('express-validator');
 const Broadcast =require('../model/broadcast');
 const admin =require('firebase-admin');
 const serviceAccount = require("../serviceAccountKey.json");
-const appointment =require('../model/appointment');
+const Appointment =require('../model/appointment');
 const supportcontact =require('../model/supportContactConfig');
 const Admin = require('../model/adminlogin');
 const bcrypt = require('bcrypt');
 const adminMessage = require('../model/adminMessage');
 const applicationconfig =require('../model/applicationConfig');
+const multer =require('multer');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: "gs://thasmai-star-life.appspot.com"
 });
+const upload = multer({ dest: 'uploads/' });
+const storage = admin.storage().bucket();
+
 
 router.post('/login', async (req, res) => {
   console.log("..................enter...........")
@@ -171,27 +175,29 @@ router.get('/beneficiaries', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-router.post('/add-event', async (req, res) => {
-  try {
-    const { event_name, event_description, priority, place, date } = req.body;
-   // const image = req.file.buffer; 
+// router.post('/add-event',upload.sinngle('eventImage'), async (req, res) => {
+//   try {
+    
+//     const { event_name, event_description, priority, place, date } = req.body;
+//     const eventImageFile = req.file; 
 
     
-    const newEvent = await events.create({
-      event_name,
-      event_description,
-      priority,
-      place,
-      date,
-    //  image,
-    });
+//     const newEvent = await events.create({
+//       event_name,
+//       event_description,
+//       priority,
+//       place,
+//       date,
+//     //  image,
+//     });
 
-    res.status(201).send({ message: 'Event created successfully', event: newEvent });
-  } catch (error) {
-    console.log(error);
-    res.status(500).send({ error: 'Internal Server Error' });
-  }
-});
+//     res.status(201).send({ message: 'Event created successfully', event: newEvent });
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).send({ error: 'Internal Server Error' });
+//   }
+// });
+
 
 router.get('/events', async (req, res) => {
   try {
@@ -207,6 +213,7 @@ router.get('/events', async (req, res) => {
         priority: event.priority,
         place: event.place,
         date: event.date,
+        event_time: event.event_time
        // image: event.image.toString('base64'), 
       };
     });
@@ -217,6 +224,7 @@ router.get('/events', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 router.put('/update-events/:eventId', async (req, res) => {
   try {
@@ -241,6 +249,7 @@ router.put('/update-events/:eventId', async (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 router.delete('/delete-events/:eventId', async (req, res) => {
   try {
       const eventId = req.params.eventId;
@@ -257,6 +266,7 @@ router.delete('/delete-events/:eventId', async (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 router.get('/messages', async (req, res) => {
   try {
       const priority = req.query.priority; 
@@ -277,11 +287,12 @@ router.get('/messages', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-//////////////////////////////////meditater//////////////////////////
+
+//////////////////////////////////meditator//////////////////////////
 
 router.get('/list-meditators', async (req, res) => {
   try {
-    console.log(".................enter...............");
+    //console.log(".................enter...............");
     // Pagination parameters
     const page = req.query.page || 1; // Current page, default is 1
     const limit =  10; // Number of records per page
@@ -330,10 +341,11 @@ router.get('/searchfield', async (req, res) => {
   }
 });
 
-router.post('/coupon-distribute', async (req, res) => {
+router.post('/coupon-systemDistribute', async (req, res) => {
   try {
+    console.log("...................enter....................");
     const { totalCoupons, distributedIds, description } = req.body;
-
+console.log("------------------------totalCoupons, distributedIds, description.........",totalCoupons, distributedIds, description);
     // Validate input
     if (!totalCoupons || !distributedIds || !Array.isArray(distributedIds)) {
       return res.status(400).json({ message: 'Invalid input. Please provide totalCoupons and an array of distributedIds.' });
@@ -398,7 +410,7 @@ router.post('/coupon-distribute', async (req, res) => {
   }
 });
 
-router.post('/export', async (req, res) => {
+router.post('/redeem', async (req, res) => {
   try {
     const { coupons, UIds, description } = req.body;
 
@@ -473,7 +485,99 @@ router.post('/export', async (req, res) => {
   }
 });
 
-router.post('/distribute-coupons', async (req, res) => {
+const ExcelJS = require('exceljs');
+
+router.get('/download', async (req, res) => {
+  try {
+    const UIds = req.query.UIds;
+ 
+    if (!Array.isArray(UIds) || UIds.length === 0) {
+      return res.status(400).json({ message: 'Invalid input. Please provide a non-empty array of UIds.' });
+    }
+
+    // Fetch the distribution details for each user
+    const userDistributionDetails = await Promise.all(UIds.map(async (UId) => {
+      const latestDistributionRecord = await Distribution.findOne({
+        attributes: ['firstName', 'secondName', 'UId', 'distributed_coupons', 'description', 'distribution_time'],
+        where: { UId },
+        order: [['distribution_time', 'DESC']],
+      });
+
+      if (!latestDistributionRecord) {
+        return { message: `Distribution details not found for UId: ${UId}` };
+      }
+
+      const bankDetails = await BankDetails.findOne({
+        attributes: ['AadarNo', 'IFSCCode', 'branchName', 'accountName', 'accountNo'],
+        where: { UId },
+      });
+
+      return {
+        firstName: latestDistributionRecord.firstName,
+        secondName: latestDistributionRecord.secondName,
+        UId: latestDistributionRecord.UId,
+        distributed_coupons: latestDistributionRecord.distributed_coupons,
+        description: latestDistributionRecord.description,
+        distribution_time: latestDistributionRecord.distribution_time,
+        AadarNo: bankDetails.AadarNo,
+        IFSCCode: bankDetails.IFSCCode,
+        branchName: bankDetails.branchName,
+        accountName: bankDetails.accountName,
+        accountNo: bankDetails.accountNo,
+      };
+    }));
+
+    // Create a new workbook and worksheet
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Distribution Details');
+
+    // Add headers to the worksheet
+    worksheet.addRow([
+      'First Name',
+      'Second Name',
+      'UId',
+      'Distributed Coupons',
+      'Description',
+      'Distribution Time',
+      'AadarNo',
+      'IFSCCode',
+      'Branch Name',
+      'Account Name',
+      'Account No',
+    ]);
+
+    // Add data to the worksheet
+    userDistributionDetails.forEach(user => {
+      worksheet.addRow([
+        user.firstName,
+        user.secondName,
+        user.UId,
+        user.distributed_coupons,
+        user.description,
+        user.distribution_time,
+        user.AadarNo,
+        user.IFSCCode,
+        user.branchName,
+        user.accountName,
+        user.accountNo,
+      ]);
+    });
+
+    // Set response headers for Excel download
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=DistributionDetails.xlsx');
+
+    // Stream the workbook to the response
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.post('/coupons-cart', async (req, res) => {
   try {
     const { UIds, couponsToDistribute } = req.body;
 
@@ -608,97 +712,7 @@ router.get('/TSL', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-const ExcelJS = require('exceljs');
 
-router.get('/download', async (req, res) => {
-  try {
-    const UIds = req.query.UIds;
- 
-    if (!Array.isArray(UIds) || UIds.length === 0) {
-      return res.status(400).json({ message: 'Invalid input. Please provide a non-empty array of UIds.' });
-    }
-
-    // Fetch the distribution details for each user
-    const userDistributionDetails = await Promise.all(UIds.map(async (UId) => {
-      const latestDistributionRecord = await Distribution.findOne({
-        attributes: ['firstName', 'secondName', 'UId', 'distributed_coupons', 'description', 'distribution_time'],
-        where: { UId },
-        order: [['distribution_time', 'DESC']],
-      });
-
-      if (!latestDistributionRecord) {
-        return { message: `Distribution details not found for UId: ${UId}` };
-      }
-
-      const bankDetails = await BankDetails.findOne({
-        attributes: ['AadarNo', 'IFSCCode', 'branchName', 'accountName', 'accountNo'],
-        where: { UId },
-      });
-
-      return {
-        firstName: latestDistributionRecord.firstName,
-        secondName: latestDistributionRecord.secondName,
-        UId: latestDistributionRecord.UId,
-        distributed_coupons: latestDistributionRecord.distributed_coupons,
-        description: latestDistributionRecord.description,
-        distribution_time: latestDistributionRecord.distribution_time,
-        AadarNo: bankDetails.AadarNo,
-        IFSCCode: bankDetails.IFSCCode,
-        branchName: bankDetails.branchName,
-        accountName: bankDetails.accountName,
-        accountNo: bankDetails.accountNo,
-      };
-    }));
-
-    // Create a new workbook and worksheet
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Distribution Details');
-
-    // Add headers to the worksheet
-    worksheet.addRow([
-      'First Name',
-      'Second Name',
-      'UId',
-      'Distributed Coupons',
-      'Description',
-      'Distribution Time',
-      'AadarNo',
-      'IFSCCode',
-      'Branch Name',
-      'Account Name',
-      'Account No',
-    ]);
-
-    // Add data to the worksheet
-    userDistributionDetails.forEach(user => {
-      worksheet.addRow([
-        user.firstName,
-        user.secondName,
-        user.UId,
-        user.distributed_coupons,
-        user.description,
-        user.distribution_time,
-        user.AadarNo,
-        user.IFSCCode,
-        user.branchName,
-        user.accountName,
-        user.accountNo,
-      ]);
-    });
-
-    // Set response headers for Excel download
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=DistributionDetails.xlsx');
-
-    // Stream the workbook to the response
-    await workbook.xlsx.write(res);
-    res.end();
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
 
 router.get('/meditator', async (req, res) => {
   try {
@@ -942,6 +956,7 @@ router.get('/complexfilter', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 router.post('/execute-query', async (req, res) => {
   try {
     const queryConditions = req.body.queryConditions;
@@ -1310,7 +1325,7 @@ router.get('/search', async (req, res) => {
 
 router.get('/list-all-appointment', async (req, res) => {
   try {
-    const appointmentData = await appointment.findAll();
+    const appointmentData = await Appointment.findAll();
     //console.log(appointmentData);
 
     if (!appointmentData || appointmentData.length === 0) {
@@ -1339,12 +1354,14 @@ router.get('/list-all-appointment', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+
 router.get('/list-appointment/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
     // Find appointment by ID
-    const appointmentData = await appointment.findOne({ where: { id } });
+    const appointmentData = await Appointment.findOne({ where: { id } });
 
     if (!appointmentData) {
       return res.status(404).json({ error: 'Appointment not found' });
@@ -1357,37 +1374,68 @@ router.get('/list-appointment/:id', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-router.put('/update-payment/:id', async (req, res) => {
-  const id = req.params.id;  // Corrected to access the ID from the parameters
-  const { check_out, payment, payment_method, appointment_status,appointmentDate } = req.body;
+
+
+
+router.put('/update-payment/:id', upload.single('appointmentImage'), async (req, res) => {
+
+  console.log('update')
+  const id = req.params.id;
+  const appointmentData = req.body;
+  const appointmentImageFile = req.file;
 
   try {
+      // Check if the user is authenticated
       if (!id) {
-          return res.status(400).json({ error: 'ID not found' });
+          return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const dataToUpdate = {
-          check_out,
-          payment,
-          payment_method,
-          appointment_status,
-          appointmentDate
-      };
+      // Find the appointment by id
+      const appointment = await Appointment.findOne({ where: { id } }); // Corrected variable name
 
-      const updatedAppointment = await appointment.update(dataToUpdate, {
-          where: { id: id } // Corrected to specify the appointment ID to update
-      });
+      // Update appointment details
+      if (appointment) {
+          // Update all fields provided in the request, excluding the appointmentImage field
+          delete appointmentData.appointmentImage; // Remove appointmentImage from appointmentData
+          await appointment.update(appointmentData);
 
-      if (updatedAppointment[0] === 1) {
-          return res.status(200).json({ message: 'Appointment updated successfully' });
+          // Store or update appointment image
+          let appointmentImageUrl = appointment.imageUrl; // Default to current URL
+          if (appointmentImageFile) {
+              const appointmentImagePath = `appointment_images/${id}/${appointmentImageFile.originalname}`;
+
+              // Upload new appointment image to Firebase Storage
+              await storage.upload(appointmentImageFile.path, {
+                  destination: appointmentImagePath,
+                  metadata: {
+                      contentType: appointmentImageFile.mimetype
+                  }
+              });
+
+              // Get the URL of the uploaded appointment image
+              appointmentImageUrl = `gs://${storage.name}/${appointmentImagePath}`;
+console.log(appointmentImageUrl);
+              // Delete the current appointment image from Firebase Storage
+              if (appointment.imageUrl) {
+                  const currentAppointmentImagePath = appointment.imageUrl.split(storage.name + '/')[1];
+                  await storage.file(currentAppointmentImagePath).delete();
+              }
+          }
+
+          // Update appointment's imageUrl in appointment table
+          await appointment.update({ imageUrl: appointmentImageUrl });
+
+          return res.status(200).json({ message: 'Appointment details updated successfully' });
       } else {
           return res.status(404).json({ error: 'Appointment not found' });
       }
   } catch (error) {
-      console.error('Error:', error);
+      console.error(error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
 router.put('/discount/:UId', async (req, res) => {
   const { UId } = req.params;
   const { coupon, id } = req.body;
@@ -1418,7 +1466,7 @@ router.put('/discount/:UId', async (req, res) => {
     await Users.update({ coupons: updatedTotalCoupons }, { where: { UId } });
 
     // Assuming 'appointment' is a model with a proper 'where' condition for the update
-    await appointment.update({ discount: coupon * 2500 }, { where: { id } });
+    await Appointment.update({ discount: coupon * 2500 }, { where: { id } });
 
     return res.status(200).json({ message: 'Discount updated successfully' });
   } catch (error) {
@@ -1428,6 +1476,7 @@ router.put('/discount/:UId', async (req, res) => {
 });
 
 ///////////////////////////messages////////////////////////////////
+
 router.post('/admin-messages', async (req, res) => {
   try {
     const { UId, message, messageTime, messageId, isAdminMessage } = req.body;
@@ -1461,6 +1510,48 @@ router.get('/messages/:messageId', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.get('/get-message', async (req, res) => {
+  try {
+    const { UId } = req.query;
+
+    if (!UId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Fetch messages from Messages table
+    const messages = await message.findAll({
+      attributes: ['id', 'message', 'messageTime', 'isAdminMessage', 'messagetype'],
+      where: { UId: UId },
+    });
+
+    if (!messages || messages.length === 0) {
+      return res.status(404).json({ error: 'Messages not found for the user' });
+    }
+
+    // Fetch details from AdminMessage table based on messageId from Messages table
+    const adminMessages = await adminMessage.findAll({
+      attributes: ['id', 'UId','message','messageTime','messageId','isAdminMessage'],
+      where: { messageId: messages.map(msg => msg.id) },
+    });
+    console.log("adminMessages",adminMessages);
+    // Merge the results
+    const mergedMessages = messages.map(msg => {
+      const adminMsg = adminMessages.find(admMsg => admMsg.messageId === msg.id);
+      console.log("....................adminMsg", adminMsg);
+      return {
+        ...msg.get({ plain: true }), // Convert Sequelize instance to plain object
+        adminMessage: adminMsg ? adminMsg.message : null, // Accessing the message content instead of 'details'
+      };
+    });
+   
+
+    return res.status(200).json(mergedMessages);
+  } catch (error) {
+    console.error('Error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 

@@ -23,7 +23,9 @@ const appointment = sequelize.define('appointment',{
    payment:{ type:DataTypes.STRING},
    payment_method:{type : DataTypes.STRING},
    discount:{ type:DataTypes.INTEGER},
-   check_out:{ type: DataTypes.STRING}
+   check_out:{ type: DataTypes.STRING},
+   imageUrl:{ type:DataTypes.STRING},
+   feedback:{ type:DataTypes.TEXT},
 },
 {timestamps: false});
 sequelize.sync({alter:true})

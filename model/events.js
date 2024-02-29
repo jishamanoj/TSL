@@ -11,14 +11,15 @@ const events = sequelize.define('events', {
     event_description: { type: DataTypes.STRING},
     priority: { type: DataTypes.STRING},
     place: { type: DataTypes.STRING},
-    date: {type: DataTypes.DATE},
+    date: {type: DataTypes.STRING},
+    event_time: { type: DataTypes.STRING},
     image: {
-        type:DataTypes.BLOB
+        type:DataTypes.STRING
     }    
  });
 
 
-events.sync()
+events.sync({alter: true})
     .then((data) => {
        
         console.log('events table created');

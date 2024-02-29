@@ -8,5 +8,5 @@ app.use(cors())
 app.use('/admin',require('../controller/AdminController'));
 app.use('/superadmin',require('../controller/superAdminController'));
 app.use('/User',require('../controller/User'));
-//app.use('/payment',require('../controller/count'));
+//app.use('/payment',require('../controller/poc'));
 module.exports = app;
