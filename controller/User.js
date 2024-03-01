@@ -25,7 +25,9 @@ const multer = require('multer');
 const admin = require('firebase-admin');
 const serviceAccount = require("../serviceAccountKey.json");
 const AdminMessage = require("../model/adminMessage");
+const privateMsg = require("../model/privatemsg");
 const distribution = require('../model/distribution');
+const operatorMsg = require('../model/operatorMsg');
 const storage = admin.storage().bucket();
 
 // Multer configuration for handling file uploads
@@ -1948,8 +1950,96 @@ router.put('/appointment-feedback/:id', async (req, res) => {
   }
 });
 
+router.put('/maintances-fee/:UId', async (req, res) => {
+  const UId = req.params.UId;
+  const maintanance_fee = req.body.maintanance_fee;
 
+  try {
+      if (!UId) {
+          return res.status(404).json({ message: 'UId is not found' });
+      }
 
+      const dataToUpdate = {
+          maintanance_fee
+      };
+
+      const [updatedRowsCount, updatedFee] = await reg.update(dataToUpdate, {
+          where: { UId: UId },
+          returning: true // This ensures the updated record is returned
+      });
+
+      if (updatedRowsCount === 0) {
+          return res.status(404).json({ message: 'User not found or no changes applied' });
+      }
+
+      // You can decide what to return upon successful update
+      return res.status(200).json({ message: 'Maintenance fee updated successfully', updatedFee });
+
+  } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.post('/messages', async (req, res) => {
+  try {
+      const { UId } = req.session;
+      const { message, messageTime, message_priority, isAdminMessage, messagetype } = req.body;
+
+      // Check if the user exists in the reg table and maintanance_fee is true
+      const regUser = await reg.findOne({ where: { UId, maintanance_fee: true } });
+
+      // Check if the user exists in the User table
+      const user = await Users.findOne({ where: { UId } });
+
+      // Check if either condition is met
+      if (!regUser && !user) {
+          return res.status(404).json({ error: 'User not found or maintenance fee not paid' });
+      }
+
+      // Create a new message record
+      const newMessage = await Messages.create({
+          UId,
+          message,
+          messageTime,
+          message_priority,
+          isAdminMessage,
+          messagetype
+      });
+
+      // Check the message type and save accordingly
+      if (messagetype === 'private') {
+        // Assuming privatemsg is the model for private messages
+        const privatemsg = await privateMsg.create({
+          UId,
+          message,
+          messageTime,
+          message_priority,
+          isAdminMessage,
+          messagetype
+        });
+
+        await privatemsg.save();
+      } else {
+        // Assuming operatorMsg is the model for other messages
+        const operatorMsg = await operatorMsg.create({
+          UId,
+          message,
+          messageTime,
+          message_priority,
+          isAdminMessage,
+          messagetype
+        });
+
+        await operatorMsg.save();
+      }
+
+      return res.status(200).json({ message: 'Message created successfully' });
+  } catch (error) {
+      console.error('Error:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 
 

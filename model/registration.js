@@ -49,10 +49,11 @@ const reg = sequelize.define('reg', {
     classAttended: { type: DataTypes.STRING, defaultValue: 'false' },
     ans : { type: DataTypes.STRING },
     other: { type: DataTypes.STRING},
-    profilePicUrl: { type: DataTypes.STRING, allowNull: true }
+    profilePicUrl: { type: DataTypes.STRING, allowNull: true },
+    maintanance_fee: { type: DataTypes.STRING, defaultValue:'false'},
  });
 
-sequelize.sync({alter: false})
+sequelize.sync({alter: true})
     .then((data) => {
        // console.log(data);
         console.log('reg table created');

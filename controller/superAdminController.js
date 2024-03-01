@@ -175,29 +175,50 @@ router.get('/beneficiaries', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-// router.post('/add-event',upload.sinngle('eventImage'), async (req, res) => {
-//   try {
+
+router.post('/add-event', upload.single('eventImage'), async (req, res) => {
+  const { event_name, event_description, priority, place, date ,event_time } = req.body;
+  const eventImageFile = req.file;
+  
+  try {
     
-//     const { event_name, event_description, priority, place, date } = req.body;
-//     const eventImageFile = req.file; 
+    if (!event_name || !event_description || !priority || !place || !date) {
+      return res.status(400).send({ error: 'Missing required fields' });
+    }
+
+    const newEvent = await events.create({
+      event_name,
+      event_description,
+      priority,
+      place,
+      date,
+      event_time
+    });
 
     
-//     const newEvent = await events.create({
-//       event_name,
-//       event_description,
-//       priority,
-//       place,
-//       date,
-//     //  image,
-//     });
+    let image = ''; 
+    if (eventImageFile) {
+      const eventImagePath = `event_image/${newEvent.id}/${eventImageFile.originalname}`;
 
-//     res.status(201).send({ message: 'Event created successfully', event: newEvent });
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).send({ error: 'Internal Server Error' });
-//   }
-// });
+      
+      await storage.upload(eventImageFile.path, {
+        destination: eventImagePath,
+        metadata: {
+          contentType: eventImageFile.mimetype
+        }
+      });
 
+      image = `gs://${storage.name}/${eventImagePath}`;
+    }
+
+    await newEvent.update({ image });
+
+    res.status(201).json({ message: 'Event created successfully', event: newEvent });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 router.get('/events', async (req, res) => {
   try {
@@ -290,27 +311,27 @@ router.get('/messages', async (req, res) => {
 
 //////////////////////////////////meditator//////////////////////////
 
-router.get('/list-meditators', async (req, res) => {
-  try {
-    //console.log(".................enter...............");
-    // Pagination parameters
-    const page = req.query.page || 1; // Current page, default is 1
-    const limit =  10; // Number of records per page
-    const offset = (page - 1) * limit; // Calculate offset based on page number
+// router.get('/list-meditators', async (req, res) => {
+//   try {
+//     //console.log(".................enter...............");
+//     // Pagination parameters
+//     const page = req.query.page || 1; // Current page, default is 1
+//     const limit =  10; // Number of records per page
+//     const offset = (page - 1) * limit; // Calculate offset based on page number
 
-    // Step 1: Fetch the list of users with pagination
-    const usersList = await Users.findAll({
-      attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'user_Status'],
-      limit: limit,
-      offset: 10,
-    });
+//     // Step 1: Fetch the list of users with pagination
+//     const usersList = await Users.findAll({
+//       attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'user_Status'],
+//       limit: limit,
+//       offset: 10,
+//     });
 
-    res.json( usersList );
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
+//     res.json( usersList );
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// });
 
 router.get('/searchfield', async (req, res) => {
   try {
@@ -412,8 +433,9 @@ console.log("------------------------totalCoupons, distributedIds, description..
 
 router.post('/redeem', async (req, res) => {
   try {
+    console.log("entered");
     const { coupons, UIds, description } = req.body;
-
+console.log( "coupons, UIds, description.................:", coupons, UIds, description);
     // Validate input
     if (!coupons || !UIds || !Array.isArray(UIds) || UIds.length === 0) {
       return res.status(400).json({ message: 'Invalid input. Please provide coupons and a non-empty array of UIds.' });
@@ -714,7 +736,7 @@ router.get('/TSL', async (req, res) => {
 });
 
 
-router.get('/meditator', async (req, res) => {
+router.get('/list-meditators', async (req, res) => {
   try {
     const users = await Users.findAll({
       attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'ban'],
