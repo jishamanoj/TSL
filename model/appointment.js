@@ -26,6 +26,8 @@ const appointment = sequelize.define('appointment',{
    check_out:{ type: DataTypes.STRING},
    imageUrl:{ type:DataTypes.STRING},
    feedback:{ type:DataTypes.TEXT},
+   externalUser:{ type:DataTypes.STRING, 
+    defaultValue:'false'},
 },
 {timestamps: false});
 sequelize.sync({alter:true})

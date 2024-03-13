@@ -23,6 +23,9 @@ const Admin = require('../model/adminlogin');
 const bcrypt = require('bcrypt');
 const adminMessage = require('../model/adminMessage');
 const applicationconfig =require('../model/applicationConfig');
+const GroupMembers = require('../model/groupmembers')
+//const redeem = require('../model/redeem');
+
 const multer =require('multer');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -311,6 +314,7 @@ router.get('/messages', async (req, res) => {
 
 //////////////////////////////////meditator//////////////////////////
 
+
 // router.get('/list-meditators', async (req, res) => {
 //   try {
 //     //console.log(".................enter...............");
@@ -332,6 +336,7 @@ router.get('/messages', async (req, res) => {
 //     res.status(500).json({ message: 'Internal server error' });
 //   }
 // });
+
 
 router.get('/searchfield', async (req, res) => {
   try {
@@ -435,7 +440,7 @@ router.post('/redeem', async (req, res) => {
   try {
     console.log("entered");
     const { coupons, UIds, description } = req.body;
-console.log( "coupons, UIds, description.................:", coupons, UIds, description);
+    console.log( "coupons, UIds, description.................:", coupons, UIds, description);
     // Validate input
     if (!coupons || !UIds || !Array.isArray(UIds) || UIds.length === 0) {
       return res.status(400).json({ message: 'Invalid input. Please provide coupons and a non-empty array of UIds.' });
@@ -512,6 +517,7 @@ const ExcelJS = require('exceljs');
 router.get('/download', async (req, res) => {
   try {
     const UIds = req.query.UIds;
+    console.log("UIds: " + UIds)
  
     if (!Array.isArray(UIds) || UIds.length === 0) {
       return res.status(400).json({ message: 'Invalid input. Please provide a non-empty array of UIds.' });
@@ -602,6 +608,7 @@ router.get('/download', async (req, res) => {
 router.post('/coupons-cart', async (req, res) => {
   try {
     const { UIds, couponsToDistribute } = req.body;
+    console.log("UIds, couponsToDistribute",UIds, couponsToDistribute);
 
     const users = await Users.findAll({ where: { UId: UIds } });
 
@@ -635,12 +642,13 @@ router.post('/coupons-cart', async (req, res) => {
     const totalCouponsInDistributionTable = await coupondistribution.sum('coupons_to_distribute');
 
 
-    return res.status(200).json({ message: 'Coupons distributed successfully',totalCouponsInDistributionTable: totalCouponsInDistributionTable });
+    return res.status(200).json({ message: 'Coupons added to cart successfully',totalCouponsInDistributionTable: totalCouponsInDistributionTable });
   } catch (error) {
     console.log('Error distributing coupons:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 router.post('/revoke-coupons', async (req, res) => {
   try {
@@ -756,6 +764,30 @@ router.get('/list-meditators', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+
+router.get('/view-cart', async (req, res) => {
+  try {
+    // Fetch all distribution records from the coupondistribution table
+    const distributionRecords = await coupondistribution.findAll();
+
+    // Calculate total coupons to distribute
+    let totalCouponsToDistribute = 0;
+    distributionRecords.forEach(record => {
+      totalCouponsToDistribute += record.coupons_to_distribute;
+    });
+
+    // Send the response with the distribution records and total coupons to distribute
+    return res.status(200).json({ distributionRecords, totalCouponsToDistribute });
+  } catch (error) {
+    console.error('Error fetching distribution records:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+
+////////////////////////////////////////mahadhanam///////////////////////////////////////
 
 router.post('/simulation', async (req, res) => {
   try {
@@ -924,60 +956,6 @@ router.get('/mahadhanam-download', async (req, res) => {
 });
 
 
-router.get('/complexfilter', async (req, res) => {
-  const { field, operator, value, logicalOperator } = req.query;
-
-  if (!field || !operator || !value) {
-    return res.status(400).json({ error: 'Field, operator, and value are required' });
-  }
-
-  try {
-    console.log('Received query parameters:', { field, operator, value, logicalOperator });
-
-    // Ensure all arrays have the same length
-    if (
-      !(field instanceof Array) ||
-      !(operator instanceof Array) ||
-      !(value instanceof Array) ||
-      field.length !== operator.length ||
-      operator.length !== value.length
-    ) {
-      return res.status(400).json({ error: 'Invalid query parameters' });
-    }
-
-    // Convert string values to numbers
-    const numericValues = value.map((v) => Number(v));
-
-    // Check if conversion was successful
-    if (numericValues.some((v) => isNaN(v))) {
-      return res.status(400).json({ error: 'Invalid numeric value in query parameters' });
-    }
-
-    // Constructing a Sequelize query
-    const whereClauses = field.map((f, index) => ({
-      [f]: {
-        [Op[operator[index]]]: numericValues[index],
-      },
-    }));
-
-    const sequelizeQuery = logicalOperator && logicalOperator.toUpperCase() === 'AND'
-      ? { [Op.and]: whereClauses }
-      : { [Op.or]: whereClauses };
-
-    console.log('Constructed Sequelize query:', sequelizeQuery);
-
-    const results = await Users.findAll({
-      where: {
-        ...sequelizeQuery, // Spread the conditions directly
-      },
-    });
-
-    res.json(results);
-  } catch (error) {
-    console.error('Error executing query:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
 
 router.post('/execute-query', async (req, res) => {
   try {
@@ -1345,38 +1323,62 @@ router.get('/search', async (req, res) => {
 
 ////////////////////////////appointments/////////////////////////////////
 
-router.get('/list-all-appointment', async (req, res) => {
+router.get('/list-appointment', async (req, res) => {
   try {
-    const appointmentData = await Appointment.findAll();
-    //console.log(appointmentData);
+    // Find all appointments
+    const appointments = await Appointment.findAll();
 
-    if (!appointmentData || appointmentData.length === 0) {
-      return res.status(404).json({ message: 'No appointments found' });
+    // Fetch group members for each appointment
+    const appointmentsWithGroupMembers = [];
+    for (const appointment of appointments) {
+      const groupMembers = await GroupMembers.findAll({ where: { appointmentId: appointment.id } });
+      appointmentsWithGroupMembers.push({
+        appointment,
+        groupMembers,
+      });
     }
-    const UIds = appointmentData.map(appointment => appointment.UId);
 
-    const userData = await Users.findAll({
-      where: { UId: { [Op.in]: UIds } },
-      attributes: ['UId', 'coupons'],
-    });
-    const userCouponMap = new Map(userData.map(user => [user.UId, user.coupons]));
-
-
-    const mergedResults = appointmentData.map(appointment => {
-      const userCoupons = userCouponMap.get(appointment.UId) || 0;
-      return {
-        ...appointment.dataValues,
-        userCoupons,
-      };
-    });
-//console.log(mergedResults)
-    res.json({ message: 'Success', data: mergedResults });
+    // Respond with the list of appointments with associated group members
+    return res.status(200).json({ message: 'Fetching appointments', appointments: appointmentsWithGroupMembers });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+const cron = require('node-cron');
 
+cron.schedule('0 9 * * *', async () =>{
+  try {
+    console.log('crone job ');
+    // Calculate the date 3 days from now
+    const threeDaysFromNow = new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000);
+
+    // Find all appointments scheduled within the next 3 days
+    const appointments = await Appointment.findAll({
+        where: {
+            appointmentDate: {
+                [Op.between]: [new Date(), threeDaysFromNow] // Find appointments between today and 3 days from now
+            }
+        }
+    });
+
+    // Iterate over each appointment and send notifications
+    for (const appointment of appointments) {
+        // Create a notification for each appointment
+        await Notification.create({
+            UId: appointment.UId,
+            // Add any additional data you want to include in the notification
+        });
+
+        // Log the notification
+        console.log(`Notification sent for appointment with ID ${appointment.id}`);
+    }
+} catch (error) {
+    console.error('Error scheduling appointment notifications:', error);
+}
+}, {
+timezone: 'Asia/Kolkata' // Set timezone to Indian Standard Time (IST)
+});
 
 router.get('/list-appointment/:id', async (req, res) => {
   const { id } = req.params;

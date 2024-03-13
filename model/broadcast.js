@@ -8,7 +8,7 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
 });
 const broadcast = sequelize.define('broadcast', {
 
-    Broadcast_message: { type: DataTypes.STRING },
+    message: { type: DataTypes.STRING },
     priority:{type: DataTypes.STRING},
     time:{type: DataTypes.STRING},
    

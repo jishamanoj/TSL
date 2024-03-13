@@ -29,7 +29,7 @@ const privateMsg = require("../model/privatemsg");
 const distribution = require('../model/distribution');
 const operatorMsg = require('../model/operatorMsg');
 const storage = admin.storage().bucket();
-
+const GroupMembers = require('../model/groupmembers');
 // Multer configuration for handling file uploads
 const upload = multer({ dest: 'uploads/' });
 
@@ -1306,47 +1306,225 @@ router.post('/messages', async (req, res) => {
 });
 
 
-router.post("/appointment", async (req, res) => {
+// router.post("/appointment", async (req, res) => {
+//   try {
+//     const { appointmentDate, num_of_people, pickup, days, from, emergencyNumber, appointment_time, appointment_reason, register_date } = req.body;
+//     const { UId } = req.session;
+
+//     // Check if the user is authenticated
+//     if (!UId) {
+//       return res.status(401).json({ error: 'User not authenticated' });
+//     }
+
+//     // Find the existing user by UId
+//     const existingUser = await reg.findOne({ where: { UId } });
+//     if (!existingUser) {
+//       return res.status(404).json({ error: 'User not found' });
+//     }
+
+//     // Create a new appointment
+//     const newAppointment = await Appointment.create({
+//       UId: existingUser.UId,
+//       phone: existingUser.phone, // Assuming phone is a field in the reg model
+//       appointmentDate,
+//       num_of_people,
+//       pickup,
+//       days,
+//       from,
+//       emergencyNumber,
+//       appointment_time,
+//       appointment_reason,
+//       register_date,
+//       user_name: `${existingUser.first_name} ${existingUser.last_name}`,
+//       appointment_status: "Not Arrived",
+//     });
+
+//     return res.status(200).json({ message: 'Appointment has been allocated successfully! We will notify guruji soon.' });
+//   } catch (error) {
+//     console.error('Error:', error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
+ //////////////////////////////////////////////appointment//////////////////////////////////////////
+
+
+ router.post("/appointment", async (req, res) => {
   try {
-    const { appointmentDate, num_of_people, pickup, days, from, emergencyNumber, appointment_time, appointment_reason, register_date } = req.body;
-    const { UId } = req.session;
-
-    // Check if the user is authenticated
-    if (!UId) {
-      return res.status(401).json({ error: 'User not authenticated' });
-    }
-
-    // Find the existing user by UId
-    const existingUser = await reg.findOne({ where: { UId } });
-    if (!existingUser) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Create a new appointment
-    const newAppointment = await Appointment.create({
-      UId: existingUser.UId,
-      phone: existingUser.phone, // Assuming phone is a field in the reg model
+    const {
+      UId,
       appointmentDate,
       num_of_people,
       pickup,
-      days,
+      room,  
       from,
       emergencyNumber,
       appointment_time,
       appointment_reason,
       register_date,
-      user_name: `${existingUser.first_name} ${existingUser.last_name}`,
-      appointment_status: "Not Arrived",
+      groupmembers,
+      externalUser
+    } = req.body;
+
+    const existingUser = await Users.findOne({ where: { UId } });
+
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const newAppointment = await Appointment.create({
+      UId: existingUser.UId,
+      phone: existingUser.phone,
+      appointmentDate,
+      num_of_people,
+      pickup,
+      room,
+      from,
+      emergencyNumber,
+      appointment_time,
+      appointment_reason,
+      register_date,
+      user_name: existingUser.firstName + " " + existingUser.secondName,
+      appointment_status: "pending",
+      externalUser
     });
 
-    return res.status(200).json({ message: 'Appointment has been allocated successfully! We will notify guruji soon.' });
+    if (Array.isArray(groupmembers) && groupmembers.length > 0) {
+      const groupMembersData = groupmembers.map(groupMember => ({
+        name: groupMember.name,
+        relation: groupMember.relation,
+        age: groupMember.age,
+        appointmentId: newAppointment.id,
+      }));
+
+      await GroupMembers.bulkCreate(groupMembersData); // Fixed the function call
+    }
+
+    return res.status(200).json({
+      message: 'Appointment has been allocated successfully! We will notify guruji soon.',
+    });
   } catch (error) {
     console.error('Error:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
- 
+
+
+
+router.put('/updateAppointment/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateFields = req.body;
+
+    // Check if appointment exists
+    const appointment = await Appointment.findOne({ where: { id } });
+    if (!appointment) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+
+    // Update Appointment
+    const [appointmentResult] = await Appointment.update(updateFields, {
+      where: { id },
+    });
+   // console.log(".......................",[appointmentResult]);
+
+    // Update or create GroupMembers
+    if (updateFields.groupmembers && Array.isArray(updateFields.groupmembers)) {
+      
+      const groupMembersUpdates = updateFields.groupmembers.map(async (groupMember) => {
+        console.log(groupMember.id);
+        if (groupMember.id) {
+         //console.log("enter");
+          // Update existing group member if ID exists
+          await GroupMembers.update(groupMember, {
+            where: { id: groupMember.id },
+          });
+        } else {
+         // console.log("................else........")
+          // Create new group member if ID does not exist
+          await GroupMembers.create({
+            name: groupMember.name,
+            relation: groupMember.relation,
+            age: groupMember.age,
+            appointmentId: id,
+          });
+        }
+      });
+      await Promise.all(groupMembersUpdates);
+    }
+
+    return res.status(200).json({ message: 'Appointment and GroupMembers updated successfully' });
+  } catch (error) {
+    console.error('Error updating appointment and group members:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.delete('/delete-appointment', async (req, res) => {
+  const { id } = req.query;
+  const UId = req.query.UId; // Assuming UId is stored in req.session
+  
+  try {
+    // Check if the user is authenticated
+    if (!UId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Start a transaction
+    await sequelize.transaction(async (t) => {
+      // Find the appointment
+      const appointmentData = await Appointment.findOne({ where: { id }, transaction: t });
+
+      // Check if the appointment exists
+      if (!appointmentData) {
+        return res.status(404).json({ error: 'Appointment not found' });
+      }
+
+      // Delete associated group members
+      await GroupMembers.destroy({ where: { appointmentId: id }, transaction: t });
+
+      // Delete the appointment
+      await appointmentData.destroy({ transaction: t });
+    });
+    
+    // Respond with a success message
+    return res.status(200).json({ message: 'Appointment and associated group members deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.get('/list-appointment', async (req, res) => {
+  try {
+    const { UId } = req.query;
+
+    // Check if the user is authenticated
+    if (!UId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Find appointments for the authenticated user
+    const appointments = await Appointment.findAll({ where: { UId } });
+
+    // Fetch group members for each appointment
+    for (const appointment of appointments) {
+      const groupMembers = await GroupMembers.findAll({ where: { appointmentId: appointment.id } });
+      appointment.dataValues.groupMembers = groupMembers; // Attach group members to each appointment
+    }
+
+    // Respond with the list of appointments
+    return res.status(200).json({ message: 'Fetching appointments', appointments });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+
+
 router.post('/send-email', async (req, res) => {
   try {
     const {first_name,last_name,UId,DOJ,expiredDate} = req.body

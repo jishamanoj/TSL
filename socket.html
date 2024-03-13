@@ -1,0 +1,104 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+</head>
+<body>
+    <div id="chat-box"></div>
+    <input type="text" id="message-input" placeholder="Type your message...">
+    <button id="send-button">Send</button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
+    <script>
+        // Connect to the Socket.IO server
+        const socket = io('http://localhost:5000/'); // Adjust the hostname and port as needed
+
+        // Handle incoming chat messages
+        socket.on('chat_message', (message) => {
+            appendMessage(message);
+        });
+
+        // Function to append a message to the chat box
+        function appendMessage(message) {
+            const chatBox = document.getElementById('chat-box');
+            const messageElement = document.createElement('div');
+            messageElement.textContent = message;
+            chatBox.appendChild(messageElement);
+        }
+
+        // Send message when the send button is clicked or Enter is pressed
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+
+        sendButton.addEventListener('click', sendMessage);
+
+        messageInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Function to send a message to the server
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message) {
+                socket.emit('chat_message', message);
+                messageInput.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
+
+ -->
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Private Chat</title>
+ </head>
+ <body>
+     <h1>Private Chat</h1>
+     <div id="messages"></div>
+     <input type="text" id="recipientUID" placeholder="Recipient UID" value="1">
+     <input type="text" id="message" placeholder="Message">
+     <button onclick="sendMessage()">Send</button>
+ 
+     <!-- Include Socket.IO client library -->
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.3/socket.io.js"></script>
+     <script>
+         const socket = io('http://localhost:5000/chat');
+         const messagesContainer = document.getElementById('messages');
+ 
+         // Event handler for receiving private messages
+         socket.on('private_message', (message) => {
+             const messageElement = document.createElement('div');
+             messageElement.textContent = message;
+             messagesContainer.appendChild(messageElement);
+         });
+ 
+         // Function to send private message
+         function sendMessage() {
+             const recipientUID = document.getElementById('recipientUID').value;
+             const message = document.getElementById('message').value;
+ 
+             // Emit private_message event with recipientUID and message
+             socket.emit('private_message', { recipientUID, message });
+ 
+             // Clear input fields
+             document.getElementById('recipientUID').value = '';
+             document.getElementById('message').value = '';
+         }
+     </script>
+ </body>
+ </html>
+ 
+ 
+ 
+ 
+ 
+ 
+ 
