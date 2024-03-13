@@ -867,8 +867,8 @@ router.get('/getUserById/:UId', async (req, res) => {
 });
 
 
-  router.put('/updateUser/:UId', upload.single('profilePic'), async (req, res) => {
-    const UId = req.params.UId;
+  router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
+    const UId = req.session.UId
     const userData = req.body;
     const profilePicFile = req.file;
   
@@ -1351,8 +1351,9 @@ router.post('/messages', async (req, res) => {
 
  router.post("/appointment", async (req, res) => {
   try {
+    const UId = req.session.UId;
     const {
-      UId,
+      
       appointmentDate,
       num_of_people,
       pickup,
@@ -1463,7 +1464,7 @@ router.put('/updateAppointment/:id', async (req, res) => {
 
 router.delete('/delete-appointment', async (req, res) => {
   const { id } = req.query;
-  const UId = req.query.UId; // Assuming UId is stored in req.session
+  const UId = req.session.UId; // Assuming UId is stored in req.session
   
   try {
     // Check if the user is authenticated
@@ -1498,7 +1499,7 @@ router.delete('/delete-appointment', async (req, res) => {
 
 router.get('/list-appointment', async (req, res) => {
   try {
-    const { UId } = req.query;
+    const { UId } = req.session.UId;
 
     // Check if the user is authenticated
     if (!UId) {
