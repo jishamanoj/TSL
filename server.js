@@ -24,11 +24,11 @@ const io = new Server(server, {
   const chatIO = io.of('/'); // Define a new namespace for chat
 
   chatIO.on('connection', (socket) => {
-      console.log('Chat connection established');
+   //   console.log('Chat connection established');
   
       // Handle chat events here...
       socket.on('chat_message', (message) => {
-          console.log('Received chat message:', message);
+   //       console.log('Received chat message:', message);
   
           // Convert the message object to a string
           const messageString = JSON.stringify(message);
@@ -40,10 +40,10 @@ const io = new Server(server, {
             time: message.time
         })
               .then(() => {
-                  console.log('Chat message saved to database');
+                 // console.log('Chat message saved to database');
               })
               .catch(err => {
-                  console.error('Error saving chat message to database:', err);
+                 // console.error('Error saving chat message to database:', err);
               });
   
           // Broadcast the message to all clients in the chat namespace
@@ -54,13 +54,13 @@ const io = new Server(server, {
     const personalChatIO = io.of('/chat');
 
 personalChatIO.on('connection', (socket) => {
-    console.log('Personal chat connection established');
+  //  console.log('Personal chat connection established');
 
     socket.on('private_message', async ({ recipientUID, message }) => {
-        console.log('Received private message:', message, 'for recipient UID:', recipientUID);
+      //  console.log('Received private message:', message, 'for recipient UID:', recipientUID);
 
         if (!recipientUID) {
-            console.error('Recipient UID is missing');
+         //   console.error('Recipient UID is missing');
             return;
         }
 
@@ -69,13 +69,13 @@ personalChatIO.on('connection', (socket) => {
 
             if (recipientUser) {
                 await private.create({ message, UId: recipientUser.id });
-                console.log('Private message saved to database');
+             //   console.log('Private message saved to database');
                 socket.to(recipientUser.id).emit('private_message', message);
             } else {
-                console.log('Recipient user not found with UID:', recipientUID);
+             //   console.log('Recipient user not found with UID:', recipientUID);
             }
         } catch (err) {
-            console.error('Error handling private message:', err);
+           // console.error('Error handling private message:', err);
         }
         //chatIO.emit('private_message', message);
     });
@@ -83,7 +83,7 @@ personalChatIO.on('connection', (socket) => {
 
 
   io.on('connection', (socket) => {
-    console.log('Connection established');
+    //console.log('Connection established');
   
     socket.on('fetchusers', () => {
       sequelize.query("SELECT COUNT(UserId) AS count FROM regs", { type: QueryTypes.SELECT })
@@ -91,7 +91,7 @@ personalChatIO.on('connection', (socket) => {
           socket.emit('usersupdate', { results });
         })
         .catch((error) => {
-          console.error('Error fetching users:', error);
+       //   console.error('Error fetching users:', error);
           socket.emit('error', 'Failed to fetch users');
         });
    })
