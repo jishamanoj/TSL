@@ -1499,7 +1499,7 @@ router.delete('/delete-appointment', async (req, res) => {
 
 router.get('/list-appointment', async (req, res) => {
   try {
-    const { UId } = req.session.UId;
+    const  UId  = req.session.UId;
 
     // Check if the user is authenticated
     if (!UId) {
