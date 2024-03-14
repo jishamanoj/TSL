@@ -1349,6 +1349,8 @@ router.post('/messages', async (req, res) => {
  //////////////////////////////////////////////appointment//////////////////////////////////////////
 
 
+
+
  router.post("/appointment", async (req, res) => {
   try {
     const UId = req.session.UId;
@@ -1409,8 +1411,6 @@ router.post('/messages', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-
 
 
 router.put('/updateAppointment/:id', async (req, res) => {
@@ -2053,14 +2053,7 @@ try {
 }
 });
 
-router.get('/list-all-appointment' , async(req, res) =>{
-try{
-  const data = await Appointment.findAll();
-  res.json(data);
-} catch ( error){
-  res.status(500).json({ message:' internal server error'});
-}
-});
+
 
 router.get('/fetch-details/:UId', async (req, res) => {
   try {

@@ -1323,7 +1323,7 @@ router.get('/search', async (req, res) => {
 
 ////////////////////////////appointments/////////////////////////////////
 
-router.get('/list-appointment', async (req, res) => {
+router.get('/list-all-appointment', async (req, res) => {
   try {
     // Find all appointments
     const appointments = await Appointment.findAll();
