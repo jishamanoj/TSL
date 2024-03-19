@@ -24,8 +24,9 @@ const bcrypt = require('bcrypt');
 const adminMessage = require('../model/adminMessage');
 const applicationconfig =require('../model/applicationConfig');
 const GroupMembers = require('../model/groupmembers')
+const ApplicationConfig = require('../model/applicationConfig');
 //const redeem = require('../model/redeem');
-
+const privateMsg = require('../model/privatemsg');
 const multer =require('multer');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -1025,6 +1026,7 @@ router.post('/execute-query', async (req, res) => {
 //   }
 // });
 
+
 router.post('/save-token', async (req, res) => {
   try {
     const { UId, token } = req.body; 
@@ -1349,7 +1351,7 @@ const cron = require('node-cron');
 
 cron.schedule('0 9 * * *', async () =>{
   try {
-    console.log('crone job ');
+    console.log('cron job ');
     // Calculate the date 3 days from now
     const threeDaysFromNow = new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000);
 
@@ -1380,25 +1382,50 @@ cron.schedule('0 9 * * *', async () =>{
 timezone: 'Asia/Kolkata' // Set timezone to Indian Standard Time (IST)
 });
 
+
+// router.get('/list-appointment/:id', async (req, res) => {
+//   const { id } = req.params;
+
+//   try {
+//     // Find appointment by ID
+//     const appointmentData = await Appointment.findOne({ where: { id } });
+
+//     if (!appointmentData) {
+//       return res.status(404).json({ error: 'Appointment not found' });
+//     }
+
+//     // Send appointment details as response
+//     return res.status(200).json(appointmentData);
+//   } catch (error) {
+//     console.error('Error:', error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
 router.get('/list-appointment/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
     // Find appointment by ID
-    const appointmentData = await Appointment.findOne({ where: { id } });
+    const appointment = await Appointment.findOne({ where: { id } });
 
-    if (!appointmentData) {
+    if (!appointment) {
       return res.status(404).json({ error: 'Appointment not found' });
     }
 
-    // Send appointment details as response
-    return res.status(200).json(appointmentData);
+    // Find group members for the appointment
+    const groupMembers = await GroupMembers.findAll({ where: { appointmentId: appointment.id } });
+
+    // Attach group members to the appointment object
+    appointment.dataValues.groupMembers = groupMembers;
+
+    // Respond with the appointment
+    return res.status(200).json({ message: 'Fetching appointment', appointment });
   } catch (error) {
-    console.error('Error:', error);
+    console.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 
 router.put('/update-payment/:id', upload.single('appointmentImage'), async (req, res) => {
@@ -1499,6 +1526,32 @@ router.put('/discount/:UId', async (req, res) => {
   }
 });
 
+router.put('/update-gurujidate', async (req, res) => {
+  try {
+    console.log('Updating');
+    const id = 11;
+    const {  values } = req.body;
+    console.log(req.body.values)
+
+    // Find the existing record by ID
+    let config = await ApplicationConfig.findByPk(id);
+
+    // If the record doesn't exist, create a new one
+    if (!config) {
+      config = await ApplicationConfig.create({ id });
+    }
+
+    // Convert the array of values to JSON format and update the record
+    config.value = JSON.stringify(values);
+    await config.save();
+
+    return res.status(200).json({ message: 'Application config updated successfully' });
+  } catch (error) {
+    console.error('Error updating application config:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 ///////////////////////////messages////////////////////////////////
 
 router.post('/admin-messages', async (req, res) => {
@@ -1578,6 +1631,51 @@ router.get('/get-message', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
+router.post('/saveMessage', async (req, res) => {
+  try {
+      const { message, message_priority } = req.body;
+      
+      if (!message || !message_priority) {
+          return res.status(400).json({ error: 'Message and message_priority are required' });
+      }
+      
+      if (message_priority === 'high') {
+          await Broadcast.create({ message, message_priority, time: new Date().toISOString() });
+          return res.status(201).json({ message: 'Message saved to broadcast table' });
+      } else if (message_priority === 'low') {
+          await privateMsg.create({ message, message_priority, messageTime: new Date().toISOString() });
+          return res.status(201).json({ message: 'Message saved to privateMsg table' });
+      } else {
+          return res.status(400).json({ error: 'Invalid message_priority. Must be "high" or "low"' });
+      }
+  } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/get-globalMessages', async (req, res) => {
+  try {
+
+    const messages = await Broadcast.findAll ({
+      attributes: ['message','message_priority','time']})
+    
+    if(!messages){
+      return res.status(404).json({ error: 'not found' });
+    }
+
+    return res.status(200).json(messages);
+  }
+  
+    catch (error) {
+    console.error(error);
+    return res.status(500).json({message: 'Internal server error'});
+  }
+});
+
+
 
 module.exports = router;
 

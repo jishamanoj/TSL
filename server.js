@@ -7,6 +7,7 @@ const broadcast = require('./model/broadcast')
 const app = require('./index');
 const private = require('./model/privatemsg');
 const { Users } = require('./model/validUsers');
+const privateMsg = require('./model/privatemsg');
 const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
     dialect: process.env.DB_DIALECT,
         host: process.env.DB_HOST,
@@ -39,6 +40,13 @@ const io = new Server(server, {
             priority: message.priority,
             time: message.time
         })
+
+        privateMsg.create({
+          UId: message.UId,
+          message: message.message,
+          message_priority: message.priority,
+          messageTime: message.time
+      })
               .then(() => {
                  // console.log('Chat message saved to database');
               })
@@ -49,7 +57,7 @@ const io = new Server(server, {
           // Broadcast the message to all clients in the chat namespace
           chatIO.emit('chat_message', message);
       });
-    }); 
+    });
 
     const personalChatIO = io.of('/chat');
 
@@ -98,6 +106,7 @@ personalChatIO.on('connection', (socket) => {
   
   })
 
+
 //console.log('qwerty')
 sequelize.authenticate()
     .then(() => {
@@ -108,5 +117,5 @@ sequelize.authenticate()
     });
 
     server.listen(process.env.SERVER_PORT, () => {
-    console.log('Listening on port 5000');
+    console.log(`Listening on port ${process.env.SERVER_PORT}`);
 });

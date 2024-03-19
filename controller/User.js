@@ -32,6 +32,7 @@ const storage = admin.storage().bucket();
 const GroupMembers = require('../model/groupmembers');
 // Multer configuration for handling file uploads
 const upload = multer({ dest: 'uploads/' });
+const ApplicationConfig = require('../model/applicationConfig');
 
 
 router.get('/getAllUsers', async (req, res) => {
@@ -1245,35 +1246,6 @@ router.post('/meditation', async (req, res) => {
 });
 
 
-// router.post('/messages', async (req, res) => {
-//     try {
-//       const { userId } = req.session;
-//         const { message,messageTime} = req.body;
-
-//         // Check if the user exists
-//         const existingUser = await Users.findOne({ where: {UId : userId } });
-//         if (!existingUser) {
-//             return res.status(404).json({ error: 'User not found' });
-//         }
-
-//         // Create a new message record
-//         const newMessage = await Messages.create({
-     
-//             userId,
-//             message,
-//             messageTime
-//         });
-
-//         // Save the new message record
-//         await newMessage.save();
-
-//         return res.status(200).json({ message: 'Message created successfully' });
-//     } catch (error) {
-//         console.error('Error:', error);
-//         return res.status(500).json({ error: 'Internal Server Error' });
-//     }
-// });
-
 
 router.post('/messages', async (req, res) => {
   try {
@@ -1306,54 +1278,32 @@ router.post('/messages', async (req, res) => {
 });
 
 
-// router.post("/appointment", async (req, res) => {
-//   try {
-//     const { appointmentDate, num_of_people, pickup, days, from, emergencyNumber, appointment_time, appointment_reason, register_date } = req.body;
-//     const { UId } = req.session;
+ router.get('/guruji-date', async (req, res) => {
+  try {
+    const  id  = 11;
 
-//     // Check if the user is authenticated
-//     if (!UId) {
-//       return res.status(401).json({ error: 'User not authenticated' });
-//     }
+    // Find the application config record by ID
+    const config = await ApplicationConfig.findByPk(id);
 
-//     // Find the existing user by UId
-//     const existingUser = await reg.findOne({ where: { UId } });
-//     if (!existingUser) {
-//       return res.status(404).json({ error: 'User not found' });
-//     }
-
-//     // Create a new appointment
-//     const newAppointment = await Appointment.create({
-//       UId: existingUser.UId,
-//       phone: existingUser.phone, // Assuming phone is a field in the reg model
-//       appointmentDate,
-//       num_of_people,
-//       pickup,
-//       days,
-//       from,
-//       emergencyNumber,
-//       appointment_time,
-//       appointment_reason,
-//       register_date,
-//       user_name: `${existingUser.first_name} ${existingUser.last_name}`,
-//       appointment_status: "Not Arrived",
-//     });
-
-//     return res.status(200).json({ message: 'Appointment has been allocated successfully! We will notify guruji soon.' });
-//   } catch (error) {
-//     console.error('Error:', error);
-//     return res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
-
- //////////////////////////////////////////////appointment//////////////////////////////////////////
-
-
-
+    // If the record exists, parse the JSON value and send it in the response
+    if (config) {
+      const values = JSON.parse(config.value);
+      return res.status(200).json({ message: 'Application config retrieved successfully', values });
+    } else {
+      return res.status(404).json({ error: 'Application config not found' });
+    }
+  } catch (error) {
+    console.error('Error retrieving application config:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
  router.post("/appointment", async (req, res) => {
   try {
     const UId = req.session.UId;
+    if (!UId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
     const {
       
       appointmentDate,
@@ -1388,7 +1338,7 @@ router.post('/messages', async (req, res) => {
       appointment_reason,
       register_date,
       user_name: existingUser.firstName + " " + existingUser.secondName,
-      appointment_status: "pending",
+      appointment_status: "Not Arrived",
       externalUser
     });
 
@@ -1411,7 +1361,6 @@ router.post('/messages', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 router.put('/updateAppointment/:id', async (req, res) => {
   try {
@@ -1523,7 +1472,28 @@ router.get('/list-appointment', async (req, res) => {
   }
 });
 
+router.delete('/group-members/:id', async (req, res) => {
+  const { id } = req.params;
 
+  try {
+    // Find the group member by ID
+    const groupMember = await GroupMembers.findByPk(id);
+
+    // Check if the group member exists
+    if (!groupMember) {
+      return res.status(404).json({ error: 'Group member not found' });
+    }
+
+    // Delete the group member
+    await groupMember.destroy();
+
+    // Respond with a success message
+    return res.status(200).json({ message: 'Group member deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 
 router.post('/send-email', async (req, res) => {
@@ -2011,33 +1981,7 @@ router.get('/list-appointment', async (req, res) => {
 });
 
 
-router.delete('/appointment', async (req, res) => {
-  const { id } = req.query;
-  const UId = req.session.UId; // Assuming UId is stored in req.session
-  
-  try {
-    // Check if the user is authenticated
-    if (!UId) {
-      return res.status(401).json({ error: 'User not authenticated' });
-    }
 
-    // Find the appointment
-    const appointmentData = await Appointment.findOne({ where: { id } });
-
-    // Check if the appointment exists
-    if (!appointmentData) {
-      return res.status(404).json({ error: 'Appointment not found' });
-    }
-
-    await appointmentData.destroy();
-    
-    // Respond with a success message
-    return res.status(200).json({ message: 'Appointment deleted successfully' });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
 
 
 router.get('/show', async (req, res) => {
