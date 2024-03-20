@@ -1325,28 +1325,60 @@ router.get('/search', async (req, res) => {
 
 ////////////////////////////appointments/////////////////////////////////
 
+// router.get('/list-all-appointment', async (req, res) => {
+//   try {
+//     // Find all appointments
+//     const appointments = await Appointment.findAll();
+
+//     // Fetch group members for each appointment
+//     const appointmentsWithGroupMembers = [];
+//     for (const appointment of appointments) {
+//       const groupMembers = await GroupMembers.findAll({ where: { appointmentId: appointment.id } });
+//       appointmentsWithGroupMembers.push({
+//         appointment,
+//         groupMembers,
+//       });
+//     }
+
+//     // Respond with the list of appointments with associated group members
+//     return res.status(200).json({ message: 'Fetching appointments', appointments: appointmentsWithGroupMembers });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
 router.get('/list-all-appointment', async (req, res) => {
   try {
     // Find all appointments
     const appointments = await Appointment.findAll();
 
-    // Fetch group members for each appointment
-    const appointmentsWithGroupMembers = [];
+    // Fetch group members and coupons for each appointment
+    const appointmentsWithGroupMembersAndCoupons = [];
     for (const appointment of appointments) {
       const groupMembers = await GroupMembers.findAll({ where: { appointmentId: appointment.id } });
-      appointmentsWithGroupMembers.push({
+      const user = await Users.findOne({ where: { UId: appointment.UId }, attributes: ['coupons'] });
+
+      // Create a merged object for each appointment
+      const mergedAppointmentData = {
         appointment,
         groupMembers,
-      });
+        user // Only includes coupon-related data
+      };
+
+      appointmentsWithGroupMembersAndCoupons.push(mergedAppointmentData);
     }
 
-    // Respond with the list of appointments with associated group members
-    return res.status(200).json({ message: 'Fetching appointments', appointments: appointmentsWithGroupMembers });
+    // Respond with the list of merged appointment data
+    return res.status(200).json({ message: 'Fetching appointments', appointments: appointmentsWithGroupMembersAndCoupons });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
+
 const cron = require('node-cron');
 
 cron.schedule('0 9 * * *', async () =>{

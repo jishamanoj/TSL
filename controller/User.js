@@ -758,6 +758,7 @@ router.post('/login', async (req, res) => {
           last_name : user.last_name,
           UId : user.UId,
           DOJ : user.DOJ,
+          isans : user.isans,
           expiredDate :user.expiredDate
           // Don't send sensitive information like password
         },
@@ -817,7 +818,7 @@ router.post('/login', async (req, res) => {
 
 router.get('/getUserById/:UId', async (req, res) => {
   try {
-      const { UId } = req.params;
+      const { UId } = req.session;
 
       // Fetch user details by UId from the reg table
       const user = await reg.findOne({ where: { UId } });
@@ -927,8 +928,45 @@ router.get('/getUserById/:UId', async (req, res) => {
     }
   });
   
-
-
+  router.post('/meditation-data', async (req, res) => {
+    try {
+      const UId = req.session.UId;
+      const ans = req.body.ans;
+      const isans = req.body.isans;
+  
+      // Check if the user is authenticated
+      if (!UId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+  
+      // Fetch the user record by UId
+      const user = await reg.findOne({ where: { UId: UId } });
+  
+      // Handle case where user record is not found
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+  
+      // Check if ansList is an array
+      if (!Array.isArray(ans)) {
+        return res.status(400).json({ error: 'ans must be an array of strings' });
+      }
+  
+      // Serialize the ansList array into a string
+      const serializedAns = ans.join(',');
+  
+      // Update the user's ans field with the serializedAns string
+      await user.update({ ans: serializedAns, isans});
+  
+      return res.status(200).json({ message: 'Meditation data updated successfully' });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+  
+  
+  
 router.get('/reference/:UId', async (req, res) => {
   const UId = req.params.UId;
 
@@ -1298,6 +1336,8 @@ router.post('/messages', async (req, res) => {
   }
 });
 
+
+
  router.post("/appointment", async (req, res) => {
   try {
     const UId = req.session.UId;
@@ -1311,6 +1351,7 @@ router.post('/messages', async (req, res) => {
       pickup,
       room,  
       from,
+      days,
       emergencyNumber,
       appointment_time,
       appointment_reason,
@@ -1333,6 +1374,7 @@ router.post('/messages', async (req, res) => {
       pickup,
       room,
       from,
+      days,
       emergencyNumber,
       appointment_time,
       appointment_reason,
@@ -1349,7 +1391,7 @@ router.post('/messages', async (req, res) => {
         age: groupMember.age,
         appointmentId: newAppointment.id,
       }));
-
+console.log(groupMembersData)
       await GroupMembers.bulkCreate(groupMembersData); // Fixed the function call
     }
 
@@ -1361,6 +1403,25 @@ router.post('/messages', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+router.put('/rating/:id', async (req, res) => {
+  const id = req.params.id;
+  const rating = req.body.rating;
+
+  try {
+    const appointment = await Appointment.findOne({ where: { id: id } });
+    if (!appointment) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+
+    await Appointment.update({ rating: rating }, { where: { id: id } });
+
+    return res.status(200).json({ message: 'Rating updated successfully' });
+  } catch (error) {
+    console.error('Error updating rating:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 
 router.put('/updateAppointment/:id', async (req, res) => {
   try {
@@ -1410,6 +1471,7 @@ router.put('/updateAppointment/:id', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 router.delete('/delete-appointment', async (req, res) => {
   const { id } = req.query;
