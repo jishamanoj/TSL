@@ -1325,28 +1325,7 @@ router.get('/search', async (req, res) => {
 
 ////////////////////////////appointments/////////////////////////////////
 
-// router.get('/list-all-appointment', async (req, res) => {
-//   try {
-//     // Find all appointments
-//     const appointments = await Appointment.findAll();
 
-//     // Fetch group members for each appointment
-//     const appointmentsWithGroupMembers = [];
-//     for (const appointment of appointments) {
-//       const groupMembers = await GroupMembers.findAll({ where: { appointmentId: appointment.id } });
-//       appointmentsWithGroupMembers.push({
-//         appointment,
-//         groupMembers,
-//       });
-//     }
-
-//     // Respond with the list of appointments with associated group members
-//     return res.status(200).json({ message: 'Fetching appointments', appointments: appointmentsWithGroupMembers });
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
 
 router.get('/list-all-appointment', async (req, res) => {
   try {

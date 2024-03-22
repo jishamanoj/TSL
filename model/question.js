@@ -13,7 +13,8 @@ const questions = sequelize.define('questions', {
     ans2: { type: DataTypes.STRING},
     ans3: { type: DataTypes.STRING},
     ans4: { type: DataTypes.STRING},
-    ans5:{ type: DataTypes.STRING}
+    ans5:{ type: DataTypes.STRING},
+    condition:{type:DataTypes.TEXT}
 },
  {
     timestamps: false,

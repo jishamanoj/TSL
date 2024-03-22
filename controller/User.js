@@ -566,6 +566,29 @@ router.get('/listName/:UId', async (req, res) => {
 
 
 
+router.get('/rulesAndConditions', async (req, res) => {
+  try {
+    // Extract the questionId from the request parameters
+    const  questionId  = 1;
+
+    // Fetch the question from the database by questionId
+    const question = await questions.findByPk(questionId);
+
+    // Check if the question exists
+    if (!question) {
+      return res.status(404).json({ error: 'Question not found' });
+    }
+
+    // Extract the value from the condition field
+    const conditionValue = question.condition;
+
+    // Return the condition value in the API response
+    return res.status(200).json({ message: 'Condition value retrieved successfully', condition: conditionValue });
+  } catch (error) {
+    console.error('Error retrieving condition value:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 
 router.post('/requestPasswordReset', async (req, res) => {
@@ -1351,6 +1374,24 @@ router.get('/guruji-date', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+// router.get('/rulesAndConditions', async (req, res) => {
+//   try {
+//     const id = 10;
+//     const config = await ApplicationConfig.findByPk(id);
+//     if (config) {
+//       console.log('Config value:', config.value); // Log the config value
+//       const values = JSON.parse(config.value);
+//       return res.status(200).json({ message: 'Application config retrieved successfully', values });
+//     } else {
+//       return res.status(404).json({ error: 'Application config not found' });
+//     }
+//   } catch (error) {
+//     console.error('Error retrieving application config:', error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
 
  router.post("/appointment", async (req, res) => {
   try {
