@@ -27,11 +27,11 @@ const appointment = sequelize.define('appointment',{
    imageUrl:{ type:DataTypes.STRING},
    feedback:{ type:DataTypes.TEXT},
    rating:{ type:DataTypes.STRING},
-   externalUser:{ type:DataTypes.STRING, 
-    defaultValue:'false'},
+   externalUser:{ type:DataTypes.BOOLEAN, 
+    defaultValue:false},
 },
 {timestamps: false});
-sequelize.sync({alter:true})
+sequelize.sync({alter: true})
     .then((data) => {
        // console.log(data);
         console.log('meditation table created');

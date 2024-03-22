@@ -14,11 +14,11 @@ const Meditation =require('../model/meditation');
 const moment = require('moment');
 const bcrypt = require('bcrypt');
 const timeTracking = require('../model/timeTracking');
-const Messages = require('../model/message');
+const Messages = require('../model/gurujiMessage');
 const Appointment = require("../model/appointment");
 const nodemailer = require('nodemailer');
 const meditation = require('../model/meditation');
-const message = require('../model/message');
+const message = require('../model/gurujiMessage');
 const Broadcast = require('../model/broadcast');
 const applicationconfig = require('../model/applicationConfig');
 const multer = require('multer');
@@ -670,8 +670,6 @@ router.post('/verify-userotp', async (req, res) => {
   }
 });
 
-
-
 router.post('/resetPassword', async (req, res) => {
   const { email, new_password } = req.body;
 
@@ -699,7 +697,6 @@ router.post('/resetPassword', async (req, res) => {
       return res.status(500).send(err.message || "An error occurred during password reset");
   }
 });
-
 
 const sessionMiddleware = session({
     secret: '8be00e304a7ab94f27b5e5172cc0f3b2c575e87d',
@@ -768,8 +765,6 @@ router.post('/login', async (req, res) => {
       res.status(500).json({ message: 'Internal server error' });
     }
   });
-
-
 
 // router.get('/getUserById/:UId', async (req, res) => {
 //     try {
@@ -868,7 +863,6 @@ router.get('/getUserById/:UId', async (req, res) => {
   }
 });
 
-
   router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
     const UId = req.session.UId
     const userData = req.body;
@@ -927,6 +921,33 @@ router.get('/getUserById/:UId', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   });
+
+  router.get('/flag', async (req, res) => {
+    try {
+      // Retrieve UId from the session
+      const UId = req.query.UId;
+  
+      // Check if UId exists in the session
+      if (!UId) {
+        return res.status(404).json({ error: 'invalid UId' });
+      }
+  
+      // Find the user by UId
+      const user = await reg.findOne({ where: { UId } });
+  
+      // Check if user exists
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+  
+      // Return the isans status of the user
+      return res.status(200).json({ message: { isans: user.isans} });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
   
   router.post('/meditation-data', async (req, res) => {
     try {
@@ -964,8 +985,6 @@ router.get('/getUserById/:UId', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   });
-  
-  
   
 router.get('/reference/:UId', async (req, res) => {
   const UId = req.params.UId;
@@ -1283,8 +1302,6 @@ router.post('/meditation', async (req, res) => {
   }
 });
 
-
-
 router.post('/messages', async (req, res) => {
   try {
       const { UId } = req.session;
@@ -1315,7 +1332,6 @@ router.post('/messages', async (req, res) => {
   }
 });
 
-
  router.get('/guruji-date', async (req, res) => {
   try {
     const  id  = 11;
@@ -1336,20 +1352,18 @@ router.post('/messages', async (req, res) => {
   }
 });
 
-
-
  router.post("/appointment", async (req, res) => {
   try {
-    const UId = req.session.UId;
+   const UId = req.session.UId;
     if (!UId) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
     const {
-      
+     
       appointmentDate,
       num_of_people,
       pickup,
-      room,  
+  
       from,
       days,
       emergencyNumber,
@@ -1359,6 +1373,7 @@ router.post('/messages', async (req, res) => {
       groupmembers,
       externalUser
     } = req.body;
+    console.log(UId);
 
     const existingUser = await Users.findOne({ where: { UId } });
 
@@ -1372,7 +1387,6 @@ router.post('/messages', async (req, res) => {
       appointmentDate,
       num_of_people,
       pickup,
-      room,
       from,
       days,
       emergencyNumber,
@@ -1391,7 +1405,7 @@ router.post('/messages', async (req, res) => {
         age: groupMember.age,
         appointmentId: newAppointment.id,
       }));
-console.log(groupMembersData)
+      console.log(groupMembersData)
       await GroupMembers.bulkCreate(groupMembersData); // Fixed the function call
     }
 
@@ -1421,7 +1435,6 @@ router.put('/rating/:id', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 router.put('/updateAppointment/:id', async (req, res) => {
   try {
@@ -1471,7 +1484,6 @@ router.put('/updateAppointment/:id', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 router.delete('/delete-appointment', async (req, res) => {
   const { id } = req.query;
@@ -1556,7 +1568,6 @@ router.delete('/group-members/:id', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 router.post('/send-email', async (req, res) => {
   try {
@@ -1864,7 +1875,6 @@ router.post('/send-email', async (req, res) => {
   }
 });
 
-
   router.get('/user-details', async (req, res) => {
     try {
         const { UId } = req.session;
@@ -1890,7 +1900,6 @@ console.log('UId:', UId);
     }
 });
 
-  
 router.get('/meditation-detail', async (req, res) => {
   try {
        const { UId } = req.session;
@@ -1914,7 +1923,6 @@ router.get('/meditation-detail', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 router.get('/get-messages', async (req, res) => {
   try {
@@ -2042,10 +2050,6 @@ router.get('/list-appointment', async (req, res) => {
   }
 });
 
-
-
-
-
 router.get('/show', async (req, res) => {
 try {
     
@@ -2058,8 +2062,6 @@ try {
     res.status(500).json({ error: 'Internal Server Error' });
 }
 });
-
-
 
 router.get('/fetch-details/:UId', async (req, res) => {
   try {
@@ -2218,7 +2220,5 @@ router.post('/messages', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-
 
 module.exports = router;
