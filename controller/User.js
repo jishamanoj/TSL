@@ -1041,7 +1041,7 @@ router.get('/list-questions', async (req, res) => {
   });
 
 router.get('/user-details', async (req, res) => {
-  const UId = req.session.userId;
+  const UId = req.session.UId;
 
   try {
       // Fetch details from reg table
@@ -2261,5 +2261,6 @@ router.post('/messages', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 module.exports = router;
