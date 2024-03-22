@@ -811,7 +811,7 @@ router.post('/login', async (req, res) => {
 // });
 
 
-router.get('/getUserById/:UId', async (req, res) => {
+router.get('/getUserById', async (req, res) => {
   try {
       const { UId } = req.session;
 
@@ -925,7 +925,7 @@ router.get('/getUserById/:UId', async (req, res) => {
   router.get('/flag', async (req, res) => {
     try {
       // Retrieve UId from the session
-      const UId = req.query.UId;
+      const UId = req.session.UId;
   
       // Check if UId exists in the session
       if (!UId) {
@@ -1017,8 +1017,8 @@ router.get('/list-questions', async (req, res) => {
     }
   });
 
-router.get('/user-details/:userId', async (req, res) => {
-  const UId = req.params.userId;
+router.get('/user-details', async (req, res) => {
+  const UId = req.session.userId;
 
   try {
       // Fetch details from reg table
@@ -1197,8 +1197,8 @@ return res.status(200).json({ message: 'User deleted successfully' });
 
 router.post('/meditation', async (req, res) => {
   try {
-    const { UId } = req.body;
-    //  const { UId } = req.session;
+    //const { UId } = req.body;
+      const { UId } = req.session;
       const { startdatetime, stopdatetime } = req.body;
 
       console.log('Received UId:', UId);
@@ -1332,7 +1332,7 @@ router.post('/messages', async (req, res) => {
   }
 });
 
- router.get('/guruji-date', async (req, res) => {
+router.get('/guruji-date', async (req, res) => {
   try {
     const  id  = 11;
 
@@ -2063,9 +2063,9 @@ try {
 }
 });
 
-router.get('/fetch-details/:UId', async (req, res) => {
+router.get('/fetch-details', async (req, res) => {
   try {
-      const { UId } = req.params;
+      const { UId } = req.session;
 
       // Validate UId
       if (!UId) {
@@ -2130,8 +2130,8 @@ router.put('/appointment-feedback/:id', async (req, res) => {
   }
 });
 
-router.put('/maintances-fee/:UId', async (req, res) => {
-  const UId = req.params.UId;
+router.put('/maintances-fee/', async (req, res) => {
+  const UId = req.session.UId;
   const maintanance_fee = req.body.maintanance_fee;
 
   try {
