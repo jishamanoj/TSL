@@ -14,7 +14,7 @@ const questions = sequelize.define('questions', {
     ans3: { type: DataTypes.STRING},
     ans4: { type: DataTypes.STRING},
     ans5:{ type: DataTypes.STRING},
-    condition:{type:DataTypes.TEXT}
+    conditions:{type:DataTypes.TEXT}
 },
  {
     timestamps: false,
