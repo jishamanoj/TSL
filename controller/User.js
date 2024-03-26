@@ -542,7 +542,7 @@ router.get('/rulesAndConditions', async (req, res) => {
     }
 
     // Extract the value from the condition field
-    const conditionValue = question.condition;
+    const conditionValue = question.conditions;
 
     // Return the condition value in the API response
     return res.status(200).json({ message: 'Condition value retrieved successfully', condition: conditionValue });

@@ -1604,6 +1604,80 @@ router.post('/appointment-query', async (req, res) => {
   }
 });
 
+router.post('/appointment-query', async (req, res) => {
+  try {
+    const queryConditions = req.body.queryConditions;
+    const page = req.body.page || 1; // Default to page 1 if not provided
+    const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
+
+    console.log(queryConditions);
+
+    if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
+      return res.status(400).json({ message: 'Invalid query conditions provided.' });
+    }
+
+    function isNumeric(num) {
+      return !isNaN(num);
+    }
+
+    let sql = "SELECT * FROM sequel.appointments WHERE ";
+    for (let i = 0; i < queryConditions.length; i++) {
+      sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
+    }
+
+    // Apply pagination
+    const offset = (page - 1) * pageSize;
+    sql += `LIMIT ${pageSize} OFFSET ${offset}`;
+
+    console.log(sql);
+
+    const results = await sequelize.query(sql);
+    console.log(results[0]);
+    
+    // Assuming sequelize returns an array of rows in the first element of the results array
+    res.json({ results: results[0] });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+router.post('/appointment-query', async (req, res) => {
+  try {
+    const queryConditions = req.body.queryConditions;
+    const page = req.body.page || 1; // Default to page 1 if not provided
+    const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
+
+    console.log(queryConditions);
+
+    if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
+      return res.status(400).json({ message: 'Invalid query conditions provided.' });
+    }
+
+    function isNumeric(num) {
+      return !isNaN(num);
+    }
+
+    let sql = "SELECT * FROM sequel.appointments WHERE ";
+    for (let i = 0; i < queryConditions.length; i++) {
+      sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
+    }
+
+    // Apply pagination
+    const offset = (page - 1) * pageSize;
+    sql += `LIMIT ${pageSize} OFFSET ${offset}`;
+
+    console.log(sql);
+
+    const results = await sequelize.query(sql);
+    console.log(results[0]);
+    
+    // Assuming sequelize returns an array of rows in the first element of the results array
+    res.json({ results: results[0] });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
 ///////////////////////////messages////////////////////////////////
 
 router.post('/admin-messages', async (req, res) => {
