@@ -448,6 +448,7 @@ function calculateExpirationDate() {
     return d;
 }
 
+
 router.get('/listName/:UId', async (req, res) => {
   try {
     const { UId } = req.params;
@@ -488,7 +489,9 @@ router.get('/listName/:UId', async (req, res) => {
   }
 });
 
+
 /////////////////////////////////// USER APP \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
 
 // router.post('/requestPasswordReset', async (req, res) => {
 //         const { email } = req.body;
@@ -846,7 +849,7 @@ router.get('/getUserById', async (req, res) => {
       console.error(error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
-});
+ });
 
   router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
     const UId = req.session.UId
@@ -1420,9 +1423,10 @@ router.get('/guruji-date', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 router.put('/rating/:id', async (req, res) => {
   const id = req.params.id;
-  const rating = req.body.rating;
+  const {rating , feedback}= req.body;
 
   try {
     const appointment = await Appointment.findOne({ where: { id: id } });
@@ -1430,7 +1434,7 @@ router.put('/rating/:id', async (req, res) => {
       return res.status(404).json({ error: 'Appointment not found' });
     }
 
-    await Appointment.update({ rating: rating }, { where: { id: id } });
+    await Appointment.update({ rating: rating ,feedback :feedback}, { where: { id: id } });
 
     return res.status(200).json({ message: 'Rating updated successfully' });
   } catch (error) {
@@ -2013,6 +2017,7 @@ router.get('/getBankDetails/:userId', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 router.get('/getbroadcast-message', async (req, res) => {
   try {
     const messages = await Broadcast.findAll();
