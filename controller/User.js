@@ -1424,8 +1424,8 @@ router.get('/guruji-date', async (req, res) => {
   }
 });
 
-router.put('/rating/:id', async (req, res) => {
-  const id = req.params.id;
+router.put('/rating', async (req, res) => {
+  const id = req.body.id;
   const {rating , feedback}= req.body;
 
   try {

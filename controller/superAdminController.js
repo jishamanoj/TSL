@@ -1349,11 +1349,16 @@ router.get('/list-all-appointment', async (req, res) => {
 
       appointmentsWithGroupMembersAndCoupons.push(mergedAppointmentData);
     }
-
+//console.log(appointmentsWithGroupMembersAndCoupons)
+  let modarray =   JSON.parse(JSON.stringify(appointmentsWithGroupMembersAndCoupons))
+.map(i=>{
+  //console.log(i.appointment)
+return i.appointment
+    })
     // Respond with the list of merged appointment data
-    return res.status(200).json({ message: 'Fetching appointments', appointments: appointmentsWithGroupMembersAndCoupons });
+    return res.status(200).json({ message: 'Fetching appointments', appointments: modarray });
   } catch (error) {
-    console.error(error);
+   // console.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -1441,7 +1446,6 @@ router.get('/list-appointment/:id', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 router.put('/update-payment/:id', upload.single('appointmentImage'), async (req, res) => {
 
