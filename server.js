@@ -36,16 +36,21 @@ const io = new Server(server, {
   
           // Save the message to the database
           broadcast.create({
-            message: message.message,
-            priority: message.priority,
-            time: message.time
+            UId: message.UId,
+          message: message.message,
+          message_priority: message.priority,
+          isAdminMessage:message.isAdminMessage,
+          messageTime: message.messageTime,
+          messagetype:message.messageType
         })
 
         privateMsg.create({
           UId: message.UId,
           message: message.message,
           message_priority: message.priority,
-          messageTime: message.time
+          isAdminMessage:message.isAdminMessage,
+          messageTime: message.messageTime,
+          messagetype:message.messageType
       })
               .then(() => {
                  // console.log('Chat message saved to database');

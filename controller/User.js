@@ -69,8 +69,6 @@ router.get('/getAllUsers', async (req, res) => {
   }
 });
 
-
-
 router.post('/countries', async (req, res) => {
     const data = req.body; // Assuming req.body is an array of objects
 
@@ -439,8 +437,6 @@ console.log("..................currentDate.",currentDate)
     return res.status(500).send(err.message || "An error occurred during OTP verification");
   }
 });
-
-
 
 function calculateExpirationDate() {
     const d = new Date();
@@ -1290,35 +1286,35 @@ router.post('/meditation', async (req, res) => {
   }
 });
 
-router.post('/messages', async (req, res) => {
-  try {
-      const { UId } = req.session;
-      const { message, messageTime,message_priority,isAdminMessage } = req.body;
+// router.post('/messages', async (req, res) => {
+//   try {
+//       const { UId } = req.session;
+//       const { message, messageTime,message_priority,isAdminMessage } = req.body;
 
-      // Check if the user exists
-      const existingUser = await Users.findOne({ where: { UId } });
-      if (!existingUser) {
-          return res.status(404).json({ error: 'User not found' });
-      }
+//       // Check if the user exists
+//       const existingUser = await Users.findOne({ where: { UId } });
+//       if (!existingUser) {
+//           return res.status(404).json({ error: 'User not found' });
+//       }
 
-      // Create a new message record
-      const newMessage = await Messages.create({
-          UId,
-          message,
-          messageTime,
-          message_priority,
-          isAdminMessage
-      });
+//       // Create a new message record
+//       const newMessage = await Messages.create({
+//           UId,
+//           message,
+//           messageTime,
+//           message_priority,
+//           isAdminMessage
+//       });
 
-      // Save the new message record
-      await newMessage.save();
+//       // Save the new message record
+//       await newMessage.save();
 
-      return res.status(200).json({ message: 'Message created successfully' });
-  } catch (error) {
-      console.error('Error:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+//       return res.status(200).json({ message: 'Message created successfully' });
+//   } catch (error) {
+//       console.error('Error:', error);
+//       return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
 
 router.get('/guruji-date', async (req, res) => {
   try {
