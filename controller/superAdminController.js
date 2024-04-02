@@ -1332,7 +1332,7 @@ router.get('/search', async (req, res) => {
 
 router.get('/list-all-appointment', async (req, res) => {
   try {
-    const appointmentData = await appointment.findAll();
+    const appointmentData = await Appointment.findAll();
     //console.log(appointmentData);
 
     if (!appointmentData || appointmentData.length === 0) {
@@ -1355,7 +1355,7 @@ router.get('/list-all-appointment', async (req, res) => {
       };
     });
 //console.log(mergedResults)
-    res.json(mergedResults);
+    res.json({appointments:mergedResults});
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
@@ -1647,7 +1647,7 @@ router.post('/appointment-query', async (req, res) => {
 router.get('/profiledetails/:UId', async (req, res) => {
   try {
     const { UId } = req.params;
-
+console.log(UId);
     const user = await reg.findOne({ where: { UId }, attributes: ['UId','first_name' ,'last_name' , 'email' ,'phone' , 'DOB' , 'gender' , 'address', 'district','state','pincode','profilePicUrl'] });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });

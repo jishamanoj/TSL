@@ -800,7 +800,7 @@ router.get('/getUserById', async (req, res) => {
       const { UId } = req.session;
 
       // Fetch user details by UId from the reg table
-      const user = await reg.findOne({ where: { UId } });
+      const user = await reg.findOne({ where: { UId }, attributes: ['first_name', 'last_name' , 'DOB' , 'gender' , 'email', 'address','pincode', 'state', 'district' , 'country', 'phone' ,'reference' , 'languages' ,'UId', 'DOJ' ,'expiredDate', 'classAttended', 'isans','profilePicUrl', 'maintanance_fee' ] });
 
       if (!user) {
           return res.status(404).json({ error: 'User not found' });
@@ -816,6 +816,8 @@ router.get('/getUserById', async (req, res) => {
                   action: 'read',
                   expires: '03-01-2500' // Adjust expiration date as needed
               });
+              // Convert profilePicUrl from an array to a string
+              profilePicUrl = profilePicUrl[0];
           }
       }
 
@@ -845,7 +847,7 @@ router.get('/getUserById', async (req, res) => {
       console.error(error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
- });
+});
 
   router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
     const UId = req.session.UId

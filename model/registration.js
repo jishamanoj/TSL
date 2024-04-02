@@ -35,7 +35,7 @@ const reg = sequelize.define('reg', {
     reference: { type: DataTypes.STRING,defaultValue: '' },
     languages: {type:DataTypes.STRING,defaultValue: ''},
     remark: { type: DataTypes.TEXT,defaultValue: '' },
-    verify: { type: DataTypes.STRING, defaultValue: 'false' },
+    verify: { type: DataTypes.BOOLEAN, defaultValue: false },
     UId: {
         type: DataTypes.INTEGER,      
       },
@@ -46,12 +46,12 @@ const reg = sequelize.define('reg', {
         allowNull: false,
         
     },
-    classAttended: { type: DataTypes.STRING, defaultValue: 'false' },
+    classAttended: { type: DataTypes.BOOLEAN, defaultValue: false },
     ans : { type: DataTypes.STRING },
     isans : { type: DataTypes.BOOLEAN, defaultValue:false},
     other: { type: DataTypes.STRING},
     profilePicUrl: { type: DataTypes.STRING, allowNull: true },
-    maintanance_fee: { type: DataTypes.STRING, defaultValue:'false'},
+    maintanance_fee: { type: DataTypes.BOOLEAN, defaultValue:false},
     
  });
 
