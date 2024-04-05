@@ -1654,7 +1654,11 @@ console.log(UId);
     }
 
     const bankDetails = await BankDetails.findOne({ where: { UId } });
-    const meditationData = await meditation.findOne({ where: { UId } });
+    const meditationData = await timeTracking.findAll({
+      where: { UId },
+      order: [['createdAt', 'DESC']], 
+      limit: 5, 
+    });
 
     return res.status(200).json({
       user,

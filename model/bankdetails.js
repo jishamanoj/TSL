@@ -7,6 +7,7 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
 
 });
 const BankDetails = sequelize.define('bankDetails', {
+    bankName:{type:DataTypes.STRING,defaultValue:""},
     AadarNo: { type: DataTypes.STRING,defaultValue:"" },
     IFSCCode: { type: DataTypes.STRING,defaultValue:""},
     branchName: { type: DataTypes.STRING,defaultValue:""},
@@ -17,7 +18,7 @@ const BankDetails = sequelize.define('bankDetails', {
         defaultValue: 0,
       },
 });
-sequelize.sync()
+sequelize.sync({alter:true})
     .then((data) => {
        // console.log(data);
         console.log('BankDetails table created');

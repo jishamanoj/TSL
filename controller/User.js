@@ -685,7 +685,7 @@ router.post('/resetPassword', async (req, res) => {
 const sessionMiddleware = session({
     secret: '8be00e304a7ab94f27b5e5172cc0f3b2c575e87d',
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24, // 1 day
     },
@@ -1317,6 +1317,7 @@ router.post('/meditation', async (req, res) => {
 //       return res.status(500).json({ error: 'Internal Server Error' });
 //   }
 // });
+
 
 router.get('/guruji-date', async (req, res) => {
   try {
