@@ -1657,7 +1657,7 @@ console.log(UId);
     const meditationData = await timeTracking.findAll({
       where: { UId },
       order: [['createdAt', 'DESC']], 
-      limit: 5, 
+      limit: 10, 
     });
 
     return res.status(200).json({
