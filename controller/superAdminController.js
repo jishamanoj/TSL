@@ -128,6 +128,7 @@ router.get('/register-count', async (req, res) => {
       res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 router.get('/waiting-list', async (req, res) => {
   try {
     const list = await reg.count({
@@ -142,6 +143,7 @@ router.get('/waiting-list', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 router.get('/meditation', async (req, res) => {
   try {
     const list = await meditation.count({});
@@ -152,6 +154,7 @@ router.get('/meditation', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 router.get('/beneficiaries', async (req, res) => {
   try {
       
@@ -179,6 +182,7 @@ router.get('/beneficiaries', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 router.post('/add-event', upload.single('eventImage'), async (req, res) => {
   const { event_name, event_description, priority, place, date ,event_time } = req.body;
@@ -223,6 +227,7 @@ router.post('/add-event', upload.single('eventImage'), async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 router.get('/events', async (req, res) => {
   try {
@@ -367,6 +372,7 @@ router.get('/searchfield', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 router.post('/coupon-systemDistribute', async (req, res) => {
   try {
@@ -607,6 +613,7 @@ router.get('/download', async (req, res) => {
   }
 });
 
+
 router.post('/coupons-cart', async (req, res) => {
   try {
     const { UIds, couponsToDistribute } = req.body;
@@ -792,6 +799,7 @@ router.get('/view-cart', async (req, res) => {
 
 ////////////////////////////////////////mahadhanam///////////////////////////////////////
 
+
 router.post('/simulation', async (req, res) => {
   try {
     const { coupons, UIds, description } = req.body;
@@ -867,6 +875,7 @@ router.post('/simulation', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 router.get('/mahadhanam-download', async (req, res) => {
   try {
@@ -1039,6 +1048,7 @@ router.post('/save-token', async (req, res) => {
   }
 });
 
+
 router.post('/broadcast-messages', async (req, res) => {
   try {
     const { Broadcast_message, time, priority, title, body } = req.body;
@@ -1138,6 +1148,7 @@ router.get('/appconfig',async(req,res) =>{
   }
 });
 
+
 router.put('/update-appconfig/:id', async(req, res) =>{
   const id = req.params.id;
   const configdata = req.body;
@@ -1163,6 +1174,7 @@ router.put('/update-appconfig/:id', async(req, res) =>{
   }
 });
 
+
 router.get('/support',async(req,res) =>{
   try{
      // console.log('get support');
@@ -1174,6 +1186,7 @@ router.get('/support',async(req,res) =>{
       res.status(500).json({message:'internal server error'});
   }
 });
+
 
 router.put('/update-support/:id', async (req, res) => {
   const id = req.params.id;
@@ -1201,7 +1214,9 @@ router.put('/update-support/:id', async (req, res) => {
       return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
+
 ////////////////////////////////// financial pages////////////////////////////////
+
 
 router.get('/list-users', async (req, res) => {
   try {
@@ -1235,6 +1250,7 @@ router.get('/list-users', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 router.post('/financial-query', async (req, res) => {
   try {
@@ -1281,6 +1297,7 @@ router.post('/financial-query', async (req, res) => {
   }
 });
 
+
 router.get('/search', async (req, res) => {
   try {
     const field = req.query.field; 
@@ -1326,6 +1343,7 @@ router.get('/search', async (req, res) => {
   }
 });
 
+
 ////////////////////////////appointments/////////////////////////////////
 
 
@@ -1362,6 +1380,7 @@ router.get('/list-all-appointment', async (req, res) => {
   }
 });
 
+
 router.get('/list-appointment-details', async (req, res) => {
   try {
     // Find all appointments
@@ -1390,8 +1409,6 @@ router.get('/list-appointment-details', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-
 
 const cron = require('node-cron');
 
@@ -1474,6 +1491,7 @@ router.get('/list-appointment/:id', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 router.put('/update-payment/:id', upload.single('appointmentImage'), async (req, res) => {
 
@@ -1573,6 +1591,7 @@ router.put('/discount/:UId', async (req, res) => {
   }
 });
 
+
 router.put('/update-gurujidate', async (req, res) => {
   try {
     console.log('Updating');
@@ -1598,6 +1617,7 @@ router.put('/update-gurujidate', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 router.post('/appointment-query', async (req, res) => {
   try {
@@ -1644,6 +1664,7 @@ router.post('/appointment-query', async (req, res) => {
   }
 });
 
+
 router.get('/profiledetails/:UId', async (req, res) => {
   try {
     const { UId } = req.params;
@@ -1670,7 +1691,9 @@ console.log(UId);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 ///////////////////////////messages////////////////////////////////
+
 
 router.post('/admin-messages', async (req, res) => {
   try {
@@ -1691,6 +1714,7 @@ router.post('/admin-messages', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 // GET endpoint to retrieve a message by messageId
 router.get('/messages/:messageId', async (req, res) => {
   try {
@@ -1707,6 +1731,7 @@ router.get('/messages/:messageId', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 router.get('/get-message', async (req, res) => {
   try {
@@ -1774,6 +1799,7 @@ router.post('/saveMessage', async (req, res) => {
   }
 });
 
+
 router.get('/get-globalMessages', async (req, res) => {
   try {
 
@@ -1793,6 +1819,42 @@ router.get('/get-globalMessages', async (req, res) => {
   }
 });
 
+router.get('/get-event/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Fetch user details by UId from the reg table
+    const user = await events.findOne({ where: { id } });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    let image = null;
+    if (user.image) {
+      // If profilePicUrl exists, fetch the image URL from Firebase Storage
+      const file = storage.file(user.image.split(storage.name + '/')[1]);
+      const [exists] = await file.exists();
+      if (exists) {
+        image = await file.getSignedUrl({
+          action: 'read',
+          expires: '03-01-2500' // Adjust expiration date as needed
+        });
+      }
+    }
+
+    // Send the response with user data including profilePicUrl
+    return res.status(200).json({
+      user: {
+        ...user.toJSON(),
+        image
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 
 module.exports = router;

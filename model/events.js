@@ -8,7 +8,7 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
 });
 const events = sequelize.define('events', {
     event_name: { type: DataTypes.STRING},
-    event_description: { type: DataTypes.STRING},
+    event_description: { type: DataTypes.TEXT},
     priority: { type: DataTypes.STRING},
     place: { type: DataTypes.STRING},
     date: {type: DataTypes.STRING},
