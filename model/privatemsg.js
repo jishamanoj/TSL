@@ -12,7 +12,6 @@ const privateMsg = sequelize.define ('privateMsg',{
     message :{ type:DataTypes.STRING} ,
     messageTime :{ type: DataTypes.STRING},
     messagetype : { type:DataTypes.STRING},
-    message_priority : { type:DataTypes.STRING}
 });
 sequelize.sync({alter:true})
     .then((data) => {

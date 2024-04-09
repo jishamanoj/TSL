@@ -14,18 +14,18 @@ const Meditation =require('../model/meditation');
 const moment = require('moment');
 const bcrypt = require('bcrypt');
 const timeTracking = require('../model/timeTracking');
-const Messages = require('../model/gurujiMessage');
+//const Messages = require('../model/gurujiMessage');
 const Appointment = require("../model/appointment");
 const nodemailer = require('nodemailer');
 const meditation = require('../model/meditation');
 const message = require('../model/gurujiMessage');
-const Broadcast = require('../model/broadcast');
+const globalMessage = require('../model/globalMessage');
 const applicationconfig = require('../model/applicationConfig');
 const multer = require('multer');
 const admin = require('firebase-admin');
 const serviceAccount = require("../serviceAccountKey.json");
 const AdminMessage = require("../model/adminMessage");
-const privateMsg = require("../model/privatemsg");
+const privateMsg = require("../model/privateMsg");
 const distribution = require('../model/distribution');
 const operatorMsg = require('../model/operatorMsg');
 const storage = admin.storage().bucket();
@@ -1526,31 +1526,7 @@ router.delete('/delete-appointment', async (req, res) => {
   }
 });
 
-router.get('/list-appointment', async (req, res) => {
-  try {
-    const  UId  = req.session.UId;
 
-    // Check if the user is authenticated
-    if (!UId) {
-      return res.status(401).json({ error: 'User not authenticated' });
-    }
-
-    // Find appointments for the authenticated user
-    const appointments = await Appointment.findAll({ where: { UId } });
-
-    // Fetch group members for each appointment
-    for (const appointment of appointments) {
-      const groupMembers = await GroupMembers.findAll({ where: { appointmentId: appointment.id } });
-      appointment.dataValues.groupMembers = groupMembers; // Attach group members to each appointment
-    }
-
-    // Respond with the list of appointments
-    return res.status(200).json({ message: 'Fetching appointments', appointments });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
 
 router.delete('/group-members/:id', async (req, res) => {
   const { id } = req.params;
@@ -1993,39 +1969,56 @@ router.get('/meditation-date', async (req, res) => {
   }
 });
 
-router.get('/getBankDetails/:userId', async (req, res) => {
+router.get('/getBankDetails', async (req, res) => {
   try {
-    const userId = parseInt(req.params.UId);
-
-    // Fetch the 'reg' record with associated 'BankDetails'
-    const userData = await reg.findOne({
-      where: { userId },
-      include: [BankDetails], // Include the associated BankDetails
-    });
-
-    if (!userData) {
+    const { UId } = req.session;
+    
+    if (!UId) {
       return res.status(404).json({ message: 'User not found' });
     }
-
-    // Access the BankDetails from the retrieved data
-    const userBankDetails = userData.BankDetail; // assuming you've defined it as "BankDetail" in the reg model
-
-    res.json({ userData, userBankDetails });
+    const userBankDetails = await BankDetails.findOne({where: {UId}}); // assuming you've defined it as "BankDetail" in the reg model
+      res.status(200).json(userBankDetails);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-router.get('/getbroadcast-message', async (req, res) => {
+router.put('/updteBankDetails', async (req, res) => {
   try {
-    const messages = await Broadcast.findAll();
-    res.json({ messages });
+    const { UId } = req.session;
+    const bankdetails = req.body;
+
+    if (!UId) {
+      return res.status(404).json('unauthenticated');
+    }
+
+    const existingUser = await reg.findOne({ where: { UId } });
+
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    } else {
+      // Assuming BankDetails is your Sequelize model for bank details
+      await BankDetails.update(bankdetails, { where: { UId } });
+      // Optionally, you can fetch and return the updated bank details
+      const updatedBankDetails = await BankDetails.findOne({ where: { UId } });
+      return res.status(200).json('bank details updated');
+    }
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.log(error);
+    return res.status(500).json('internal server error');
   }
 });
+
+// router.get('/getbroadcast-message', async (req, res) => {
+//   try {
+//     const messages = await Broadcast.findAll();
+//     res.json({ messages });
+//   } catch (error) {
+//     console.error('Error:', error);
+//     res.status(500).json({ error: 'Internal server error' });
+//   }
+// });
 
 router.get('/reg-confiq', async (req, res) => {
 try{
@@ -2047,12 +2040,15 @@ router.get('/list-appointment', async (req, res) => {
     }
 
     // Find appointments for the authenticated user
-    const appointments = await Appointment.findAll({ where: { UId } });
+    const appointments = await Appointment.findOne({
+      where: { UId },
+      attributes: [ 'UId','phone','appointmentDate','num_of_people','pickup','from','days','emergencyNumber','appointment_reason','user_name','register_date','appointment_status' ], // Exclude the "image" field from the results
+    });
 
     // Respond with the list of appointments
     return res.status(200).json({ message: 'Fetching appointments', appointments });
   } catch (error) {
-    console.error(error);
+   // console.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -2171,7 +2167,7 @@ router.put('/maintances-fee/', async (req, res) => {
 router.post('/messages', async (req, res) => {
   try {
       const { UId } = req.session;
-      const { message, messageTime, message_priority, isAdminMessage, messagetype } = req.body;
+      const { message, messageTime,isAdminMessage, messagetype } = req.body;
 
       // Check if the user exists in the reg table and maintanance_fee is true
       const regUser = await reg.findOne({ where: { UId, maintanance_fee: true } });
@@ -2185,13 +2181,19 @@ router.post('/messages', async (req, res) => {
       }
 
       // Create a new message record
-      const newMessage = await Messages.create({
+      const newMessage = await globalMessage.create({
           UId,
           message,
           messageTime,
-          message_priority,
           isAdminMessage,
           messagetype
+      });
+      const msg = await privateMsg.create({
+        UId,
+        message,
+        messageTime,
+        isAdminMessage,
+        messagetype
       });
 
       // Check the message type and save accordingly
@@ -2201,26 +2203,12 @@ router.post('/messages', async (req, res) => {
           UId,
           message,
           messageTime,
-          message_priority,
           isAdminMessage,
           messagetype
         });
 
         await privatemsg.save();
-      } else {
-        // Assuming operatorMsg is the model for other messages
-        const operatorMsg = await operatorMsg.create({
-          UId,
-          message,
-          messageTime,
-          message_priority,
-          isAdminMessage,
-          messagetype
-        });
-
-        await operatorMsg.save();
-      }
-
+      } 
       return res.status(200).json({ message: 'Message created successfully' });
   } catch (error) {
       console.error('Error:', error);
@@ -2228,5 +2216,35 @@ router.post('/messages', async (req, res) => {
   }
 });
 
+router.post('/addBankDetails' , async(req,res) =>{
+  try{
+    const { UId } = req. session;
+    const { AadarNo,bankName,IFSCCode,branchName,accountName,accountNo } = req.body;
+    if(!UId) {
+       return res.status(401).json({error:'User NOt Authorised'});
+
+    }
+
+    const existingUser = await Users.findOne({ where :{ UId }});
+
+     if(!existingUser) {
+      return res.status(404).json({error: 'User not found'});
+     }
+     const bankDetails = await BankDetails.create({
+      UId : existingUser.UId,
+      AadarNo,
+      bankName,
+      IFSCCode,
+      branchName,
+      accountName,
+      accountNo
+     });
+     return res.status(200).json('bank details added');
+  } catch(error) {
+    console.error('Error:' , error);
+    return res.status(500).json({error:'internal server error'});
+
+  }
+});
 
 module.exports = router;

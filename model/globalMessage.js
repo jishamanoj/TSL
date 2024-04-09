@@ -6,19 +6,19 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
     logging: false,
 
 });
-
-const gurujiMessage = sequelize.define ('gurujiMessage',{
-    UId : { type:DataTypes.INTEGER} ,
-    message :{ type:DataTypes.STRING} ,
-    messageTime :{ type: DataTypes.STRING},
+const globalMessage = sequelize.define('globalMessage',{
+    UId: { type: DataTypes.INTEGER},
+    message: { type: DataTypes.TEXT},
+    messageTime: { type: DataTypes.STRING},
+    isAdminMessage:{type: DataTypes.STRING},
     messagetype : { type:DataTypes.STRING},
 });
 sequelize.sync({alter:true})
     .then((data) => {
        // console.log(data);
-        console.log('gurujiMessage table created');
+        console.log('globalmsg table created');
     })
     .catch((err) => {
         console.log(err);
     });
-    module.exports =gurujiMessage;
+    module.exports =globalMessage;

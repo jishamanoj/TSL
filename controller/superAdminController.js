@@ -14,7 +14,7 @@ const message =require('../model/gurujiMessage')
 const meditation =require('../model/meditation');
 const Notification = require('../model/notification');
 const { validationResult } = require('express-validator');
-const Broadcast =require('../model/broadcast');
+const Broadcast =require('../model/globalMessage');
 const admin =require('firebase-admin');
 const serviceAccount = require("../serviceAccountKey.json");
 const Appointment =require('../model/appointment');
@@ -26,7 +26,7 @@ const applicationconfig =require('../model/applicationConfig');
 const GroupMembers = require('../model/groupmembers')
 const ApplicationConfig = require('../model/applicationConfig');
 //const redeem = require('../model/redeem');
-const privateMsg = require('../model/privatemsg');
+const privateMsg = require('../model/privateMsg');
 const multer =require('multer');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -1635,7 +1635,7 @@ router.post('/appointment-query', async (req, res) => {
       return !isNaN(num);
     }
 
-    let sql = "SELECT * FROM sequel.appointments WHERE ";
+    let sql = "SELECT * FROM thasmai.appointments WHERE ";
     for (let i = 0; i < queryConditions.length; i++) {
       if(queryConditions[i].operator === "between"){
 
@@ -1691,6 +1691,7 @@ console.log(UId);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 ///////////////////////////messages////////////////////////////////
 

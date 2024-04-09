@@ -3,11 +3,8 @@ const http = require('http');
 const {Server} = require('socket.io')
 const Sequelize = require('sequelize');
 const { QueryTypes } = require('sequelize');
-const broadcast = require('./model/broadcast')
 const app = require('./index');
-const private = require('./model/privatemsg');
-const { Users } = require('./model/validUsers');
-const privateMsg = require('./model/privatemsg');
+
 const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
     dialect: process.env.DB_DIALECT,
         host: process.env.DB_HOST,
