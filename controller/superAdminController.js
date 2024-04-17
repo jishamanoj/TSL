@@ -14,27 +14,26 @@ const message =require('../model/gurujiMessage')
 const meditation =require('../model/meditation');
 const Notification = require('../model/notification');
 const { validationResult } = require('express-validator');
-const Broadcast =require('../model/globalMessage');
 const admin =require('firebase-admin');
 const serviceAccount = require("../serviceAccountKey.json");
 const Appointment =require('../model/appointment');
 const supportcontact =require('../model/supportContactConfig');
 const Admin = require('../model/adminlogin');
 const bcrypt = require('bcrypt');
-const adminMessage = require('../model/adminMessage');
 const applicationconfig =require('../model/applicationConfig');
 const GroupMembers = require('../model/groupmembers')
 const ApplicationConfig = require('../model/applicationConfig');
 //const redeem = require('../model/redeem');
-const privateMsg = require('../model/privateMsg');
+const privateMsg = require('../model/privatemsg');
 const multer =require('multer');
+const timeTracking = require('../model/timeTracking');
+const gurujiMessage = require('../model/gurujiMessage');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: "gs://thasmai-star-life.appspot.com"
 });
 const upload = multer({ dest: 'uploads/' });
 const storage = admin.storage().bucket();
-
 
 router.post('/login', async (req, res) => {
   console.log("..................enter...........")
@@ -183,8 +182,7 @@ router.get('/beneficiaries', async (req, res) => {
   }
 });
 
-
-router.post('/add-event', upload.single('eventImage'), async (req, res) => {
+router.post('/add-event', upload.single('image'), async (req, res) => {
   const { event_name, event_description, priority, place, date ,event_time } = req.body;
   const eventImageFile = req.file;
   
@@ -228,7 +226,6 @@ router.post('/add-event', upload.single('eventImage'), async (req, res) => {
   }
 });
 
-
 router.get('/events', async (req, res) => {
   try {
     
@@ -254,31 +251,100 @@ router.get('/events', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-
-router.put('/update-events/:eventId', async (req, res) => {
+router.get('/get-event/:id', async (req, res) => {
   try {
-      const eventId = req.params.eventId;
-      const eventDataToUpdate = req.body;
+    const { id } = req.params;
 
-      const event = await events.findByPk(eventId);
+    // Fetch user details by UId from the reg table
+    const user = await events.findOne({ where: { id } });
 
-      if (!event) {
-          return res.status(404).json({ error: 'Event not found' });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    let image = null;
+    if (user.image) {
+      // If profilePicUrl exists, fetch the image URL from Firebase Storage
+      const file = storage.file(user.image.split(storage.name + '/')[1]);
+      const [exists] = await file.exists();
+      if (exists) {
+        image = await file.getSignedUrl({
+          action: 'read',
+          expires: '03-01-2500' // Adjust expiration date as needed
+        });
       }
+    }
 
-      await event.update(eventDataToUpdate);
-
-     
-          await event.save();
- 
-
-      res.status(200).json({ message: 'Event updated successfully' });
+    // Send the response with user data including profilePicUrl
+    return res.status(200).json({
+      user: {
+        ...user.toJSON(),
+        image
+      }
+    });
   } catch (error) {
-      console.log(error);
-      res.status(500).json({ error: 'Internal Server Error' });
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+router.put('/update-event/:id', upload.single('image'), async (req, res) => {
+  const id = req.params.id;
+  const userData = req.body;
+  const eventImageFile = req.file;
+
+  try {
+    // Check if the user is authenticated
+    if (!id) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Find the user by UId
+    const user = await events.findOne({ where: { id } });
+
+    // Update user details
+    if (user) {
+      // Update all fields provided in the request, excluding the profilePic field
+      delete userData.image; // Remove profilePic from userData
+      await user.update(userData);
+
+      // Fetch current profile picture URL
+      let currentProfilePicUrl = user.image;
+
+      // Store or update profile picture in Firebase Storage
+      let image = currentProfilePicUrl; // Default to current URL
+      if (eventImageFile) {
+        const profilePicPath = `event_image/${id}/${eventImageFile.originalname}`;
+        // Upload new profile picture to Firebase Storage
+        await storage.upload(eventImageFile.path, {
+          destination: profilePicPath,
+          metadata: {
+            contentType: eventImageFile.mimetype
+          }
+        });
+
+        // Get the URL of the uploaded profile picture
+        image = `gs://${storage.name}/${profilePicPath}`;
+
+        // Delete the current profile picture from Firebase Storage
+        if (currentProfilePicUrl) {
+          const currentProfilePicPath = currentProfilePicUrl.split(storage.name + '/')[1];
+          await storage.file(currentProfilePicPath).delete();
+        }
+      }
+
+      // Update user's profilePicUrl in reg table
+      await user.update({ image });
+
+      return res.status(200).json({ message: 'event details updated successfully' });
+    } else {
+      return res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    //console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 
 router.delete('/delete-events/:eventId', async (req, res) => {
   try {
@@ -297,26 +363,7 @@ router.delete('/delete-events/:eventId', async (req, res) => {
   }
 });
 
-router.get('/messages', async (req, res) => {
-  try {
-      const priority = req.query.priority; 
 
-      if (!priority) {
-          return res.status(400).json({ message: 'Priority parameter is required' });
-      }
-
-      const messages = await message.findAll({
-          where: {
-              message_priority: priority.toLowerCase() 
-          }
-      });
-
-      return res.status(200).json(messages);
-  } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
 
 //////////////////////////////////meditator//////////////////////////
 
@@ -372,7 +419,6 @@ router.get('/searchfield', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
 
 router.post('/coupon-systemDistribute', async (req, res) => {
   try {
@@ -442,7 +488,6 @@ console.log("------------------------totalCoupons, distributedIds, description..
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
 
 router.post('/redeem', async (req, res) => {
   try {
@@ -613,7 +658,6 @@ router.get('/download', async (req, res) => {
   }
 });
 
-
 router.post('/coupons-cart', async (req, res) => {
   try {
     const { UIds, couponsToDistribute } = req.body;
@@ -658,7 +702,6 @@ router.post('/coupons-cart', async (req, res) => {
   }
 });
 
-
 router.post('/revoke-coupons', async (req, res) => {
   try {
     const { UIds } = req.body;
@@ -692,7 +735,6 @@ router.post('/revoke-coupons', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 router.post('/distributetousers', async (req, res) => {
   try {
@@ -752,7 +794,6 @@ router.get('/TSL', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
 
 router.get('/list-meditators', async (req, res) => {
   try {
@@ -967,8 +1008,6 @@ router.get('/mahadhanam-download', async (req, res) => {
   }
 });
 
-
-
 router.post('/execute-query', async (req, res) => {
   try {
     const queryConditions = req.body.queryConditions;
@@ -1006,7 +1045,6 @@ router.post('/execute-query', async (req, res) => {
     res.status(500).json({ message: 'Internal server error.' });
   }
 });
-
 
 // router.post('/execute-query', async (req, res) => {
 //   try {
@@ -1049,48 +1087,6 @@ router.post('/save-token', async (req, res) => {
 });
 
 
-router.post('/broadcast-messages', async (req, res) => {
-  try {
-    const { Broadcast_message, time, priority, title, body } = req.body;
-
-    // Check if message, time, and priority are provided
-    if (!Broadcast_message || !time || !priority) {
-      return res.status(400).json({ error: 'Message, time, and priority are required' });
-    }
-
-    // Create a broadcast message record in the database
-    await Broadcast.create({
-      Broadcast_message,
-      time,
-      priority
-    });
-
-    // Fetch all tokens from the notification table
-    const notifications = await Notification.findAll();
-    
-    // Send notifications to each token
-    const sendPromises = notifications.map(async (notification) => {
-      const message = {
-        notification: {
-          title,
-          body,
-        },
-        token: notification.token,
-      };
-      
-      return admin.messaging().send(message);
-    });
-
-    // Wait for all notifications to be sent
-    await Promise.all(sendPromises);
-
-    res.status(200).json({ message: 'Broadcast messages sent successfully' });
-
-  } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
 
 
 ///////////////////////////////////////////////////////// configarations///////////////////////////////////////
@@ -1106,7 +1102,6 @@ router.get('/financialconfig', async (req,res) => {
       res.status(500).json({message:'An error occurred while fetching data'});
   }
 });
-
 
 router.put('/update-configuration/:id', async (req, res) => {
   const id = req.params.id;
@@ -1135,7 +1130,6 @@ router.put('/update-configuration/:id', async (req, res) => {
   }
 });
 
-
 router.get('/appconfig',async(req,res) =>{
   try{
       //console.log("get appconfig data");
@@ -1147,7 +1141,6 @@ router.get('/appconfig',async(req,res) =>{
       res.status(500).json({message:'internal server error'});
   }
 });
-
 
 router.put('/update-appconfig/:id', async(req, res) =>{
   const id = req.params.id;
@@ -1174,7 +1167,6 @@ router.put('/update-appconfig/:id', async(req, res) =>{
   }
 });
 
-
 router.get('/support',async(req,res) =>{
   try{
      // console.log('get support');
@@ -1186,7 +1178,6 @@ router.get('/support',async(req,res) =>{
       res.status(500).json({message:'internal server error'});
   }
 });
-
 
 router.put('/update-support/:id', async (req, res) => {
   const id = req.params.id;
@@ -1251,7 +1242,6 @@ router.get('/list-users', async (req, res) => {
   }
 });
 
-
 router.post('/financial-query', async (req, res) => {
   try {
     const query = req.body.queryConditions;
@@ -1296,7 +1286,6 @@ router.post('/financial-query', async (req, res) => {
     res.status(500).json({ message: 'Internal server error.' });
   }
 });
-
 
 router.get('/search', async (req, res) => {
   try {
@@ -1380,7 +1369,6 @@ router.get('/list-all-appointment', async (req, res) => {
   }
 });
 
-
 router.get('/list-appointment-details', async (req, res) => {
   try {
     // Find all appointments
@@ -1409,6 +1397,8 @@ router.get('/list-appointment-details', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
 
 const cron = require('node-cron');
 
@@ -1444,29 +1434,6 @@ cron.schedule('0 9 * * *', async () =>{
 }, {
 timezone: 'Asia/Kolkata' // Set timezone to Indian Standard Time (IST)
 });
-
-
-// router.get('/list-appointment/:id', async (req, res) => {
-//   const { id } = req.params;
-
-//   try {
-//     // Find appointment by ID
-//     const appointmentData = await Appointment.findOne({ where: { id } });
-
-//     if (!appointmentData) {
-//       return res.status(404).json({ error: 'Appointment not found' });
-//     }
-
-//     // Send appointment details as response
-//     return res.status(200).json(appointmentData);
-//   } catch (error) {
-//     console.error('Error:', error);
-//     return res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
-
-
-
 router.get('/list-appointment/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -1487,11 +1454,10 @@ router.get('/list-appointment/:id', async (req, res) => {
     // Respond with the appointment
     return res.status(200).json({ message: 'Fetching appointment', appointment });
   } catch (error) {
-    console.error(error);
+   // console.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 router.put('/update-payment/:id', upload.single('appointmentImage'), async (req, res) => {
 
@@ -1551,7 +1517,6 @@ console.log(appointmentImageUrl);
   }
 });
 
-
 router.put('/discount/:UId', async (req, res) => {
   const { UId } = req.params;
   const { coupon, id } = req.body;
@@ -1591,7 +1556,6 @@ router.put('/discount/:UId', async (req, res) => {
   }
 });
 
-
 router.put('/update-gurujidate', async (req, res) => {
   try {
     console.log('Updating');
@@ -1617,7 +1581,6 @@ router.put('/update-gurujidate', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 router.post('/appointment-query', async (req, res) => {
   try {
@@ -1664,7 +1627,6 @@ router.post('/appointment-query', async (req, res) => {
   }
 });
 
-
 router.get('/profiledetails/:UId', async (req, res) => {
   try {
     const { UId } = req.params;
@@ -1701,7 +1663,7 @@ router.post('/admin-messages', async (req, res) => {
     const { UId, message, messageTime, messageId, isAdminMessage } = req.body;
     
     // Create a new message entry
-    const newMessage = await adminMessage.create({
+    const newMessage = await gurujiMessage.create({
       UId,
       message,
       messageTime,
@@ -1715,111 +1677,67 @@ router.post('/admin-messages', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-// GET endpoint to retrieve a message by messageId
-router.get('/messages/:messageId', async (req, res) => {
+router.post('/adminglobalMessage', async (req, res) => {
   try {
-    const { messageId } = req.params;
-    const message = await adminMessage.findOne({ where: { messageId } });
-    
-    if (!message) {
-      return res.status(404).json({ error: 'Message not found' });
-    }
+    const page = parseInt(req.body.page) || 1;
+    const limit = 10;
 
-    res.status(200).json(message);
+    const totalCount = await globalMessage.count();
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    const messages = await globalMessage.findAll({
+      attributes: ['UId', 'message', 'messageTime', 'messageId', 'isAdminMessage'],
+      include: [], // No need for Sequelize include here
+      order: [['id', 'DESC']],
+      limit: limit,
+      offset: (page - 1) * limit
+    });
+
+    // Fetch first_name and last_name from reg table for each message UId
+    const messageData = await Promise.all(messages.map(async (message) => {
+      const userData = await reg.findOne({ where: { UId: message.UId }, attributes: ['first_name', 'last_name'] });
+      const userName = `${userData.first_name} ${userData.last_name}`;
+      return { 
+        ...message.toJSON(), 
+        userName 
+      };
+    }));
+
+    return res.status(200).json({
+      message: 'fetching messages',
+      messages: messageData,
+      totalPages
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-
-router.get('/get-message', async (req, res) => {
-  try {
-    const { UId } = req.query;
-
-    if (!UId) {
-      return res.status(401).json({ error: 'User not authenticated' });
-    }
-
-    // Fetch messages from Messages table
-    const messages = await message.findAll({
-      attributes: ['id', 'message', 'messageTime', 'isAdminMessage', 'messagetype'],
-      where: { UId: UId },
-    });
-
-    if (!messages || messages.length === 0) {
-      return res.status(404).json({ error: 'Messages not found for the user' });
-    }
-
-    // Fetch details from AdminMessage table based on messageId from Messages table
-    const adminMessages = await adminMessage.findAll({
-      attributes: ['id', 'UId','message','messageTime','messageId','isAdminMessage'],
-      where: { messageId: messages.map(msg => msg.id) },
-    });
-    console.log("adminMessages",adminMessages);
-    // Merge the results
-    const mergedMessages = messages.map(msg => {
-      const adminMsg = adminMessages.find(admMsg => admMsg.messageId === msg.id);
-      console.log("....................adminMsg", adminMsg);
-      return {
-        ...msg.get({ plain: true }), // Convert Sequelize instance to plain object
-        adminMessage: adminMsg ? adminMsg.message : null, // Accessing the message content instead of 'details'
-      };
-    });
-   
-
-    return res.status(200).json(mergedMessages);
-  } catch (error) {
-    console.error('Error:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-
-router.post('/saveMessage', async (req, res) => {
+router.post('/gurujimessage', async (req, res) => {
   try {
-      const { message, message_priority } = req.body;
-      
-      if (!message || !message_priority) {
-          return res.status(400).json({ error: 'Message and message_priority are required' });
-      }
-      
-      if (message_priority === 'high') {
-          await Broadcast.create({ message, message_priority, time: new Date().toISOString() });
-          return res.status(201).json({ message: 'Message saved to broadcast table' });
-      } else if (message_priority === 'low') {
-          await privateMsg.create({ message, message_priority, messageTime: new Date().toISOString() });
-          return res.status(201).json({ message: 'Message saved to privateMsg table' });
-      } else {
-          return res.status(400).json({ error: 'Invalid message_priority. Must be "high" or "low"' });
-      }
-  } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-
-router.get('/get-globalMessages', async (req, res) => {
-  try {
-
-    const messages = await Broadcast.findAll ({
-      attributes: ['message','message_priority','time']})
     
-    if(!messages){
-      return res.status(404).json({ error: 'not found' });
-    }
+    const page = parseInt(req.body.page) || 1;
+    const limit = 10;
+    
+    const offset = (page - 1) * limit;
 
-    return res.status(200).json(messages);
-  }
-  
-    catch (error) {
+    const totalCount = await gurujiMessage.count();
+    const totalPages = Math.ceil(totalCount / limit);
+
+    const messages = await gurujiMessage.findAll({ 
+      order: [['id', 'DESC']],
+      limit,
+      offset
+    });
+
+    return res.status(200).json({ message: 'fetching messages', messages, totalPages });
+  } catch (error) {
     console.error(error);
-    return res.status(500).json({message: 'Internal server error'});
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 router.get('/get-event/:id', async (req, res) => {
   try {
     const { id } = req.params;

@@ -14,32 +14,33 @@ const Meditation =require('../model/meditation');
 const moment = require('moment');
 const bcrypt = require('bcrypt');
 const timeTracking = require('../model/timeTracking');
-//const Messages = require('../model/gurujiMessage');
+const Messages = require('../model/gurujiMessage');
 const Appointment = require("../model/appointment");
 const nodemailer = require('nodemailer');
 const meditation = require('../model/meditation');
 const message = require('../model/gurujiMessage');
-const globalMessage = require('../model/globalMessage');
+
 const applicationconfig = require('../model/applicationConfig');
 const multer = require('multer');
 const admin = require('firebase-admin');
 const serviceAccount = require("../serviceAccountKey.json");
-const AdminMessage = require("../model/adminMessage");
-const privateMsg = require("../model/privateMsg");
+const privateMsg = require("../model/privatemsg");
 const distribution = require('../model/distribution');
-const operatorMsg = require('../model/operatorMsg');
 const storage = admin.storage().bucket();
 const GroupMembers = require('../model/groupmembers');
 // Multer configuration for handling file uploads
 const upload = multer({ dest: 'uploads/' });
 const ApplicationConfig = require('../model/applicationConfig');
-
-
+const globalMessage = require('../model/globalmessage');
+const feedBack = require('../model/feedback');
+const gurujiMessage = require('../model/gurujiMessage');
+const events = require('../model/events');
+ 
 router.get('/getAllUsers', async (req, res) => {
   try {
     // Fetch all users from the reg table
     const users = await reg.findAll();
-
+ 
     // Map users to include profilePicUrl field
     const usersWithProfilePicUrl = await Promise.all(users.map(async user => {
       let profilePicUrl = null;
@@ -60,7 +61,7 @@ router.get('/getAllUsers', async (req, res) => {
         profilePicUrl
       };
     }));
-
+ 
     // Send the response with users data including profilePicUrl
     return res.status(200).json({ users: usersWithProfilePicUrl });
   } catch (error) {
@@ -68,15 +69,16 @@ router.get('/getAllUsers', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
+ 
+ 
 router.post('/countries', async (req, res) => {
     const data = req.body; // Assuming req.body is an array of objects
-
+ 
     if (Array.isArray(data)) {
         try {
             // Use Sequelize to bulk create the data in the database
             await Country.bulkCreate(data);
-
+ 
             res.status(200).send({ message: "Countries added to the database successfully" });
         } catch (error) {
             console.error(error);
@@ -86,24 +88,26 @@ router.post('/countries', async (req, res) => {
         res.status(400).send({ message: "Invalid data format. Please send an array of objects." });
     }
 });
-
+ 
+ 
 router.get('/countrieslist', async (req, res) => {
     try {
       const countries = await Country.findAll({
         order: [['name', 'ASC']], // Order by the 'name' field in ascending order
       });
-  
+ 
       res.json(countries);
     } catch (error) {
       console.error(error);
       res.status(500).send({ message: 'An error occurred while fetching countries' });
     }
   });
-
-
+ 
+ 
+ 
 // router.post('/registerUser', async (req, res) => {
 //     const { email, phone } = req.body;
-
+ 
 //     try {
 //         const existingUser = await reg.findOne({
 //             where: {
@@ -113,9 +117,9 @@ router.get('/countrieslist', async (req, res) => {
 //                 ]
 //             }
 //         });
-
+ 
 //         if (existingUser) {
-
+ 
 //             if (existingUser.email === email) {
 //                 return res.status(400).json({ message: "Email already exists" , status:'false',flag :'email'});
 //             } else {
@@ -125,11 +129,11 @@ router.get('/countrieslist', async (req, res) => {
 //             // User does not exist, generate a new OTP
 //             const otp = generateOTP();
 //             console.log(otp);
-
+ 
 //             // Save the OTP in Redis with a key that includes the user's phone number
 //             const redisKey = `otp:${phone}`;
 //             await redis.setex(redisKey, 600, otp);
-
+ 
 //             // Send OTP to the user via SMS
 //             const otpRequest = {
 //                 method: 'get',
@@ -138,9 +142,9 @@ router.get('/countrieslist', async (req, res) => {
 //                     Accept: 'application/json'
 //                 }
 //             };
-
+ 
 //             await axios(otpRequest);
-
+ 
 //             return res.status(200).json({ message: "OTP sent successfully" });
 //         }
 //     } catch (error) {
@@ -148,11 +152,11 @@ router.get('/countrieslist', async (req, res) => {
 //         return res.status(500).json({ message: "Internal Server Error" });
 //     }
 // });
-
-
+ 
+ 
 router.post('/registerUser', async (req, res) => {
     const { email, phone } = req.body;
-
+ 
     try {
         const existingUser = await reg.findOne({
             where: {
@@ -162,9 +166,9 @@ router.post('/registerUser', async (req, res) => {
                 ]
             }
         });
-
+ 
         if (existingUser) {
-
+ 
             if (existingUser.email === email) {
                 return res.status(400).json({ message: "Email already exists" , status:'false',flag :'email'});
             } else {
@@ -179,21 +183,22 @@ router.post('/registerUser', async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 });
-
-
-
+ 
+ 
+ 
 function generateOTP() {
     // Generate a random 4-digit OTP
     return Math.floor(1000 + Math.random() * 9000).toString();
 }
-
+ 
+ 
 router.get('/displayDataFromRedis/:key', async (req, res) => {
     const key = req.params.key;
-
+ 
     try {
         // Retrieve data from Redis using the provided key
         const data = await redis.get(key);
-
+ 
         if (data) {
             // If data exists, parse it and send it in the response
             const parsedData = JSON.parse(data);
@@ -206,26 +211,27 @@ router.get('/displayDataFromRedis/:key', async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
-
-
+ 
+ 
+ 
 // router.post("/verify_otp", async (req, res) => {
 //     console.log("<........verify OTP user........>");
-
+ 
 //     const { first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP } = req.body;
 //     console.log(first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP)
-
+ 
 //     console.log("Phone: " + phone);
 //     console.log("OTP: " + OTP);
-
+ 
 //     try {
 //         // Retrieve the stored OTP from Redis
 //         const redisKey = `otp:${phone}`;
 //         const storedOTP = await redis.get(redisKey);
-
+ 
 //         if (!storedOTP) {
 //             return res.status(401).send("OTP not found in Redis");
 //         }
-
+ 
 //         // Verify the OTP
 //         if (storedOTP === OTP) {
 //             const hashedPassword = await bcrypt.hash(phone, 10);
@@ -233,11 +239,11 @@ router.get('/displayDataFromRedis/:key', async (req, res) => {
 //             const userId = maxUserId + 1;
 //             // Update the user record
 //          //   const user = await reg.findOne({ where: { phone } });
-
+ 
 //             // if (!user) {
 //             //     return res.status(404).send("User not found");
 //             // }
-
+ 
 //             // Update user data
 //             const user = await reg.create({
 //             first_name,
@@ -258,7 +264,7 @@ router.get('/displayDataFromRedis/:key', async (req, res) => {
 //         });
 //             // Save the updated user data
 //             await user.save();
-
+ 
 //             // Create a record in the BankDetails table
 //             await BankDetails.create({
 //                 AadarNo: 0,
@@ -268,10 +274,10 @@ router.get('/displayDataFromRedis/:key', async (req, res) => {
 //                 accountNo: 0,
 //                 regId: user.id // Assuming regId is the foreign key in BankDetails
 //             });
-
+ 
 //             // Delete the OTP from Redis after successful verification
 //             await redis.del(redisKey);
-
+ 
 //             const responseData = {
 //                 message: "Success",
 //                 data: {
@@ -283,7 +289,7 @@ router.get('/displayDataFromRedis/:key', async (req, res) => {
 //                     userId: user.userId
 //                 }
 //             };
-
+ 
 //             return res.status(200).json(responseData);
 //         } else {
 //             // Respond with an error message if OTP is invalid
@@ -294,18 +300,18 @@ router.get('/displayDataFromRedis/:key', async (req, res) => {
 //         return res.status(500).send(err.message || "An error occurred during OTP verification");
 //     }
 // });
-
+ 
 // router.post("/verify_otp", async (req, res) => {
 //     console.log("<........verify OTP user........>");
 //     try {
 //     const { first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP } = req.body;
 //     //console.log(first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP)
-
+ 
 //     console.log("Phone: " + phone);
 //     console.log("OTP: " + OTP);
 //     const storedOTP = "1111"
 //     console.log(first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP,storedOTP)
-
+ 
 //     if(storedOTP == OTP){
 //         console.log(".......");
 //         const hashedPassword = await bcrypt.hash(phone, 10);
@@ -330,7 +336,7 @@ router.get('/displayDataFromRedis/:key', async (req, res) => {
 //             });
 //                 // Save the updated user data
 //                 await user.save();
-
+ 
 //                 // Create a record in the BankDetails table
 //                 await BankDetails.create({
 //                     AadarNo: 0,
@@ -351,7 +357,7 @@ router.get('/displayDataFromRedis/:key', async (req, res) => {
 //                         userId: user.userId
 //                     }
 //                 };
-  
+ 
 //                 return res.status(200).json(responseData);
 //             } else {
 //                 // Respond with an error message if OTP is invalid
@@ -362,21 +368,21 @@ router.get('/displayDataFromRedis/:key', async (req, res) => {
 //             return res.status(500).send(err.message || "An error occurred during OTP verification");
 //         }
 //     });
-
-
+ 
+ 
 router.post("/verify_otp", async (req, res) => {
   console.log("<........verify OTP user........>");
   try {
     const { first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP } = req.body;
-
+ 
     console.log("Phone: " + phone);
     console.log("OTP: " + OTP);
     const storedOTP = "1111";
     console.log(first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP, storedOTP);
-
+ 
     if (storedOTP == OTP) {
       console.log(".......");
-
+ 
       const hashedPassword = await bcrypt.hash(phone, 10);
       const maxUserId = await reg.max('UId');
       const UId = maxUserId + 1;
@@ -399,12 +405,12 @@ console.log("..................currentDate.",currentDate)
         password: hashedPassword, // Store the hashed password
         verify: 'true'
       });
-
-   
+ 
+ 
             // console.log("UIds.dataValues.UId",[0].reg);
-       
+ 
    // })();
-
+ 
       // Create a record in the BankDetails table
       await BankDetails.create({
         AadarNo: "",
@@ -414,7 +420,7 @@ console.log("..................currentDate.",currentDate)
         accountNo: "",
         UId: user.UId // Assuming regId is the foreign key in BankDetails
       });
-
+ 
       const responseData = {
         message: "Success",
         data: {
@@ -426,7 +432,7 @@ console.log("..................currentDate.",currentDate)
           UId: user.UId 
         }
       };
-
+ 
       return res.status(200).json(responseData);
     } else {
       // Respond with an error message if OTP is invalid
@@ -437,29 +443,31 @@ console.log("..................currentDate.",currentDate)
     return res.status(500).send(err.message || "An error occurred during OTP verification");
   }
 });
-
+ 
+ 
+ 
 function calculateExpirationDate() {
     const d = new Date();
     d.setFullYear(d.getFullYear() + 5);
     return d;
 }
-
-
+ 
+ 
 router.get('/listName/:UId', async (req, res) => {
   try {
     const { UId } = req.params;
-
+ 
     // Find the member with the provided UId
     const selectedMember = await reg.findOne({
       where: {
         UId: UId,
       },
     });
-
+ 
     if (!selectedMember) {
       return res.status(404).json({ error: 'Member not found' });
     }
-
+ 
     // Fetch the next 4 members including the selected member based on the UId in descending order
     const members = await reg.findAll({
       where: {
@@ -473,39 +481,39 @@ router.get('/listName/:UId', async (req, res) => {
       limit: 5, // Limit to 5 members
       attributes: ['first_name', 'last_name'], // Include only these attributes in the result
     });
-
+ 
     const processedData = members.map(user => ({
       name: `${user.first_name} ${user.last_name}`,
     }));
-
+ 
     res.status(200).json(processedData);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'An error occurred' });
   }
 });
-
-
+ 
+ 
 /////////////////////////////////// USER APP \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-
+ 
+ 
 // router.post('/requestPasswordReset', async (req, res) => {
 //         const { email } = req.body;
-    
+ 
 //         try {
 //             // Find the user with the provided email
 //             const user = await reg.findOne({ where: { email: email } });
-    
+ 
 //             if (!user) {
 //                 return res.status(404).json({ message: "User not found" });
 //             } else {
 //             // User does not exist, generate a new OTP
 //             const otp = generateOTP();
-
+ 
 //             // Save the OTP in Redis with a key that includes the user's phone number
 //             const redisKey = `reqotp:${user.phone}`;
 //             await redis.setex(redisKey, 600, otp);
-
+ 
 //             // Send OTP to the user via SMS
 //             const otpRequest = {
 //                 method: 'get',
@@ -514,9 +522,9 @@ router.get('/listName/:UId', async (req, res) => {
 //                     Accept: 'application/json'
 //                 }
 //             };
-
+ 
 //             await axios(otpRequest);
-
+ 
 //             return res.status(200).json({ message: "OTP sent successfully",otp : otp });
 //         }
 //     } catch (error) {
@@ -524,25 +532,25 @@ router.get('/listName/:UId', async (req, res) => {
 //         return res.status(500).json({ message: "Internal Server Error" });
 //     }
 // });
-
-
-
+ 
+ 
+ 
 router.get('/rulesAndConditions', async (req, res) => {
   try {
     // Extract the questionId from the request parameters
     const  questionId  = 1;
-
+ 
     // Fetch the question from the database by questionId
     const question = await questions.findByPk(questionId);
-
+ 
     // Check if the question exists
     if (!question) {
       return res.status(404).json({ error: 'Question not found' });
     }
-
+ 
     // Extract the value from the condition field
     const conditionValue = question.conditions;
-
+ 
     // Return the condition value in the API response
     return res.status(200).json({ message: 'Condition value retrieved successfully', condition: conditionValue });
   } catch (error) {
@@ -550,25 +558,25 @@ router.get('/rulesAndConditions', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-
+ 
+ 
 router.post('/requestPasswordReset', async (req, res) => {
     const { email } = req.body;
-
+ 
     try {
         // Find the user with the provided email
         const user = await reg.findOne({ where: { email: email } });
-
+ 
         if (!user) {
             return res.status(404).json({ message: "you are not register" });
         } else {
         // // User does not exist, generate a new OTP
         // const otp = generateOTP();
-
+ 
         // // Save the OTP in Redis with a key that includes the user's phone number
         // const redisKey = `reqotp:${user.phone}`;
         // await redis.setex(redisKey, 600, otp);
-
+ 
         // // Send OTP to the user via SMS
         // const otpRequest = {
         //     method: 'get',
@@ -577,9 +585,9 @@ router.post('/requestPasswordReset', async (req, res) => {
         //         Accept: 'application/json'
         //     }
         // };
-
+ 
         // await axios(otpRequest);
-
+ 
         return res.status(200).json({ message: "OTP sent successfully"});
     }
 } catch (error) {
@@ -587,29 +595,31 @@ router.post('/requestPasswordReset', async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
 }
 });
-
+ 
+ 
+ 
 // router.post('/resetPassword', async (req, res) => {
 //     const { email, otp, new_password } = req.body;
-
+ 
 //     try {
 //         // Find the user with the provided email in the 'reg' schema
 //         const regUser = await reg.findOne({ where: { email: email } });
-
+ 
 //         if (!regUser) {
 //             return res.status(404).json({ message: "User not found" });
 //         }
-
+ 
 //         // Retrieve the stored OTP from Redis
 //         const redisKey = `reqotp:${regUser.phone}`;
 //         const storedOTP = await redis.get(redisKey);
-
+ 
 //         if (!storedOTP) {
 //             return res.status(401).json({message:"Otp has expired" });``
 //         }
-
+ 
 //         if (storedOTP === otp) {
 //             const hashedPassword = await bcrypt.hash(new_password, 10);
-
+ 
 //             // Update password and set classAttended to true in the 'reg' table
 //             await reg.update({
 //                 password: hashedPassword,
@@ -617,10 +627,10 @@ router.post('/requestPasswordReset', async (req, res) => {
 //             }, {
 //                 where: { email: regUser.email },
 //             });
-
+ 
 //             // Delete the OTP from Redis after successful verification
 //             await redis.del(redisKey);
-
+ 
 //             return res.status(200).json({ message: "Password reset successfully" });
 //         } else {
 //             // Respond with an error message if OTP is invalid
@@ -631,18 +641,18 @@ router.post('/requestPasswordReset', async (req, res) => {
 //         return res.status(500).send(err.message || "An error occurred during password reset");
 //     }
 // });
-
-
+ 
+ 
 router.post('/verify-userotp', async (req, res) => {
   try {
     const { otp,email } = req.body;
     const regUser = await reg.findOne({ where: { email: email } });
-
+ 
     if (!regUser) {
         return res.status(404).json({ message: "User not found" });
     }
     const storedOTP = "1234"; // This is just an example, replace it with the actual stored OTP
-
+ 
     if (storedOTP === otp) {
       return res.status(200).json({ message: 'OTP verified successfully' });
     } else {
@@ -653,20 +663,22 @@ router.post('/verify-userotp', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
+ 
+ 
+ 
 router.post('/resetPassword', async (req, res) => {
   const { email, new_password } = req.body;
-
+ 
   try {
       // Find the user with the provided email in the 'reg' schema
       const regUser = await reg.findOne({ where: { email: email } });
-
+ 
       if (!regUser) {
           return res.status(404).json({ message: "User not found" });
       }
-
+ 
       const hashedPassword = await bcrypt.hash(new_password, 10);
-
+ 
       // Update password and set classAttended to true in the 'reg' table
       await reg.update({
           password: hashedPassword,
@@ -674,14 +686,16 @@ router.post('/resetPassword', async (req, res) => {
       }, {
           where: { email: regUser.email },
       });
-
+ 
       return res.status(200).json({ message: "Password reset successfully" });
   } catch (err) {
       console.error("Error resetting password:", err);
       return res.status(500).send(err.message || "An error occurred during password reset");
   }
 });
-
+ 
+ 
+ 
 const sessionMiddleware = session({
     secret: '8be00e304a7ab94f27b5e5172cc0f3b2c575e87d',
     resave: false,
@@ -690,27 +704,29 @@ const sessionMiddleware = session({
       maxAge: 1000 * 60 * 60 * 24, // 1 day
     },
   });
-  
+ 
   router.use(sessionMiddleware);
-
+ 
+ 
+ 
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
-  
+ 
     // Validate email and password
-  
-    
+ 
+ 
   if (!email || !password) {
       return res.status(400).json({ message:'Email and password are required' });
     }
-  
+ 
     try {
-        
+ 
       const validUser = await reg.findOne({ where: {email}  })
-
+ 
         if(!validUser){
           res.status(401).json({message:"Sorry ! your are not registered" });
         }
-
+ 
         const user = await reg.findOne({
             where: {
                 email: email,
@@ -720,13 +736,13 @@ router.post('/login', async (req, res) => {
       if (!user) {
         return res.status(404).json({ message: 'Invalid email !' });
       }
-  
+ 
       const isPasswordValid = await bcrypt.compare(password, user.password);
-  
+ 
       if (!isPasswordValid) {
         return res.status(401).json({ message: 'Incorrect password !' });
       }
-  
+ 
       // Create session and store user ID
       req.session.UId = user.UId;
       //xconsole.log(res)
@@ -749,18 +765,20 @@ router.post('/login', async (req, res) => {
       res.status(500).json({ message: 'Internal server error' });
     }
   });
-
+ 
+ 
+ 
 // router.get('/getUserById/:UId', async (req, res) => {
 //     try {
 //         const { UId } = req.params;
-
+ 
 //         // Fetch user details by UId from the reg table
 //         const user = await reg.findOne({ where: { UId } });
-
+ 
 //         if (!user) {
 //             return res.status(404).json({ error: 'User not found' });
 //         }
-
+ 
 //         let profilePicUrl = null;
 //         if (user.profilePicUrl) {
 //             // If profilePicUrl exists, fetch the image URL from Firebase Storage
@@ -773,13 +791,13 @@ router.post('/login', async (req, res) => {
 //                 });
 //             }
 //         }
-
+ 
 //         // Fetch only 'cycle' and 'day' fields from the meditation table based on the UId
 //         const meditationData = await meditation.findOne({
 //             where: { UId },
 //             attributes: ['cycle', 'day' , 'session_num']
 //         });
-
+ 
 //         // Send the response with user data including profilePicUrl and meditationData
 //         return res.status(200).json({
 //             user: {
@@ -793,19 +811,19 @@ router.post('/login', async (req, res) => {
 //         return res.status(500).json({ error: 'Internal Server Error' });
 //     }
 // });
-
-
+ 
+ 
 router.get('/getUserById', async (req, res) => {
   try {
       const { UId } = req.session;
-
+ 
       // Fetch user details by UId from the reg table
       const user = await reg.findOne({ where: { UId }, attributes: ['first_name', 'last_name' , 'DOB' , 'gender' , 'email', 'address','pincode', 'state', 'district' , 'country', 'phone' ,'reference' , 'languages' ,'UId', 'DOJ' ,'expiredDate', 'classAttended', 'isans','profilePicUrl', 'maintanance_fee' ] });
-
+ 
       if (!user) {
           return res.status(404).json({ error: 'User not found' });
       }
-
+ 
       let profilePicUrl = null;
       if (user.profilePicUrl) {
           // If profilePicUrl exists, fetch the image URL from Firebase Storage
@@ -820,27 +838,27 @@ router.get('/getUserById', async (req, res) => {
               profilePicUrl = profilePicUrl[0];
           }
       }
-
+ 
       // Fetch only 'cycle' and 'day' fields from the meditation table based on the UId
       const meditationData = await meditation.findOne({
           where: { UId },
           attributes: ['cycle', 'day' , 'session_num']
       });
-
+ 
       // Merge meditationData properties directly into the user object
       const mergedUser = {
           ...user.toJSON(),
           profilePicUrl,
           ...meditationData?.toJSON() // Use optional chaining to avoid errors if meditationData is null
       };
-
+ 
       // Remove null or undefined values from mergedUser
       Object.keys(mergedUser).forEach(key => {
           if (mergedUser[key] === null || mergedUser[key] === undefined) {
               delete mergedUser[key];
           }
       });
-
+ 
       // Send the response with merged user data
       return res.status(200).json({ user: mergedUser });
   } catch (error) {
@@ -848,35 +866,37 @@ router.get('/getUserById', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-  router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
+ 
+ 
+ 
+router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
     const UId = req.session.UId
-    const userData = req.body;
+   // const userData = req.body;
     const profilePicFile = req.file;
-  
+ 
     try {
       // Check if the user is authenticated
       if (!UId) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
-  
+ 
       // Find the user by UId
       const user = await reg.findOne({ where: { UId } });
-  
+ 
       // Update user details
       if (user) {
         // Update all fields provided in the request, excluding the profilePic field
         delete userData.profilePic; // Remove profilePic from userData
-        await user.update(userData);
-  
+       // await user.update(userData);
+ 
         // Fetch current profile picture URL
         let currentProfilePicUrl = user.profilePicUrl;
-  
+ 
         // Store or update profile picture in Firebase Storage
         let profilePicUrl = currentProfilePicUrl; // Default to current URL
         if (profilePicFile) {
           const profilePicPath = `profile_pictures/${UId}/${profilePicFile.originalname}`;
-  
+ 
           // Upload new profile picture to Firebase Storage
           await storage.upload(profilePicFile.path, {
             destination: profilePicPath,
@@ -884,20 +904,20 @@ router.get('/getUserById', async (req, res) => {
               contentType: profilePicFile.mimetype
             }
           });
-  
+ 
           // Get the URL of the uploaded profile picture
           profilePicUrl = `gs://${storage.name}/${profilePicPath}`;
-  
+ 
           // Delete the current profile picture from Firebase Storage
           if (currentProfilePicUrl) {
             const currentProfilePicPath = currentProfilePicUrl.split(storage.name + '/')[1];
             await storage.file(currentProfilePicPath).delete();
           }
         }
-  
+ 
         // Update user's profilePicUrl in reg table
         await user.update({ profilePicUrl });
-  
+ 
         return res.status(200).json({ message: 'User details updated successfully' });
       } else {
         return res.status(404).json({ error: 'User not found' });
@@ -907,84 +927,90 @@ router.get('/getUserById', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   });
-
-  router.get('/flag', async (req, res) => {
+ 
+ 
+ 
+router.get('/flag', async (req, res) => {
     try {
       // Retrieve UId from the session
       const UId = req.session.UId;
-  
+ 
       // Check if UId exists in the session
       if (!UId) {
         return res.status(404).json({ error: 'invalid UId' });
       }
-  
+ 
       // Find the user by UId
       const user = await reg.findOne({ where: { UId } });
-  
+ 
       // Check if user exists
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
-  
+ 
       // Return the isans status of the user
       return res.status(200).json({ message: { isans: user.isans} });
-
+ 
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   });
-  
-  router.post('/meditation-data', async (req, res) => {
+ 
+ 
+ 
+router.post('/meditation-data', async (req, res) => {
     try {
       const UId = req.session.UId;
       const ans = req.body.ans;
       const isans = req.body.isans;
-  
+ 
       // Check if the user is authenticated
       if (!UId) {
         return res.status(401).json({ error: 'User not authenticated' });
       }
-  
+ 
       // Fetch the user record by UId
       const user = await reg.findOne({ where: { UId: UId } });
-  
+ 
       // Handle case where user record is not found
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
-  
+ 
       // Check if ansList is an array
       if (!Array.isArray(ans)) {
         return res.status(400).json({ error: 'ans must be an array of strings' });
       }
-  
+ 
       // Serialize the ansList array into a string
       const serializedAns = ans.join(',');
-  
+ 
       // Update the user's ans field with the serializedAns string
       await user.update({ ans: serializedAns, isans});
-  
+ 
       return res.status(200).json({ message: 'Meditation data updated successfully' });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   });
-  
+ 
+ 
+ 
 router.get('/reference/:UId', async (req, res) => {
   const UId = req.params.UId;
-
+ 
   try {
       const user = await reg.findOne({
           where: { UId },
           attributes: ['first_name', 'last_name'],
       });
-
+ 
       if (!user) {
           return res.status(404).json({ message: 'User not found' });
       }
-
+ 
       const fullName = `${user.first_name} ${user.last_name}`.trim();
       res.json({ full_name: fullName });
   } catch (error) {
@@ -992,7 +1018,9 @@ router.get('/reference/:UId', async (req, res) => {
       res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
+ 
+ 
+ 
 router.get('/list-questions', async (req, res) => {
     try {
       const Questions = await questions.findAll();
@@ -1002,59 +1030,65 @@ router.get('/list-questions', async (req, res) => {
       res.status(500).json({ message: 'Internal Server Error' });
     }
   });
-
+ 
+ 
+ 
 router.get('/user-details', async (req, res) => {
   const UId = req.session.UId;
-
+ 
   try {
       // Fetch details from reg table
       const userDetails = await reg.findOne({
           where: { UId },
       });
-
+ 
       if (!userDetails) {
           return res.status(404).json({ message: 'User not found' });
       }
-
+ 
       // Fetch details from BankDetails table
       const bankDetails = await BankDetails.findOne({
           where: { UId },
       });
-
+ 
       // Combine the data from both tables
       const combinedData = {
           userDetails: userDetails.toJSON(),
           bankDetails: bankDetails ? bankDetails.toJSON() : null,
       };
-
+ 
       res.json(combinedData);
   } catch (error) {
       console.error('Error:', error);
       res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
+ 
+ 
+ 
 router.delete('/delete-user/:phone', async (req, res) => {
     const phone = req.params.phone;
-
+ 
     try {
         // Find the user based on the phone number
         const user = await reg.findOne({ where: { phone } });
-
+ 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-
+ 
         // Delete the user
         await user.destroy();
-
+ 
         return res.status(200).json({ message: 'User deleted successfully' });
     } catch (error) {
         console.error('Error:', error);
         return res.status(500).json({ message: 'Internal Server Error' });
     }
 });
-
+ 
+ 
+ 
 router.delete('/deleteuser/:phone', async (req, res) => {
     const phone = req.params.phone;
     try {
@@ -1069,35 +1103,37 @@ if (bank) {
     await bank.destroy();
 }
 return res.status(200).json({ message: 'User deleted successfully' });
-        
+ 
     } catch (error) {
         console.error('Error:', error);
         return res.status(500).json({ message: 'Internal Server Error' });
     }
 });
-
+ 
+ 
+ 
 // router.post('/meditation', async (req, res) => {
 //     try {
 //       const { userId } = req.session;
 //         const {startdatetime, stopdatetime } = req.body;
-
+ 
 //         console.log('Received userId:', userId);
 //         console.log('Received startdatetime:', startdatetime);
 //         console.log('Received stopdatetime:', stopdatetime);
-
+ 
 //         // Check if userId exists in the reg table
 //         const userExists = await Users.findOne({ where: { UId : userId } });
 //         if (!userExists) {
 //             return res.status(404).json({ error: 'User not found in reg table' });
 //         }
-
+ 
 //         const refStartDate = moment(`${startdatetime}`, "YYYY-MM-DD HH:mm:ss", true);
 //         const refFutureDate = refStartDate.clone().add(45, "minutes");
 //         const refStopDate = moment(`${stopdatetime}`, "YYYY-MM-DD HH:mm:ss", true);
-
+ 
 //         console.log('Parsed startdatetime:', refStartDate.format('YYYY-MM-DD HH:mm:ss'));
 //         console.log('Parsed stopdatetime:', refStopDate.format('YYYY-MM-DD HH:mm:ss'));
-
+ 
 //         const difference = refStopDate.diff(refStartDate, 'minutes');
 //         if(difference>=90){
 //           ismeditated = 1
@@ -1105,7 +1141,7 @@ return res.status(200).json({ message: 'User deleted successfully' });
 //         else{
 //           ismeditated = 2
 //         }
-
+ 
 //         console.log('Difference:', difference);
 //         const TimeTracking = await timeTracking.create({
 //             userId,
@@ -1115,32 +1151,32 @@ return res.status(200).json({ message: 'User deleted successfully' });
 //             ismeditated
 //         });
 //         await TimeTracking.save();
-
+ 
 //         // Check if there is an existing record for the userId
 //         const existingMeditationRecord = await Meditation.findOne({ where: { userId } });
-
+ 
 //         if (existingMeditationRecord) {
 //             // Update the existing record
 //             existingMeditationRecord.med_starttime = refStartDate.format('YYYY-MM-DD HH:mm:ss');
 //             existingMeditationRecord.med_stoptime = refStopDate.format('YYYY-MM-DD HH:mm:ss');
 //             existingMeditationRecord.med_endtime = refFutureDate.format('YYYY-MM-DD HH:mm:ss');
-
+ 
 //             if (difference >= 45) {
 //                 existingMeditationRecord.session_num += 1 ;
 //                 if(existingMeditationRecord.session_num > 2) {
 //                     existingMeditationRecord.session_num = 1; 
 //             }}
-
+ 
 //             if (existingMeditationRecord.session_num === 2) {
 //                 existingMeditationRecord.day += 1;
 //                 //existingMeditationRecord.session_num = 0;
 //             }
-
+ 
 //             if (existingMeditationRecord.day === 15) {
 //                 existingMeditationRecord.cycle += 1;
 //                 existingMeditationRecord.day = 0;
 //             }
-
+ 
 //             await existingMeditationRecord.save();
 //             return res.status(200).json({ message: 'Meditation time updated successfully' });
 //         } else {
@@ -1154,65 +1190,64 @@ return res.status(200).json({ message: 'User deleted successfully' });
 //                 day: 0,
 //                 cycle: 0,
 //             });
-
+ 
 //             if (difference >= 45) {
 //                 meditationRecord.session_num += 1;
 //             }
-
+ 
 //             if (meditationRecord.session_num === 2) {
 //                 meditationRecord.day += 1;
 //                 meditationRecord.session_num = 0;
 //             }
-
+ 
 //             if (meditationRecord.day === 41) {
 //                 meditationRecord.cycle += 1;
 //                 meditationRecord.day = 0;
 //             }
-
+ 
 //             await meditationRecord.save();
 //             return res.status(200).json({ message: 'Meditation time inserted successfully' });
-
+ 
 //         }
-
+ 
 //     } catch (error) {
 //         console.error('Error:', error);
 //         return res.status(500).json({ error: 'Internal Server Error' });
 //     }
 // });
  
-
 router.post('/meditation', async (req, res) => {
   try {
     //const { UId } = req.body;
       const { UId } = req.session;
       const { startdatetime, stopdatetime } = req.body;
-
+ 
       console.log('Received UId:', UId);
       console.log('Received startdatetime:', startdatetime);
       console.log('Received stopdatetime:', stopdatetime);
-
+ 
       // Check if UId exists in the reg table
       const userExists = await Users.findOne({ where: { UId } });
       if (!userExists) {
           return res.status(404).json({ error: 'User not found in reg table' });
       }
-
+ 
       const refStartDate = moment(`${startdatetime}`, "YYYY-MM-DD HH:mm:ss", true);
       const refFutureDate = refStartDate.clone().add(45, "minutes");
       const refStopDate = moment(`${stopdatetime}`, "YYYY-MM-DD HH:mm:ss", true);
-
+ 
       console.log('Parsed startdatetime:', refStartDate.format('YYYY-MM-DD HH:mm:ss'));
       console.log('Parsed stopdatetime:', refStopDate.format('YYYY-MM-DD HH:mm:ss'));
-
+ 
       const difference = refStopDate.diff(refStartDate, 'minutes');
       let ismeditated;
-
+ 
       if (difference >= 90) {
           ismeditated = 1;
       } else {
           ismeditated = 2;
       }
-
+ 
       console.log('Difference:', difference);
       const TimeTracking = await timeTracking.create({
           UId,
@@ -1222,33 +1257,33 @@ router.post('/meditation', async (req, res) => {
           ismeditated
       });
       await TimeTracking.save();
-
+ 
       // Check if there is an existing record for the UId
       const existingMeditationRecord = await Meditation.findOne({ where: { UId } });
-
+ 
       if (existingMeditationRecord) {
           // Update the existing record
           existingMeditationRecord.med_starttime = refStartDate.format('YYYY-MM-DD HH:mm:ss');
           existingMeditationRecord.med_stoptime = refStopDate.format('YYYY-MM-DD HH:mm:ss');
           existingMeditationRecord.med_endtime = refFutureDate.format('YYYY-MM-DD HH:mm:ss');
-
+ 
           if (difference >= 45) {
               existingMeditationRecord.session_num += 1;
               if (existingMeditationRecord.session_num > 2) {
                   existingMeditationRecord.session_num = 1;
               }
           }
-
+ 
           if (existingMeditationRecord.session_num === 2) {
               existingMeditationRecord.day += 1;
               //existingMeditationRecord.session_num = 0;
           }
-
+ 
           if (existingMeditationRecord.day === 41) {
               existingMeditationRecord.cycle += 1;
               existingMeditationRecord.day = 0;
           }
-
+ 
           await existingMeditationRecord.save();
           return res.status(200).json({ message: 'Meditation time updated successfully' });
       } else {
@@ -1262,43 +1297,45 @@ router.post('/meditation', async (req, res) => {
               day: 0,
               cycle: 0,
           });
-
+ 
           if (difference >= 45) {
               meditationRecord.session_num += 1;
           }
-
+ 
           if (meditationRecord.session_num === 2) {
               meditationRecord.day += 1;
               meditationRecord.session_num = 0;
           }
-
+ 
           if (meditationRecord.day === 41) {
               meditationRecord.cycle += 1;
               meditationRecord.day = 0;
           }
-
+ 
           await meditationRecord.save();
           return res.status(200).json({ message: 'Meditation time inserted successfully' });
-
+ 
       }
-
+ 
   } catch (error) {
       console.error('Error:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
+ 
+ 
+ 
 // router.post('/messages', async (req, res) => {
 //   try {
 //       const { UId } = req.session;
-//       const { message, messageTime,message_priority,isAdminMessage } = req.body;
-
+//       const { message, messageTime, } = req.body;
+ 
 //       // Check if the user exists
 //       const existingUser = await Users.findOne({ where: { UId } });
 //       if (!existingUser) {
 //           return res.status(404).json({ error: 'User not found' });
 //       }
-
+ 
 //       // Create a new message record
 //       const newMessage = await Messages.create({
 //           UId,
@@ -1307,25 +1344,25 @@ router.post('/meditation', async (req, res) => {
 //           message_priority,
 //           isAdminMessage
 //       });
-
+ 
 //       // Save the new message record
 //       await newMessage.save();
-
+ 
 //       return res.status(200).json({ message: 'Message created successfully' });
 //   } catch (error) {
 //       console.error('Error:', error);
 //       return res.status(500).json({ error: 'Internal Server Error' });
 //   }
 // });
-
-
+ 
+ 
 router.get('/guruji-date', async (req, res) => {
   try {
     const  id  = 11;
-
+ 
     // Find the application config record by ID
     const config = await ApplicationConfig.findByPk(id);
-
+ 
     // If the record exists, parse the JSON value and send it in the response
     if (config) {
       const values = JSON.parse(config.value);
@@ -1338,7 +1375,9 @@ router.get('/guruji-date', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
+ 
+ 
+ 
 // router.get('/rulesAndConditions', async (req, res) => {
 //   try {
 //     const id = 10;
@@ -1355,8 +1394,8 @@ router.get('/guruji-date', async (req, res) => {
 //     return res.status(500).json({ error: 'Internal Server Error' });
 //   }
 // });
-
-
+ 
+ 
  router.post("/appointment", async (req, res) => {
   try {
    const UId = req.session.UId;
@@ -1364,11 +1403,11 @@ router.get('/guruji-date', async (req, res) => {
       return res.status(401).json({ error: 'User not authenticated' });
     }
     const {
-     
+ 
       appointmentDate,
       num_of_people,
       pickup,
-  
+ 
       from,
       days,
       emergencyNumber,
@@ -1379,13 +1418,13 @@ router.get('/guruji-date', async (req, res) => {
       externalUser
     } = req.body;
     console.log(UId);
-
+ 
     const existingUser = await Users.findOne({ where: { UId } });
-
+ 
     if (!existingUser) {
       return res.status(404).json({ error: 'User not found' });
     }
-
+ 
     const newAppointment = await Appointment.create({
       UId: existingUser.UId,
       phone: existingUser.phone,
@@ -1402,7 +1441,7 @@ router.get('/guruji-date', async (req, res) => {
       appointment_status: "Not Arrived",
       externalUser
     });
-
+ 
     if (Array.isArray(groupmembers) && groupmembers.length > 0) {
       const groupMembersData = groupmembers.map(groupMember => ({
         name: groupMember.name,
@@ -1413,7 +1452,7 @@ router.get('/guruji-date', async (req, res) => {
       console.log(groupMembersData)
       await GroupMembers.bulkCreate(groupMembersData); // Fixed the function call
     }
-
+ 
     return res.status(200).json({
       message: 'Appointment has been allocated successfully! We will notify guruji soon.',
     });
@@ -1422,46 +1461,81 @@ router.get('/guruji-date', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
+ 
+ 
+ 
 router.put('/rating', async (req, res) => {
   const id = req.body.id;
   const {rating , feedback}= req.body;
-
+ 
   try {
     const appointment = await Appointment.findOne({ where: { id: id } });
     if (!appointment) {
       return res.status(404).json({ error: 'Appointment not found' });
     }
-
+ 
     await Appointment.update({ rating: rating ,feedback :feedback}, { where: { id: id } });
-
+ 
     return res.status(200).json({ message: 'Rating updated successfully' });
   } catch (error) {
     console.error('Error updating rating:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
+ 
+ 
+ 
+router.get('/list-appointment', async (req, res) => {
+  try {
+    const  UId = req.session.UId;
+ 
+    // Check if the user is authenticated
+    if (!UId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+ 
+    // Find appointments for the authenticated user
+    const appointments = await Appointment.findAll({ where: { UId },
+      attributes: [ 'id','UId','phone','appointmentDate','num_of_people','pickup','from','days','emergencyNumber','appointment_reason','user_name','register_date','appointment_status','externalUser' ] });
+ 
+    // Fetch group members for each appointment
+    for (const appointment of appointments) {
+      if(appointment.id){
+      const groupMembers = await GroupMembers.findAll({ where: { appointmentId: appointment.id } });
+      appointment.dataValues.groupMembers = groupMembers; // Attach group members to each appointment
+    }
+  }
+ 
+    // Respond with the list of appointments
+    return res.status(200).json({ message: 'Fetching appointments', appointments });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+ 
+ 
+ 
 router.put('/updateAppointment/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const updateFields = req.body;
-
+ 
     // Check if appointment exists
     const appointment = await Appointment.findOne({ where: { id } });
     if (!appointment) {
       return res.status(404).json({ error: 'Appointment not found' });
     }
-
+ 
     // Update Appointment
     const [appointmentResult] = await Appointment.update(updateFields, {
       where: { id },
     });
    // console.log(".......................",[appointmentResult]);
-
+ 
     // Update or create GroupMembers
     if (updateFields.groupmembers && Array.isArray(updateFields.groupmembers)) {
-      
+ 
       const groupMembersUpdates = updateFields.groupmembers.map(async (groupMember) => {
         console.log(groupMember.id);
         if (groupMember.id) {
@@ -1483,41 +1557,43 @@ router.put('/updateAppointment/:id', async (req, res) => {
       });
       await Promise.all(groupMembersUpdates);
     }
-
+ 
     return res.status(200).json({ message: 'Appointment and GroupMembers updated successfully' });
   } catch (error) {
     console.error('Error updating appointment and group members:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
+ 
+ 
+ 
 router.delete('/delete-appointment', async (req, res) => {
   const { id } = req.query;
   const UId = req.session.UId; // Assuming UId is stored in req.session
-  
+ 
   try {
     // Check if the user is authenticated
     if (!UId) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
-
+ 
     // Start a transaction
     await sequelize.transaction(async (t) => {
       // Find the appointment
       const appointmentData = await Appointment.findOne({ where: { id }, transaction: t });
-
+ 
       // Check if the appointment exists
       if (!appointmentData) {
         return res.status(404).json({ error: 'Appointment not found' });
       }
-
+ 
       // Delete associated group members
       await GroupMembers.destroy({ where: { appointmentId: id }, transaction: t });
-
+ 
       // Delete the appointment
       await appointmentData.destroy({ transaction: t });
     });
-    
+ 
     // Respond with a success message
     return res.status(200).json({ message: 'Appointment and associated group members deleted successfully' });
   } catch (error) {
@@ -1525,24 +1601,24 @@ router.delete('/delete-appointment', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-
-
+ 
+ 
+ 
 router.delete('/group-members/:id', async (req, res) => {
   const { id } = req.params;
-
+ 
   try {
     // Find the group member by ID
     const groupMember = await GroupMembers.findByPk(id);
-
+ 
     // Check if the group member exists
     if (!groupMember) {
       return res.status(404).json({ error: 'Group member not found' });
     }
-
+ 
     // Delete the group member
     await groupMember.destroy();
-
+ 
     // Respond with a success message
     return res.status(200).json({ message: 'Group member deleted successfully' });
   } catch (error) {
@@ -1550,7 +1626,9 @@ router.delete('/group-members/:id', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
+ 
+ 
+ 
 router.post('/send-email', async (req, res) => {
   try {
     const {first_name,last_name,UId,DOJ,expiredDate} = req.body
@@ -1856,7 +1934,9 @@ router.post('/send-email', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
+ 
+ 
+ 
   router.get('/user-details', async (req, res) => {
     try {
         const { UId } = req.session;
@@ -1865,23 +1945,25 @@ console.log('UId:', UId);
         if (!UId) {
             return res.status(401).json({ error: 'User not authenticated' });
         }
-
+ 
         const user = await reg.findOne({
             attributes: ['first_name', 'last_name', 'UId', 'DOJ', 'expiredDate'],
             where: { UId },
         });
-
+ 
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
-
+ 
         return res.status(200).json(user);
     } catch (error) {
         console.error('Error:', error);
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 });
-
+ 
+ 
+ 
 router.get('/meditation-detail', async (req, res) => {
   try {
        const { UId } = req.session;
@@ -1889,344 +1971,103 @@ router.get('/meditation-detail', async (req, res) => {
       if (!UId) {
           return res.status(401).json({ error: 'User not authenticated' });
       }
-
+ 
       const user = await meditation.findOne({
           attributes: ['UId', 'med_starttime', 'med_stoptime', 'med_endtime', 'session_num', 'day', 'cycle'],
           where: { UId: UId },
       });
-
+ 
       if (!user) {
           return res.status(404).json({ error: 'User not found' });
       }
-
+ 
       return res.status(200).json(user);
   } catch (error) {
       console.error('Error:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
+ 
+ 
+ 
 router.get('/get-messages', async (req, res) => {
   try {
       const  { UId } = req.session;
-    
+ 
       if (!UId) {
           return res.status(401).json({ error: 'User not authenticated' });
       }
-
+ 
       const messages = await Messages.findAll({
           attributes: ['UId', 'message', 'messageTime','isAdminMessage','messagetype'],
           where: { UId: UId },
       });
-
+ 
       if (!messages || messages.length === 0) {
           return res.status(404).json({ error: 'Messages not found for the user' });
       }
-
+ 
       return res.status(200).json(messages);
   } catch (error) {
       console.error('Error:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
+ 
+ 
+ 
 router.get('/meditation-date', async (req, res) => {
   try {
       const { UId } = req.session;
-
+ 
      // const { UId } = req.body;
-
-
+ 
+ 
       if (!UId) {
           return res.status(401).json({ error: 'User not authenticated' });
       }
-
+ 
       const user = await timeTracking.findAll({
           attributes: ['UId', 'med_starttime', 'timeEstimate', 'ismeditated'],
           where: {
             UId: UId,
           },
       });
-
+ 
       if (!user || user.length === 0) {
           return res.status(404).json({ error: 'No records found with timeEstimate >= 90' });
       }
-
+ 
       // Modify the med_starttime in each record
       const formattedUser = user.map(record => {
           const parsedDate = moment(record.med_starttime, "YYYY-MM-DD HH:mm:ss");
           const formattedDate = parsedDate.format("YYYY-MM-DD HH:mm:ss");
           const replacedDate = formattedDate.replace(/-/g, ',');
-
+ 
           // Add the formatted date to the record
           return { ...record.dataValues, med_starttime: replacedDate };
       });
-
+ 
       return res.status(200).json(formattedUser);
   } catch (error) {
       console.error('Error:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-router.get('/getBankDetails', async (req, res) => {
-  try {
-    const { UId } = req.session;
-    
-    if (!UId) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    const userBankDetails = await BankDetails.findOne({where: {UId}}); // assuming you've defined it as "BankDetail" in the reg model
-      res.status(200).json(userBankDetails);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-router.put('/updteBankDetails', async (req, res) => {
-  try {
-    const { UId } = req.session;
-    const bankdetails = req.body;
-
-    if (!UId) {
-      return res.status(404).json('unauthenticated');
-    }
-
-    const existingUser = await reg.findOne({ where: { UId } });
-
-    if (!existingUser) {
-      return res.status(404).json({ error: 'User not found' });
-    } else {
-      // Assuming BankDetails is your Sequelize model for bank details
-      await BankDetails.update(bankdetails, { where: { UId } });
-      // Optionally, you can fetch and return the updated bank details
-      const updatedBankDetails = await BankDetails.findOne({ where: { UId } });
-      return res.status(200).json('bank details updated');
-    }
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json('internal server error');
-  }
-});
-
-// router.get('/getbroadcast-message', async (req, res) => {
-//   try {
-//     const messages = await Broadcast.findAll();
-//     res.json({ messages });
-//   } catch (error) {
-//     console.error('Error:', error);
-//     res.status(500).json({ error: 'Internal server error' });
-//   }
-// });
-
-router.get('/reg-confiq', async (req, res) => {
-try{
-const config = await applicationconfig.findAll();
-res.json({ config });
-}
-catch (error) {
-  res.status(500).json({ error: 'Internal server error' });
-}
-});
-
-router.get('/list-appointment', async (req, res) => {
-  try {
-    const { UId } = req.session;
-
-    // Check if the user is authenticated
-    if (!UId) {
-      return res.status(401).json({ error: 'User not authenticated' });
-    }
-
-    // Find appointments for the authenticated user
-    const appointments = await Appointment.findOne({
-      where: { UId },
-      attributes: [ 'UId','phone','appointmentDate','num_of_people','pickup','from','days','emergencyNumber','appointment_reason','user_name','register_date','appointment_status' ], // Exclude the "image" field from the results
-    });
-
-    // Respond with the list of appointments
-    return res.status(200).json({ message: 'Fetching appointments', appointments });
-  } catch (error) {
-   // console.error(error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-router.get('/show', async (req, res) => {
-try {
-    
-    const config = await applicationconfig.findOne(); // Retrieve a single row from the table
-    const prompt = config ? config.reg_email_prompt : null; // Access the reg_email_prompt property
-    console.log(prompt);
-    res.status(200).json({ prompt });
-} catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-}
-});
-
-router.get('/fetch-details', async (req, res) => {
-  try {
-      const { UId } = req.session;
-
-      // Validate UId
-      if (!UId) {
-          return res.status(400).json({ error: 'UId parameter is required' });
-      }
-
-      // Fetch details from both tables
-      const Messages = await message.findAll({
-          attributes: ['id', 'UId', 'message', 'messageTime', 'isAdminMessage', 'messagetype'],
-          where: { UId },
-          order: [
-              ['messageTime', 'ASC'] // Order by time in ascending order
-          ]
-      });
-
-      const adminMessages = await AdminMessage.findAll({
-          attributes: ['id', 'UId', 'message', 'messageTime', 'isAdminMessage'],
-          where: { UId },
-          order: [
-              ['messageTime', 'ASC'] // Order by time in ascending order
-          ]
-      });
-
-      // Merge the results
-      const mergedDetails = [...Messages, ...adminMessages];
-
-      // Sort the merged details by messageTime
-      mergedDetails.sort((a, b) => new Date(a.messageTime) - new Date(b.messageTime));
-
-      return res.status(200).json(mergedDetails);
-  } catch (error) {
-      console.error('Error:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-router.put('/appointment-feedback/:id', async (req, res) => {
-  const id = req.params.id;  // Corrected to access the ID from the parameters
-  const feedback = req.body.feedback;
-
-  try {
-      if (!id) {
-          return res.status(400).json({ error: 'ID not found' });
-      }
-
-      const dataToUpdate = {
-        feedback
-      };
-
-      const updatedAppointment = await Appointment.update(dataToUpdate, {
-          where: { id: id } // Corrected to specify the appointment ID to update
-      });
-
-      if (updatedAppointment[0] === 1) {
-          return res.status(200).json({ message: 'Appointment updated successfully' });
-      } else {
-          return res.status(404).json({ error: 'Appointment not found' });
-      }
-  } catch (error) {
-      console.error('Error:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-router.put('/maintances-fee/', async (req, res) => {
-  const UId = req.session.UId;
-  const maintanance_fee = req.body.maintanance_fee;
-
-  try {
-      if (!UId) {
-          return res.status(404).json({ message: 'UId is not found' });
-      }
-
-      const dataToUpdate = {
-          maintanance_fee
-      };
-
-      const [updatedRowsCount, updatedFee] = await reg.update(dataToUpdate, {
-          where: { UId: UId },
-          returning: true // This ensures the updated record is returned
-      });
-
-      if (updatedRowsCount === 0) {
-          return res.status(404).json({ message: 'User not found or no changes applied' });
-      }
-
-      // You can decide what to return upon successful update
-      return res.status(200).json({ message: 'Maintenance fee updated successfully', updatedFee });
-
-  } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-router.post('/messages', async (req, res) => {
-  try {
-      const { UId } = req.session;
-      const { message, messageTime,isAdminMessage, messagetype } = req.body;
-
-      // Check if the user exists in the reg table and maintanance_fee is true
-      const regUser = await reg.findOne({ where: { UId, maintanance_fee: true } });
-
-      // Check if the user exists in the User table
-      const user = await Users.findOne({ where: { UId } });
-
-      // Check if either condition is met
-      if (!regUser && !user) {
-          return res.status(404).json({ error: 'User not found or maintenance fee not paid' });
-      }
-
-      // Create a new message record
-      const newMessage = await globalMessage.create({
-          UId,
-          message,
-          messageTime,
-          isAdminMessage,
-          messagetype
-      });
-      const msg = await privateMsg.create({
-        UId,
-        message,
-        messageTime,
-        isAdminMessage,
-        messagetype
-      });
-
-      // Check the message type and save accordingly
-      if (messagetype === 'private') {
-        // Assuming privatemsg is the model for private messages
-        const privatemsg = await privateMsg.create({
-          UId,
-          message,
-          messageTime,
-          isAdminMessage,
-          messagetype
-        });
-
-        await privatemsg.save();
-      } 
-      return res.status(200).json({ message: 'Message created successfully' });
-  } catch (error) {
-      console.error('Error:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
+ 
+ 
+ 
 router.post('/addBankDetails' , async(req,res) =>{
   try{
     const { UId } = req. session;
     const { AadarNo,bankName,IFSCCode,branchName,accountName,accountNo } = req.body;
     if(!UId) {
        return res.status(401).json({error:'User NOt Authorised'});
-
+ 
     }
-
+ 
     const existingUser = await Users.findOne({ where :{ UId }});
-
+ 
      if(!existingUser) {
       return res.status(404).json({error: 'User not found'});
      }
@@ -2243,8 +2084,496 @@ router.post('/addBankDetails' , async(req,res) =>{
   } catch(error) {
     console.error('Error:' , error);
     return res.status(500).json({error:'internal server error'});
-
+ 
+  }
+});
+ 
+ 
+ 
+router.get('/getBankDetails', async (req, res) => {
+  try {
+    const { UId } = req.session;
+ 
+    if (!UId) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const userBankDetails = await BankDetails.findOne({where: {UId}}); // assuming you've defined it as "BankDetail" in the reg model
+      res.status(200).json(userBankDetails);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+ 
+ 
+ 
+router.put('/updteBankDetails', async (req, res) => {
+  try {
+    const { UId } = req.session;
+    const bankdetails = req.body;
+ 
+    if (!UId) {
+      return res.status(404).json('unauthenticated');
+    }
+ 
+    const existingUser = await reg.findOne({ where: { UId } });
+ 
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    } else {
+      // Assuming BankDetails is your Sequelize model for bank details
+      await BankDetails.update(bankdetails, { where: { UId } });
+      // Optionally, you can fetch and return the updated bank details
+      const updatedBankDetails = await BankDetails.findOne({ where: { UId } });
+      return res.status(200).json('bank details updated');
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json('internal server error');
   }
 });
 
+router.get('/reg-confiq', async (req, res) => {
+try{
+const config = await applicationconfig.findAll();
+res.json({ config });
+}
+catch (error) {
+  res.status(500).json({ error: 'Internal server error' });
+}
+});
+ 
+ 
+router.get('/show', async (req, res) => {
+try {
+ 
+    const config = await applicationconfig.findOne(); // Retrieve a single row from the table
+    const prompt = config ? config.reg_email_prompt : null; // Access the reg_email_prompt property
+    console.log(prompt);
+    res.status(200).json({ prompt });
+} catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+}
+});
+ 
+ 
+ 
+router.get('/fetch-details', async (req, res) => {
+  try {
+      const { UId } = req.session;
+ 
+      // Validate UId
+      if (!UId) {
+          return res.status(400).json({ error: 'UId parameter is required' });
+      }
+ 
+      // Fetch details from both tables
+      const Messages = await message.findAll({
+          attributes: ['id', 'UId', 'message', 'messageTime', 'isAdminMessage', 'messagetype'],
+          where: { UId },
+          order: [
+              ['messageTime', 'ASC'] // Order by time in ascending order
+          ]
+      });
+ 
+      const adminMessages = await AdminMessage.findAll({
+          attributes: ['id', 'UId', 'message', 'messageTime', 'isAdminMessage'],
+          where: { UId },
+          order: [
+              ['messageTime', 'ASC'] // Order by time in ascending order
+          ]
+      });
+ 
+      // Merge the results
+      const mergedDetails = [...Messages, ...adminMessages];
+ 
+      // Sort the merged details by messageTime
+      mergedDetails.sort((a, b) => new Date(a.messageTime) - new Date(b.messageTime));
+ 
+      return res.status(200).json(mergedDetails);
+  } catch (error) {
+      console.error('Error:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+ 
+ 
+ 
+router.put('/appointment-feedback/:id', async (req, res) => {
+  const id = req.params.id;  // Corrected to access the ID from the parameters
+  const feedback = req.body.feedback;
+ 
+  try {
+      if (!id) {
+          return res.status(400).json({ error: 'ID not found' });
+      }
+ 
+      const dataToUpdate = {
+        feedback
+      };
+ 
+      const updatedAppointment = await Appointment.update(dataToUpdate, {
+          where: { id: id } // Corrected to specify the appointment ID to update
+      });
+ 
+      if (updatedAppointment[0] === 1) {
+          return res.status(200).json({ message: 'Appointment updated successfully' });
+      } else {
+          return res.status(404).json({ error: 'Appointment not found' });
+      }
+  } catch (error) {
+      console.error('Error:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+ 
+ 
+ 
+router.put('/maintances-fee/', async (req, res) => {
+  const UId = req.session.UId;
+  const maintanance_fee = req.body.maintanance_fee;
+ 
+  try {
+      if (!UId) {
+          return res.status(404).json({ message: 'UId is not found' });
+      }
+ 
+      const dataToUpdate = {
+          maintanance_fee
+      };
+ 
+      const [updatedRowsCount, updatedFee] = await reg.update(dataToUpdate, {
+          where: { UId: UId },
+          returning: true // This ensures the updated record is returned
+      });
+ 
+      if (updatedRowsCount === 0) {
+          return res.status(404).json({ message: 'User not found or no changes applied' });
+      }
+ 
+      // You can decide what to return upon successful update
+      return res.status(200).json({ message: 'Maintenance fee updated successfully', updatedFee });
+ 
+  } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+ 
+// router.post('/messages', async (req, res) => {
+//   try {
+//       const { UId } = req.session;
+//       const { message, messageTime,isAdminMessage, messagetype } = req.body;
+ 
+//       // Check if the user exists in the reg table and maintanance_fee is true
+//       const regUser = await reg.findOne({ where: { UId, maintanance_fee: true } });
+ 
+//       // Check if the user exists in the User table
+//       const user = await Users.findOne({ where: { UId } });
+ 
+//       // Check if either condition is met
+//       if (!regUser && !user) {
+//           return res.status(404).json({ error: 'User not found or maintenance fee not paid' });
+//       }
+ 
+//       // Create a new message record
+//       const newMessage = await globalMessage.create({
+//           UId,
+//           message,
+//           messageTime,
+//           isAdminMessage,
+//           messagetype
+//       });
+//       const msg = await privateMsg.create({
+//         UId,
+//         message,
+//         messageTime,
+//         isAdminMessage,
+//         messagetype
+//       });
+ 
+//       // Check the message type and save accordingly
+//       if (messagetype === 'private') {
+//         // Assuming privatemsg is the model for private messages
+//         const privatemsg = await privateMsg.create({
+//           UId,
+//           message,
+//           messageTime,
+//           isAdminMessage,
+//           messagetype
+//         });
+ 
+//         await privatemsg.save();
+//       } 
+//       return res.status(200).json({ message: 'Message created successfully' });
+//   } catch (error) {
+//       console.error('Error:', error);
+//       return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+ 
+ 
+router.post('/messages', async (req, res) => {
+  try {
+      
+      const {UId, message, messageTime,isAdminMessage, messagetype,messageDate} = req.body;
+
+      // Check if the user exists in the reg table and maintanance_fee is true
+      const regUser = await reg.findOne({ where: { UId, maintanance_fee: true } });
+
+      // Check if the user exists in the User table
+      const user = await Users.findOne({ where: { UId } });
+
+      // Check if either condition is met
+      if (!regUser && !user) {
+          return res.status(404).json({ error: 'User not found or maintenance fee not paid' });
+      }
+
+      if (messagetype == 'private') {
+        // Assuming privatemsg is the model for private messages
+        const privatemsg = await privateMsg.create({
+          UId,
+          message,
+          messageTime,
+          isAdminMessage,
+          messagetype,
+          messageDate
+        });
+
+        await privatemsg.save();
+      } 
+else{
+      // Create a new message record
+      const newMessage = await globalMessage.create({
+          UId,
+          message,
+          messageTime,
+          isAdminMessage,
+          messageDate,
+          messagetype
+      });
+
+      const privatemsg = await privateMsg.create({
+        UId,
+        message,
+        messageTime,
+        isAdminMessage,
+        messageDate,
+        messagetype
+      });
+    }
+      // Check the message type and save accordingly
+      
+      return res.status(200).json({ message: 'Message created successfully' });
+  } catch (error) {
+      console.error('Error:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.get('/privateMessage/:page' , async(req, res) =>{
+  try{
+    const { UId } = req. session;
+    const page = parseInt(req.params.page) || 1;
+    const limit = 10;
+    if(!UId) {
+      return res.status(401).json('User not Authenticated');
+    }
+    else{
+ 
+ 
+      const totalCount = await privateMsg.count();
+ 
+      const totalPages = Math.ceil(totalCount / limit);
+ 
+      const messages = await privateMsg.findAll({ 
+        where: {UId},
+        attributes: ['id', 'UId' , 'message' , 'messageTime', 'messageDate'],
+        include:[],
+        order:[['id' , 'DESC']],
+        limit: limit,
+        offset:(page - 1) * limit
+      });
+ 
+      return res.status(200).json({messages: 'fetching messages', messages , totalPages});
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+ 
+router.get('/globalMessage/:page', async (req, res) => {
+  try {
+    const { UId } = req.session;
+    if(!UId){
+      return res.status(401).json('User not Authenticated');
+    }
+    else{
+    const page = parseInt(req.params.page) || 1;
+    const limit = 10;
+ 
+    const totalCount = await globalMessage.count();
+ 
+    const totalPages = Math.ceil(totalCount / limit);
+ 
+    const messages = await globalMessage.findAll({
+      attributes: [ 'id','UId', 'message', 'messageTime','messageDate', 'isAdminMessage'],
+      include: [], // No need for Sequelize include here
+      order: [['id', 'DESC']],
+      limit: limit,
+      offset: (page - 1) * limit
+    });
+ 
+    // Fetch first_name and last_name from reg table for each message UId
+    const messageData = await Promise.all(messages.map(async (message) => {
+      const userData = await reg.findOne({ where: { UId: message.UId }, attributes: ['first_name', 'last_name'] });
+      const userName = `${userData.first_name} ${userData.last_name}`;
+      return { 
+        ...message.toJSON(), 
+        userName 
+      };
+ 
+    }));
+ 
+    return res.status(200).json({
+      message: 'fetching messages',
+      messages: messageData,
+      totalPages
+    });
+  }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.get('/gurujiMessages' , async(req,res) => {
+  try{
+    const { UId } = req.session;
+    if (!UId) {
+      return res.status(401).json({error: 'USer not authenticated'});
+    }
+    const messages = await gurujiMessage.findAll({where: {UId}});
+    return res.status(200).json({messages: 'fetching messages', messages});
+  } catch(error) {
+    return res.status(500).json({error: 'internal server error'});
+  }
+});
+ 
+ 
+ 
+ 
+router.put('/updateUserDetails', async (req, res) => {
+  const UId = req.session.UId
+  const userData = req.body;
+ 
+  try {
+    // Check if the user is authenticated
+    if (!UId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+ 
+    // Find the user by UId
+    const user = await reg.findOne({ where: { UId } });
+ 
+    // Update user details
+    if (user) {
+      // Update all fields provided in the request, excluding the profilePic field
+      await user.update(userData);
+ 
+      // Fetch current profile picture URL
+ 
+      return res.status(200).json({ message: 'User details updated successfully' });
+    } else {
+      return res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+ 
+ 
+ 
+ 
+router.post('/appFeedback' , async( req, res) => {
+  const UId = req.session.UId;
+  const { feedback, rating } = req.body;
+  try{
+    if(!UId) {
+      return res.status(401).json({error:'invalid UId'});
+    }
+    const User = await Users.findOne({where: {UId}});
+    if(!User) {
+      return res.status(401).json({error:'user not found'});
+ 
+    }
+    const FeedBack = await feedBack.create({
+      UId :User.UId,
+      feedback,
+      rating
+    });
+    return res.status(200).json('Feedback created');
+  } catch(error) {
+    return res.status(500).json({error:'internal server error'});
+  }
+});
+ 
+ 
+ 
+router.get('/listevents', async (req, res) => {
+  try {
+    const currentDate = new Date();
+    const upcomingEvents = await events.findAll({
+      where: {
+        date: {
+          [Op.gte]: currentDate // Filter events with dates greater than or equal to the current date
+        }
+      }
+    });
+ 
+    // Map through each event and fetch image if available
+    const upcomingEventsFormatted = await Promise.all(upcomingEvents.map(async event => {
+      let image = null;
+      if (event.image) {
+        // If image URL exists, fetch the image URL from Firebase Storage
+        const file = storage.file(event.image.split(storage.name + '/')[1]);
+        const [exists] = await file.exists();
+        if (exists) {
+          image = await file.getSignedUrl({
+            action: 'read',
+            expires: '03-01-2500' // Adjust expiration date as needed
+          });
+          image = image[0];
+        }
+      }
+      // Return formatted event data with image
+      return {
+        id: event.id,
+        event_name: event.event_name,
+        event_description: event.event_description,
+        priority: event.priority,
+        place: event.place,
+        date: event.date,
+        event_time: event.event_time,
+        image
+      };
+    }));
+ 
+    return res.status(200).json({ events: upcomingEventsFormatted });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 module.exports = router;

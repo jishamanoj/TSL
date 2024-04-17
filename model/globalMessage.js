@@ -10,6 +10,7 @@ const globalMessage = sequelize.define('globalMessage',{
     UId: { type: DataTypes.INTEGER},
     message: { type: DataTypes.TEXT},
     messageTime: { type: DataTypes.STRING},
+    messageDate:{ type: DataTypes.STRING},
     isAdminMessage:{type: DataTypes.STRING},
     messagetype : { type:DataTypes.STRING},
 });

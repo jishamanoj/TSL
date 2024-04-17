@@ -7,19 +7,18 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
 
 });
 
-const gurujiMessage = sequelize.define ('gurujiMessage',{
-    UId : { type:DataTypes.INTEGER} ,
-    message :{ type:DataTypes.STRING} ,
-    messageTime :{ type: DataTypes.STRING},
-    messagetype : { type:DataTypes.STRING},
-    messageDate:{ type: DataTypes.STRING},
-});
-sequelize.sync({alter:true})
+const feedback = sequelize.define('feedback' , {
+    UId :{type:DataTypes.INTEGER} , 
+    feedback :{ type:DataTypes.STRING},
+    rating :{type: DataTypes.STRING }
+},
+{timestamps: false})
+sequelize.sync({alter: true})
     .then((data) => {
        // console.log(data);
-        console.log('gurujiMessage table created');
+        console.log('meditation table created');
     })
     .catch((err) => {
         console.log(err);
     });
-    module.exports =gurujiMessage;
+module.exports = feedback

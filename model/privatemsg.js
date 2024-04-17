@@ -11,6 +11,7 @@ const privateMsg = sequelize.define ('privateMsg',{
     UId : { type:DataTypes.INTEGER} ,
     message :{ type:DataTypes.STRING} ,
     messageTime :{ type: DataTypes.STRING},
+    messageDate:{ type: DataTypes.STRING},
     messagetype : { type:DataTypes.STRING},
 });
 sequelize.sync({alter:true})
