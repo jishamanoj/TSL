@@ -31,7 +31,7 @@ const GroupMembers = require('../model/groupmembers');
 // Multer configuration for handling file uploads
 const upload = multer({ dest: 'uploads/' });
 const ApplicationConfig = require('../model/applicationConfig');
-const globalMessage = require('../model/globalmessage');
+const globalMessage = require('../model/globalMessage');
 const feedBack = require('../model/feedback');
 const gurujiMessage = require('../model/gurujiMessage');
 const events = require('../model/events');

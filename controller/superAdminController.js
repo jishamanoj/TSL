@@ -23,6 +23,7 @@ const bcrypt = require('bcrypt');
 const applicationconfig =require('../model/applicationConfig');
 const GroupMembers = require('../model/groupmembers')
 const ApplicationConfig = require('../model/applicationConfig');
+const globalMessage = require('../model/globalMessage');
 //const redeem = require('../model/redeem');
 const privateMsg = require('../model/privatemsg');
 const multer =require('multer');
@@ -1667,7 +1668,7 @@ router.post('/admin-messages', async (req, res) => {
       UId,
       message,
       messageTime,
-      messageId,
+      messageDate,
       isAdminMessage,
     });
 
