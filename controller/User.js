@@ -2449,20 +2449,29 @@ router.get('/globalMessage/:page', async (req, res) => {
   }
 });
 
-router.get('/gurujiMessages' , async(req,res) => {
-  try{
-    const { UId } = req.session;
-    if (!UId) {
-      return res.status(401).json({error: 'USer not authenticated'});
-    }
-    const messages = await gurujiMessage.findAll({where: {UId}});
-    return res.status(200).json({messages: 'fetching messages', messages});
-  } catch(error) {
-    return res.status(500).json({error: 'internal server error'});
+router.get('/gurujimessage', async (req, res) => {
+  try {
+    
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const limit = 10;
+    
+    const offset = (page - 1) * limit;
+
+    const totalCount = await gurujiMessage.count();
+    const totalPages = Math.ceil(totalCount / limit);
+
+    const messages = await gurujiMessage.findAll({ 
+      order: [['id', 'DESC']],
+      limit,
+      offset
+    });
+
+    return res.status(200).json({ message: 'fetching messages', messages, totalPages });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
- 
- 
  
  
 router.put('/updateUserDetails', async (req, res) => {

@@ -9,7 +9,7 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
 
 const privateMsg = sequelize.define ('privateMsg',{
     UId : { type:DataTypes.INTEGER} ,
-    message :{ type:DataTypes.STRING} ,
+    message :{ type:DataTypes.TEXT} ,
     messageTime :{ type: DataTypes.STRING},
     messageDate:{ type: DataTypes.STRING},
     messagetype : { type:DataTypes.STRING},

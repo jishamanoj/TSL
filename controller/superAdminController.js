@@ -1661,15 +1661,13 @@ console.log(UId);
 
 router.post('/admin-messages', async (req, res) => {
   try {
-    const { UId, message, messageTime, messageId, isAdminMessage } = req.body;
+    const { message, messageTime} = req.body;
     
     // Create a new message entry
     const newMessage = await gurujiMessage.create({
-      UId,
+      
       message,
       messageTime,
-      messageDate,
-      isAdminMessage,
     });
 
     res.status(201).json({ message: 'Message created successfully', data: newMessage });
@@ -1678,6 +1676,8 @@ router.post('/admin-messages', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
 router.post('/adminglobalMessage', async (req, res) => {
   try {
     const page = parseInt(req.body.page) || 1;
@@ -1688,7 +1688,7 @@ router.post('/adminglobalMessage', async (req, res) => {
     const totalPages = Math.ceil(totalCount / limit);
 
     const messages = await globalMessage.findAll({
-      attributes: ['UId', 'message', 'messageTime', 'messageId', 'isAdminMessage'],
+      attributes: ['UId', 'message', 'messageTime','messageDate' ,'messageId', 'isAdminMessage'],
       include: [], // No need for Sequelize include here
       order: [['id', 'DESC']],
       limit: limit,
@@ -1739,6 +1739,27 @@ router.post('/gurujimessage', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+router.post('/global-message', async (req, res) => {
+  try {
+    const {UId, message, messageTime, messageDate,isAdminMessage} = req.body;
+    
+    // Create a new message entry
+    const newMessage = await globalMessage.create({
+      UId,
+      message,
+      messageTime,
+      messageDate,
+      isAdminMessage
+    });
+
+    res.status(201).json({ message: 'Message created successfully', data: newMessage });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 router.get('/get-event/:id', async (req, res) => {
   try {
     const { id } = req.params;
