@@ -828,7 +828,7 @@ router.post('/login', async (req, res) => {
  
 router.get('/getUserById', async (req, res) => {
   try {
-      const { UId } = req.body;
+      const { UId } = req.session;
  
       // Fetch user details by UId from the reg table
       const user = await reg.findOne({ where: { UId }, attributes: ['first_name', 'last_name' , 'DOB' , 'gender' , 'email', 'address','pincode', 'state', 'district' , 'country', 'phone' ,'reference' , 'languages' ,'UId', 'DOJ' ,'expiredDate', 'classAttended', 'isans','profilePicUrl', 'maintanance_fee' ] });
