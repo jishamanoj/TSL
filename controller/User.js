@@ -370,24 +370,41 @@ router.get('/displayDataFromRedis/:key', async (req, res) => {
 //     });
  
  
-router.post("/verify_otp", async (req, res) => {
+router.post("/verify_otp", upload.single('profilePic'), async (req, res) => {
   console.log("<........verify OTP user........>");
   try {
     const { first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP } = req.body;
- 
+
     console.log("Phone: " + phone);
     console.log("OTP: " + OTP);
     const storedOTP = "1111";
     console.log(first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP, storedOTP);
- 
+
     if (storedOTP == OTP) {
       console.log(".......");
- 
+
       const hashedPassword = await bcrypt.hash(phone, 10);
       const maxUserId = await reg.max('UId');
       const UId = maxUserId + 1;
       const currentDate = new Date().toJSON().split('T')[0]; // Get the current date in "YYYY-MM-DD" format
-console.log("..................currentDate.",currentDate)
+
+      console.log("..................currentDate.",currentDate)
+      let profilePicUrl = ''; 
+
+      if (req.file) {
+        const profilePicPath = `profile_pictures/${UId}/${req.file.originalname}`;
+
+        
+        await storage.upload(req.file.path, {
+          destination: profilePicPath,
+          metadata: {
+            contentType: req.file.mimetype
+          }
+        });
+
+        profilePicUrl = `gs://${storage.name}/${profilePicPath}`;
+      }
+
       const user = await reg.create({
         first_name,
         last_name,
@@ -400,17 +417,13 @@ console.log("..................currentDate.",currentDate)
         languages,
         remark,
         UId,
-        DOJ: currentDate, // Set only the date portion
+        DOJ: currentDate,
         expiredDate: calculateExpirationDate(),
-        password: hashedPassword, // Store the hashed password
-        verify: 'true'
+        password: hashedPassword,
+        verify: 'true',
+        profilePicUrl: profilePicUrl 
       });
- 
- 
-            // console.log("UIds.dataValues.UId",[0].reg);
- 
-   // })();
- 
+
       // Create a record in the BankDetails table
       await BankDetails.create({
         AadarNo: "",
@@ -418,21 +431,21 @@ console.log("..................currentDate.",currentDate)
         branchName: "",
         accountName: "",
         accountNo: "",
-        UId: user.UId // Assuming regId is the foreign key in BankDetails
+        UId: user.UId
       });
- 
+
       const responseData = {
         message: "Success",
         data: {
           id: user.UserId,
           first_name: user.first_name,
           last_name: user.last_name,
-          DOJ: user.DOJ, // The stored date without the time component
+          DOJ: user.DOJ,
           expiredDate: user.expiredDate,
-          UId: user.UId 
+          UId: user.UId
         }
       };
- 
+
       return res.status(200).json(responseData);
     } else {
       // Respond with an error message if OTP is invalid
@@ -815,7 +828,7 @@ router.post('/login', async (req, res) => {
  
 router.get('/getUserById', async (req, res) => {
   try {
-      const { UId } = req.session;
+      const { UId } = req.body;
  
       // Fetch user details by UId from the reg table
       const user = await reg.findOne({ where: { UId }, attributes: ['first_name', 'last_name' , 'DOB' , 'gender' , 'email', 'address','pincode', 'state', 'district' , 'country', 'phone' ,'reference' , 'languages' ,'UId', 'DOJ' ,'expiredDate', 'classAttended', 'isans','profilePicUrl', 'maintanance_fee' ] });
@@ -1703,7 +1716,7 @@ router.post('/send-email', async (req, res) => {
  
  
       .reg-success-card {
-        background-image: url('https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYTWA0bZqZRaGcd2yXoQu_AzBPv36ZDRHbeYm7rcVap0nQ1Dk16LUmtFnuWfmfdMGGkrVmZpw2Hg37ay2o6qgG-WAV6D=w1920-h922');
+        background-image: url('https://firebasestorage.googleapis.com/v0/b/thasmai-star-life.appspot.com/o/general_images%2Freg-success-card-img.png?alt=media&token=ab56e564-3eb8-497d-8a14-a2b78e92e53e');
         background-repeat: no-repeat;
         background-color: rgb(62, 61, 91);
         background-size: cover;
@@ -1846,7 +1859,7 @@ router.post('/send-email', async (req, res) => {
       <p>To receive further details about the introduction class (zoom session): Please send a “hi” to number ‘+91 9900829007’. Thank you for taking the first step.</p>
  
       <p class="whatsapp-link">
-      <img class="whatsapp-icon" src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYSnIUgsI2fYvK6_gntrPiT71yOQNKVBOjFaRj6IBkTqFB6XeOj2ucTd_zVvb8P_mCNQTc44g-MWkvmQctQ0q9-7WXEzyw=w1920-h922" alt="">
+      <img class="whatsapp-icon" src="https://firebasestorage.googleapis.com/v0/b/thasmai-star-life.appspot.com/o/general_images%2Fwhatsappicon.gif?alt=media&token=d8742a63-d2dd-4835-b26c-d0234124b770" alt="">
  
           <a class="whatsapp-link" href="https://wa.me/+919008290027">Click here to Join Whatsapp Group</a>
       </p>
@@ -1866,7 +1879,7 @@ router.post('/send-email', async (req, res) => {
         <h1>${UId}</h1>
       </td>
          <td class="logo-container">
-      <img class="reg-card-logo" src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYSV8OQTMueB3tVPRLnS4G7ogutUDfJ8bxG0aSVEgoCF4ULoC0kMv1jqRjuwX-39JSXFw34gAhoiARJ444BG7wiyiaW4=w1227-h922" alt="Thasmai logo" />
+      <img class="reg-card-logo" src="https://firebasestorage.googleapis.com/v0/b/thasmai-star-life.appspot.com/o/general_images%2Fthasmai%20(1).png?alt=media&token=5ffa5d93-caeb-4802-a8be-d92459766004" alt="Thasmai logo" />
     </td> 
     </tr>
     </table>
@@ -1874,11 +1887,11 @@ router.post('/send-email', async (req, res) => {
     <table class="reg-success-card-content">
       <tr>
         <td class="content-chip">
-      <img class="chip" src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYSDv_6wQFPu6a321tH8lrNiPqVRhyOKOiWiTwK4dFhf7LqPyqu3JHwoUjeeZK4Lf2PwKqhcMHATBrJ7i_uVzbNcNpbZHQ=w1920-h922" alt="chip" />
+      <img class="chip" src="https://firebasestorage.googleapis.com/v0/b/thasmai-star-life.appspot.com/o/general_images%2Fchip%20(1).png?alt=media&token=8934f00c-57e8-4c4c-8ea8-d8d2dc55d591" alt="chip" />
     </td>
     <td class="center-content">
       <div>
-        <img class="reg-card-star-life-logo" src="https://lh3.googleusercontent.com/u/0/drive-viewer/AEYmBYQNvO2hAP--VETE3_IPAsKI5McAw4EhsbXPVCbTbvfbN9k_jLs4lHTJWhWJwweNuRdxERjL5p8PfXPfO4X28PS_IYVF_g=w1920-h922" alt="star-life-img" />
+        <img class="reg-card-star-life-logo" src="https://firebasestorage.googleapis.com/v0/b/thasmai-star-life.appspot.com/o/general_images%2Fstar-life-logo-gold.png?alt=media&token=3e4ffde3-aca0-4332-bdaf-1621aac5e5f7" alt="star-life-img" />
         <h3 class="reg-card-success-message">Registration Successful</h3>
         <p class="reg-card-contact-number">
           <span>Contact: +91 9008290027</span>
@@ -2059,7 +2072,7 @@ router.get('/meditation-date', async (req, res) => {
  
 router.post('/addBankDetails' , async(req,res) =>{
   try{
-    const { UId } = req. session;
+    const  UId  = req.session.UId;
     const { AadarNo,bankName,IFSCCode,branchName,accountName,accountNo } = req.body;
     if(!UId) {
        return res.status(401).json({error:'User NOt Authorised'});
@@ -2230,7 +2243,7 @@ router.put('/appointment-feedback/:id', async (req, res) => {
  
  
  
-router.put('/maintances-fee/', async (req, res) => {
+router.put('/maintances-fee', async (req, res) => {
   const UId = req.session.UId;
   const maintanance_fee = req.body.maintanance_fee;
  
@@ -2449,10 +2462,10 @@ router.get('/globalMessage/:page', async (req, res) => {
   }
 });
 
-router.get('/gurujimessage', async (req, res) => {
+router.get('/gurujimessage/:page', async (req, res) => {
   try {
     
-    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const page = parseInt(req.params.page) || 1;
     const limit = 10;
     
     const offset = (page - 1) * limit;

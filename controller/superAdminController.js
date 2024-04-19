@@ -252,6 +252,7 @@ router.get('/events', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 router.get('/get-event/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -288,6 +289,7 @@ router.get('/get-event/:id', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 router.put('/update-event/:id', upload.single('image'), async (req, res) => {
   const id = req.params.id;
   const userData = req.body;
