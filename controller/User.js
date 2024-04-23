@@ -2329,8 +2329,8 @@ router.put('/maintances-fee', async (req, res) => {
  
 router.post('/messages', async (req, res) => {
   try {
-      
-      const {UId, message, messageTime,isAdminMessage, messagetype,messageDate} = req.body;
+      const UId = req.session.UId
+      const { message, messageTime,isAdminMessage, messagetype,messageDate} = req.body;
 
       // Check if the user exists in the reg table and maintanance_fee is true
       const regUser = await reg.findOne({ where: { UId, maintanance_fee: true } });
@@ -2387,7 +2387,7 @@ else{
 
 router.get('/privateMessage/:page' , async(req, res) =>{
   try{
-    const { UId } = req. session;
+    const { UId } = req.session;
     const page = parseInt(req.params.page) || 1;
     const limit = 10;
     if(!UId) {

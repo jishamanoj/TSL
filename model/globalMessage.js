@@ -11,7 +11,7 @@ const globalMessage = sequelize.define('globalMessage',{
     message: { type: DataTypes.TEXT},
     messageTime: { type: DataTypes.STRING},
     messageDate:{ type: DataTypes.STRING},
-    isAdminMessage:{type: DataTypes.STRING},
+    isAdminMessage:{type: DataTypes.BOOLEAN},
     messagetype : { type:DataTypes.STRING},
 });
 sequelize.sync({alter:true})

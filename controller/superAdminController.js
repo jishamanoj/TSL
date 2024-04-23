@@ -425,9 +425,9 @@ router.get('/searchfield', async (req, res) => {
 
 router.post('/coupon-systemDistribute', async (req, res) => {
   try {
-    console.log("...................enter....................");
+   // console.log("...................enter....................");
     const { totalCoupons, distributedIds, description } = req.body;
-console.log("------------------------totalCoupons, distributedIds, description.........",totalCoupons, distributedIds, description);
+//console.log("------------------------totalCoupons, distributedIds, description.........",totalCoupons, distributedIds, description);
     // Validate input
     if (!totalCoupons || !distributedIds || !Array.isArray(distributedIds)) {
       return res.status(400).json({ message: 'Invalid input. Please provide totalCoupons and an array of distributedIds.' });
@@ -449,7 +449,7 @@ console.log("------------------------totalCoupons, distributedIds, description..
       }, // Exclude the first 10 records
     });
 
-    console.log("........................................................", usersWithCoupons);
+   // console.log("........................................................", usersWithCoupons);
 
     // Check if enough coupons are available for distribution
     if (usersWithCoupons.length < totalCoupons) {
@@ -1339,7 +1339,6 @@ router.get('/search', async (req, res) => {
 ////////////////////////////appointments/////////////////////////////////
 
 
-
 router.get('/list-all-appointment', async (req, res) => {
   try {
     const appointmentData = await Appointment.findAll();
@@ -1399,9 +1398,7 @@ router.get('/list-appointment-details', async (req, res) => {
     console.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
-});
-
-
+})
 
 const cron = require('node-cron');
 
@@ -1678,7 +1675,6 @@ router.post('/admin-messages', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 router.post('/adminglobalMessage', async (req, res) => {
   try {

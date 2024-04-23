@@ -13,6 +13,8 @@ const gurujiMessage = sequelize.define ('gurujiMessage',{
     messageTime :{ type: DataTypes.STRING},
     messagetype : { type:DataTypes.STRING},
     messageDate:{ type: DataTypes.STRING},
+    isAdminMessage:{type: DataTypes.BOOLEAN},
+
 });
 sequelize.sync({alter:true})
     .then((data) => {

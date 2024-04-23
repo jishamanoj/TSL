@@ -13,6 +13,8 @@ const privateMsg = sequelize.define ('privateMsg',{
     messageTime :{ type: DataTypes.STRING},
     messageDate:{ type: DataTypes.STRING},
     messagetype : { type:DataTypes.STRING},
+    isAdminMessage:{type: DataTypes.BOOLEAN},
+
 });
 sequelize.sync({alter:true})
     .then((data) => {
