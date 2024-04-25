@@ -37,6 +37,7 @@ admin.initializeApp({
 const upload = multer({ dest: 'uploads/' });
 const storage = admin.storage().bucket();
 
+
 router.post('/login', async (req, res) => {
   console.log("..................enter...........")
   try {
@@ -1711,7 +1712,7 @@ router.post('/gurujimessage', async (req, res) => {
 router.post('/global-message', async (req, res) => {
   try {
     const {UId, message, messageTime, messageDate,isAdminMessage} = req.body;
-    
+
     // Create a new message entry
     const newMessage = await globalMessage.create({
       UId,

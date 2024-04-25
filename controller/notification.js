@@ -94,4 +94,58 @@ const notificationCronJob = cron.schedule('0 0 * * *', async () => {
 
 notificationCronJob.start();
 
+
+async function sendNotificationToUsers(userIds, title, message) {
+  try {
+    
+    const notifications = await Notification.findAll({ where: { UId: userIds } });
+    
+    
+    if (!notifications.length) {
+      console.error('Notifications not found for any user');
+      return;
+    }
+
+    
+    const notificationMessages = notifications.map(notification => ({
+      notification: { title, body: message },
+      token: notification.token
+    }));
+
+    
+    const responses = await Promise.all(
+      notificationMessages.map(notificationMessage => admin.messaging().send(notificationMessage))
+    );
+
+    
+    responses.forEach((response, index) => {
+      console.log(`Notification sent successfully to user ${userIds[index]}:`, response);
+    });
+  } catch (error) {
+    console.error('Error sending notifications:', error);
+  }
+}
+
+router.post('/send-broadcast-notification', async (req, res) => {
+  try {
+
+    const users = await Notification.findAll();
+    const userIds = users.map(user => user.UId);
+    
+    const {title, message } = req.body;
+
+    
+    if (!userIds || !title || !message) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    await sendNotificationToUsers(userIds, title, message);
+
+    res.json({ message: 'Broadcast notification sent successfully' });
+  } catch (error) {
+    console.error('Error sending broadcast notification:', error);
+    res.status(500).json({ error: 'An error occurred while sending broadcast notification' });
+  }
+});
+
 module.exports = router;
