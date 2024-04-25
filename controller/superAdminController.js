@@ -29,6 +29,7 @@ const privateMsg = require('../model/privatemsg');
 const multer =require('multer');
 const timeTracking = require('../model/timeTracking');
 const gurujiMessage = require('../model/gurujiMessage');
+const ashramexpense = require('../model/expense');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: "gs://thasmai-star-life.appspot.com"
@@ -1402,38 +1403,7 @@ router.get('/list-appointment-details', async (req, res) => {
 
 const cron = require('node-cron');
 
-cron.schedule('0 9 * * *', async () =>{
-  try {
-    console.log('cron job ');
-    // Calculate the date 3 days from now
-    const threeDaysFromNow = new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000);
 
-    // Find all appointments scheduled within the next 3 days
-    const appointments = await Appointment.findAll({
-        where: {
-            appointmentDate: {
-                [Op.between]: [new Date(), threeDaysFromNow] // Find appointments between today and 3 days from now
-            }
-        }
-    });
-
-    // Iterate over each appointment and send notifications
-    for (const appointment of appointments) {
-        // Create a notification for each appointment
-        await Notification.create({
-            UId: appointment.UId,
-            // Add any additional data you want to include in the notification
-        });
-
-        // Log the notification
-        console.log(`Notification sent for appointment with ID ${appointment.id}`);
-    }
-} catch (error) {
-    console.error('Error scheduling appointment notifications:', error);
-}
-}, {
-timezone: 'Asia/Kolkata' // Set timezone to Indian Standard Time (IST)
-});
 router.get('/list-appointment/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -1792,6 +1762,199 @@ router.get('/get-event/:id', async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+//////////////////expense/////////////////////////////////
+
+router.post('/expense', upload.single('invoice'), async (req, res) => {
+  const { Date, expenseType, amount, description } = req.body;
+  const invoiceFile = req.file;
+
+  try {
+    if (!Date || !expenseType || !amount) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Create a new ashram expense
+    const newExpense = await ashramexpense.create({
+      Date,
+      expenseType,
+      amount,
+      description
+    });
+
+    let invoiceUrl = '';
+    if (invoiceFile) {
+      const invoicePath = `invoices/${newExpense.id}/${invoiceFile.originalname}`;
+
+      await storage.upload(invoiceFile.path, {
+        destination: invoicePath,
+        metadata: {
+          contentType: invoiceFile.mimetype
+        }
+      });
+
+      invoiceUrl = `gs://${storage.name}/${invoicePath}`;
+    }
+
+    await newExpense.update({ invoiceUrl });
+
+    res.status(201).json({ message: 'Ashram expense created successfully', expense: newExpense });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.post('/get-expense', async (req, res) => {
+  try {
+    
+    const page = parseInt(req.body.page) || 1;
+    const pageSize = 10;
+    const offset = (page - 1) * pageSize;
+    const count = await ashramexpense.count();
+
+    const totalpages = Math.ceil(count/pageSize)
+
+    const expenses = await ashramexpense.findAll({
+      offset: offset,
+      limit: pageSize
+    });
+
+  
+    const upcomingEventsFormatted = await Promise.all(expenses.map(async expense => {
+      let invoiceUrl = null;
+      if (expense.invoiceUrl) {
+        const file = storage.file(expense.invoiceUrl.split(storage.name + '/')[1]);
+        const [exists] = await file.exists();
+        if (exists) {
+          invoiceUrl = await file.getSignedUrl({
+            action: 'read',
+            expires: '03-01-2500'
+          });
+          invoiceUrl = invoiceUrl[0];
+        }
+      }
+      return {
+        id: expense.id,
+        Date: expense.Date,
+        expenseType: expense.expenseType,
+        amount: expense.amount,
+        description: expense.description,
+        invoiceUrl
+      };
+    }));
+
+    return res.status(200).json({ expenses: upcomingEventsFormatted,totalpages });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+router.get('/get-expensebyid/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Fetch user details by UId from the reg table
+    const user = await ashramexpense.findOne({ where: { id } });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    let invoiceUrl = null;
+    if (user.invoiceUrl) {
+      // If profilePicUrl exists, fetch the image URL from Firebase Storage
+      const file = storage.file(user.invoiceUrl.split(storage.name + '/')[1]);
+      const [exists] = await file.exists();
+      if (exists) {
+        invoiceUrl = await file.getSignedUrl({
+          action: 'read',
+          expires: '03-01-2500' // Adjust expiration date as needed
+        });
+      }
+    }
+
+    // Send the response with user data including profilePicUrl
+    return res.status(200).json({
+      user: {
+        ...user.toJSON(),
+        invoiceUrl
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+router.post('/filter', async (req, res) => {
+  try {
+    
+    const page = parseInt(req.body.page) || 1;
+    const pageSize = 10;
+
+    const { month, year } = req.query;
+
+  
+    const formattedMonth = month.padStart(2, '0');
+    const formattedYear = year;
+    const searchString = `%/${formattedMonth}/${formattedYear}`;
+
+    
+    const totalCount = await ashramexpense.count({
+      where: {
+        Date: {
+          [Op.like]: searchString
+        }
+      }
+    });
+
+    
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    
+    const offset = (page - 1) * pageSize;
+
+    
+    const expenses = await ashramexpense.findAll({
+      where: {
+        Date: {
+          [Op.like]: searchString
+        }
+      },
+      offset: offset,
+      limit: pageSize
+    });
+
+    
+    const expensesWithImages = await Promise.all(expenses.map(async expense => {
+      let invoiceUrl = null;
+      if (expense.invoiceUrl) {
+        const file = storage.file(expense.invoiceUrl.split(storage.name + '/')[1]);
+        const [exists] = await file.exists();
+        if (exists) {
+          invoiceUrl = await file.getSignedUrl({
+            action: 'read',
+            expires: '03-01-2500'
+          });
+          invoiceUrl = invoiceUrl[0];
+        }
+      }
+      return {
+        id: expense.id,
+        Date: expense.Date,
+        expenseType: expense.expenseType,
+        amount: expense.amount,
+        description: expense.description,
+        invoiceUrl
+      };
+    }));
+
+    res.json({ expenses: expensesWithImages, totalPages: totalPages });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

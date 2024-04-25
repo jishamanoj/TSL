@@ -2330,6 +2330,7 @@ router.put('/maintances-fee', async (req, res) => {
 router.post('/messages', async (req, res) => {
   try {
       const UId = req.session.UId
+      //const UId = req.body.UId;
       const { message, messageTime,isAdminMessage, messagetype,messageDate} = req.body;
 
       // Check if the user exists in the reg table and maintanance_fee is true
@@ -2388,6 +2389,7 @@ else{
 router.get('/privateMessage/:page' , async(req, res) =>{
   try{
     const { UId } = req.session;
+   // const UId = req.query.UId;
     const page = parseInt(req.params.page) || 1;
     const limit = 10;
     if(!UId) {
@@ -2402,7 +2404,7 @@ router.get('/privateMessage/:page' , async(req, res) =>{
  
       const messages = await privateMsg.findAll({ 
         where: {UId},
-        attributes: ['id', 'UId' , 'message' , 'messageTime', 'messageDate'],
+        attributes: ['id', 'UId' , 'message' , 'messageTime', 'messageDate','isAdminMessage'],
         include:[],
         order:[['id' , 'DESC']],
         limit: limit,
@@ -2420,6 +2422,7 @@ router.get('/privateMessage/:page' , async(req, res) =>{
 router.get('/globalMessage/:page', async (req, res) => {
   try {
     const { UId } = req.session;
+   // const UId = req.query.UId;
     if(!UId){
       return res.status(401).json('User not Authenticated');
     }
