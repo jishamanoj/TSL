@@ -10,44 +10,62 @@ const { Op } = require('sequelize');
 const moment = require('moment');
 const admin =require('firebase-admin');
 const Notification = require('../model/notification');
+const payment = require('../model/payment');
 
-
-router.post("/order",async(req, res) => {
-  console.log("enter ");
-  const razorpay = new Razorpay({
-      key_id:"rzp_test_iupJrCXb3OkViV",
-
-      key_secret:"ENTq0OZLrGiOApdzk70wzd1Y"
-
-  });
-  const options = req.body;
-  const order = await razorpay.orders.create(options);
-  if(!order){
-      return res.status(500).send("error");
+router.post('/checkout',async (req, res) => {
+  const options = {
+    amount: Number(req.body.amount),
+    currency: "INR",
+  };
+  try {
+    const order = await instance.orders.create(options);
+    res.status(200).json({
+      success: true,
+      order,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
-  res.json(order);
-
 });
-
-router.post("/order/validate", async (req, res) => {
-  
+router.post('/paymentVerification', async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
     req.body;
 
-  const sha = crypto.createHmac("sha256","ENTq0OZLrGiOApdzk70wzd1Y");
-  //order_id + "|" + razorpay_payment_id
-  sha.update(`${razorpay_order_id}|${razorpay_payment_id}`);
-  const digest = sha.digest("hex");
-  if (digest !== razorpay_signature) {
-    return res.status(400).json({ msg: "Transaction is not legit!" });
-  }
+  const body = razorpay_order_id + "|" + razorpay_payment_id;
 
-  res.json({
-    msg: "success",
-    orderId: razorpay_order_id,
-    paymentId: razorpay_payment_id,
-  });
-});
+  const expectedSignature = crypto
+    .createHmac("sha256", process.env.RAZORPAY_APT_SECRET)
+    .update(body.toString())
+    .digest("hex");
+
+  const isAuthentic = expectedSignature === razorpay_signature;
+
+  if (isAuthentic) {
+    try {
+      // Database operation
+      await payment.create({
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature,
+      });
+      res.status(200).json({success:true})
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  } else {
+    res.status(400).json({
+      success: false,
+      error: "Invalid signature"
+    });
+  }
+})
+
 
 async function sendNotificationToUser(UId, title, message) {
   try {
@@ -125,26 +143,68 @@ async function sendNotificationToUsers(userIds, title, message) {
     console.error('Error sending notifications:', error);
   }
 }
-
 router.post('/send-broadcast-notification', async (req, res) => {
   try {
 
     const users = await Notification.findAll();
     const userIds = users.map(user => user.UId);
     
-    const {title, message } = req.body;
+    const {title, message,Date } = req.body;
 
     
-    if (!userIds || !title || !message) {
+    if (!userIds ||  !message) {
       return res.status(400).json({ error: 'Missing required parameters' });
     }
 
     await sendNotificationToUsers(userIds, title, message);
+    const notification = await broadcast.create({
+      Date,
+      message,
+      title
+    })
 
-    res.json({ message: 'Broadcast notification sent successfully' });
+    res.json({ message: 'Broadcast notification sent successfully',notification });
   } catch (error) {
     console.error('Error sending broadcast notification:', error);
     res.status(500).json({ error: 'An error occurred while sending broadcast notification' });
+  }
+});
+router.post('/get-notification', async (req, res) => {
+  try {
+    
+    const page = parseInt(req.body.page) || 1;
+    const pageSize = 10;
+    const offset = (page - 1) * pageSize;
+    const count = await broadcast.count();
+
+    const totalpages = Math.ceil(count/pageSize)
+
+    const notification = await broadcast.findAll({
+      offset: offset,
+      limit: pageSize
+    });
+
+    return res.status(200).json({ notifications: notification,totalpages: totalpages });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+router.get('/get-notificationbyid/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    
+    const notification = await broadcast.findOne({ where: { id } });
+
+    if (!notification) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.status(200).json({notification:notification });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 

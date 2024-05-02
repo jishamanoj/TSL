@@ -1077,8 +1077,6 @@ router.get('/user-details', async (req, res) => {
   }
 });
  
- 
- 
 router.delete('/delete-user/:phone', async (req, res) => {
     const phone = req.params.phone;
  
@@ -1100,8 +1098,6 @@ router.delete('/delete-user/:phone', async (req, res) => {
     }
 });
  
- 
- 
 router.delete('/deleteuser/:phone', async (req, res) => {
     const phone = req.params.phone;
     try {
@@ -1122,8 +1118,6 @@ return res.status(200).json({ message: 'User deleted successfully' });
         return res.status(500).json({ message: 'Internal Server Error' });
     }
 });
- 
- 
  
 // router.post('/meditation', async (req, res) => {
 //     try {
@@ -1335,9 +1329,7 @@ router.post('/meditation', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
- 
- 
- 
+
 // router.post('/messages', async (req, res) => {
 //   try {
 //       const { UId } = req.session;
@@ -1388,9 +1380,7 @@ router.get('/guruji-date', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
- 
- 
- 
+
 // router.get('/rulesAndConditions', async (req, res) => {
 //   try {
 //     const id = 10;
@@ -1475,8 +1465,6 @@ router.get('/guruji-date', async (req, res) => {
   }
 });
  
- 
- 
 router.put('/rating', async (req, res) => {
   const id = req.body.id;
   const {rating , feedback}= req.body;
@@ -1495,9 +1483,7 @@ router.put('/rating', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
- 
- 
- 
+
 router.get('/list-appointment', async (req, res) => {
   try {
     const  UId = req.session.UId;
@@ -1526,8 +1512,6 @@ router.get('/list-appointment', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
- 
- 
  
 router.put('/updateAppointment/:id', async (req, res) => {
   try {
@@ -1578,8 +1562,6 @@ router.put('/updateAppointment/:id', async (req, res) => {
   }
 });
  
- 
- 
 router.delete('/delete-appointment', async (req, res) => {
   const { id } = req.query;
   const UId = req.session.UId; // Assuming UId is stored in req.session
@@ -1614,9 +1596,7 @@ router.delete('/delete-appointment', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
- 
- 
- 
+
 router.delete('/group-members/:id', async (req, res) => {
   const { id } = req.params;
  
@@ -1639,8 +1619,6 @@ router.delete('/group-members/:id', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
- 
- 
  
 router.post('/send-email', async (req, res) => {
   try {
@@ -1948,8 +1926,6 @@ router.post('/send-email', async (req, res) => {
   }
 });
  
- 
- 
   router.get('/user-details', async (req, res) => {
     try {
         const { UId } = req.session;
@@ -2100,9 +2076,7 @@ router.post('/addBankDetails' , async(req,res) =>{
  
   }
 });
- 
- 
- 
+
 router.get('/getBankDetails', async (req, res) => {
   try {
     const { UId } = req.session;
@@ -2117,8 +2091,6 @@ router.get('/getBankDetails', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
- 
- 
  
 router.put('/updteBankDetails', async (req, res) => {
   try {
@@ -2169,9 +2141,7 @@ try {
     res.status(500).json({ error: 'Internal Server Error' });
 }
 });
- 
- 
- 
+
 router.get('/fetch-details', async (req, res) => {
   try {
       const { UId } = req.session;
@@ -2210,9 +2180,7 @@ router.get('/fetch-details', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
- 
- 
- 
+
 router.put('/appointment-feedback/:id', async (req, res) => {
   const id = req.params.id;  // Corrected to access the ID from the parameters
   const feedback = req.body.feedback;
@@ -2240,9 +2208,7 @@ router.put('/appointment-feedback/:id', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
- 
- 
- 
+
 router.put('/maintances-fee', async (req, res) => {
   const UId = req.session.UId;
   const maintanance_fee = req.body.maintanance_fee;
@@ -2421,12 +2387,12 @@ router.get('/privateMessage/:page' , async(req, res) =>{
  
 router.get('/globalMessage/:page', async (req, res) => {
   try {
-    const { UId } = req.session;
+   // const { UId } = req.session;
    // const UId = req.query.UId;
-    if(!UId){
-      return res.status(401).json('User not Authenticated');
-    }
-    else{
+    // if(!UId){
+    //   return res.status(401).json('User not Authenticated');
+    // }
+    
     const page = parseInt(req.params.page) || 1;
     const limit = 10;
  
@@ -2458,7 +2424,7 @@ router.get('/globalMessage/:page', async (req, res) => {
       messages: messageData,
       totalPages
     });
-  }
+  
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
@@ -2520,9 +2486,6 @@ router.put('/updateUserDetails', async (req, res) => {
   }
 });
  
- 
- 
- 
 router.post('/appFeedback' , async( req, res) => {
   const UId = req.session.UId;
   const { feedback, rating } = req.body;
@@ -2545,8 +2508,6 @@ router.post('/appFeedback' , async( req, res) => {
     return res.status(500).json({error:'internal server error'});
   }
 });
- 
- 
  
 router.get('/listevents', async (req, res) => {
   try {

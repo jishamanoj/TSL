@@ -157,6 +157,29 @@ router.get('/meditation', async (req, res) => {
   }
 });
 
+router.get('/this-month', async (req, res) => {
+  try {
+      
+      const currentDate = new Date();
+     
+      const startDateOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const endDateOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      
+      const userCount = await reg.count({
+          where: {
+              DOJ: {
+                  [Op.between]: [startDateOfMonth.toISOString().slice(0, 10), endDateOfMonth.toISOString().slice(0, 10)]
+              }
+          }
+      });
+
+      res.json({ count: userCount });
+  } catch (error) {
+      console.error('Error:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 router.get('/beneficiaries', async (req, res) => {
   try {
       
