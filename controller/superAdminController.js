@@ -1233,6 +1233,15 @@ router.put('/update-support/:id', async (req, res) => {
       return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
+router.post('/addSupport', async (req, res) => {
+  try {
+    const data = req.body;
+    const support = await supportcontact.create(data);
+    return res.status(200).json({ message: 'Success', support });
+  } catch (error) {
+    return res.status(500).json({ error: 'Internal server error', message: error.message });
+  }
+});
 
 ////////////////////////////////// financial pages////////////////////////////////
 
@@ -1689,7 +1698,7 @@ router.post('/adminglobalMessage', async (req, res) => {
 
     // Fetch first_name and last_name from reg table for each message UId
     const messageData = await Promise.all(messages.map(async (message) => {
-      const userData = await reg.findOne({ where: { UId: message.UId }, attributes: ['first_name', 'last_name'] });
+      const userData = await Users.findOne({ where: { UId: message.UId }, attributes: ['first_name', 'last_name'] });
       const userName = `${userData.first_name} ${userData.last_name}`;
       return { 
         ...message.toJSON(), 
@@ -1791,6 +1800,7 @@ router.get('/get-event/:id', async (req, res) => {
 
 //////////////////expense/////////////////////////////////
 
+
 router.post('/expense', upload.single('invoice'), async (req, res) => {
   const { Date, expenseType, amount, description } = req.body;
   const invoiceFile = req.file;
@@ -1830,7 +1840,6 @@ router.post('/expense', upload.single('invoice'), async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 router.post('/get-expense', async (req, res) => {
   try {
     
@@ -1912,6 +1921,7 @@ router.get('/get-expensebyid/:id', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 router.post('/filter', async (req, res) => {
   try {
     

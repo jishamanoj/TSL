@@ -2455,7 +2455,6 @@ router.get('/gurujimessage/:page', async (req, res) => {
   }
 });
  
- 
 router.put('/updateUserDetails', async (req, res) => {
   const UId = req.session.UId
   const userData = req.body;
@@ -2555,7 +2554,28 @@ router.get('/listevents', async (req, res) => {
   }
 });
  
- 
+router.get('/rewardList', async(req,res) =>{
+  try{
+    const { UId } = req.session;
+   if (!UId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+  }
+  const user = await distribution.findOne({
+    attributes: ['UId', 'distributed_coupons', 'description', 'distribution_time' ],
+    where: { UId },
+});
+
+
+  const rewards =  user.distributed_coupons * 2500;
+//console.log(rewards);
+  return res.status(200).json({user,rewards});
+
+  } catch(error){
+    //console.log(error);
+    return res.status(500).json({ error: 'internal server error'})
+  }
+});
+
  
  
  
