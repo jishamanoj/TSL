@@ -1680,7 +1680,7 @@ router.post('/adminglobalMessage', async (req, res) => {
     const totalPages = Math.ceil(totalCount / limit);
 
     const messages = await globalMessage.findAll({
-      attributes: ['UId', 'message', 'messageTime','messageDate' ,'messageId', 'isAdminMessage'],
+      attributes: ['UId', 'message', 'messageTime','messageDate', 'isAdminMessage'],
       include: [], // No need for Sequelize include here
       order: [['id', 'DESC']],
       limit: limit,
