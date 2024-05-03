@@ -1663,7 +1663,7 @@ console.log(UId);
 
 router.post('/admin-messages', async (req, res) => {
   try {
-    const { message, messageTime} = req.body;
+    const { message, messageTime,isAdminMessage} = req.body;
     
     // Create a new message entry
     const newMessage = await gurujiMessage.create({
