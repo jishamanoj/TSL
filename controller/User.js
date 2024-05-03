@@ -2387,12 +2387,12 @@ router.get('/privateMessage/:page' , async(req, res) =>{
  
 router.get('/globalMessage/:page', async (req, res) => {
   try {
-   // const { UId } = req.session;
+   const { UId } = req.session;
    // const UId = req.query.UId;
-    // if(!UId){
-    //   return res.status(401).json('User not Authenticated');
-    // }
-    
+    if(!UId){
+      return res.status(401).json('User not Authenticated');
+    }
+    else{
     const page = parseInt(req.params.page) || 1;
     const limit = 10;
  
@@ -2424,7 +2424,7 @@ router.get('/globalMessage/:page', async (req, res) => {
       messages: messageData,
       totalPages
     });
-  
+    }
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
