@@ -1670,6 +1670,7 @@ router.post('/admin-messages', async (req, res) => {
       
       message,
       messageTime,
+      isAdminMessage,
     });
 
     res.status(201).json({ message: 'Message created successfully', data: newMessage });
@@ -1678,6 +1679,7 @@ router.post('/admin-messages', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 ///////////////get global messages////////////////////////////////
 router.post('/adminglobalMessage', async (req, res) => {
   try {
@@ -1695,11 +1697,14 @@ router.post('/adminglobalMessage', async (req, res) => {
       limit: limit,
       offset: (page - 1) * limit
     });
+   // console.log(".................",messages);
 
     // Fetch first_name and last_name from reg table for each message UId
     const messageData = await Promise.all(messages.map(async (message) => {
       const userData = await Users.findOne({ where: { UId: message.UId }, attributes: ['firstName', 'secondName'] });
-      const userName = `${userData.first_name} ${userData.last_name}`;
+      console.log("................",userData)
+      const userName = `${userData.firstName} ${userData.secondName}`;
+  
       return { 
         ...message.toJSON(), 
         userName 

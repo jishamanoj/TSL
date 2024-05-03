@@ -2410,8 +2410,9 @@ router.get('/globalMessage/:page', async (req, res) => {
  
     // Fetch first_name and last_name from reg table for each message UId
     const messageData = await Promise.all(messages.map(async (message) => {
-      const userData = await reg.findOne({ where: { UId: message.UId }, attributes: ['first_name', 'last_name'] });
-      const userName = `${userData.first_name} ${userData.last_name}`;
+      const userData = await Users.findOne({ where: { UId: message.UId }, attributes: ['firstName', 'secondName'] });
+      console.log("userData.............",userData);
+      const userName = `${userData.firstName} ${userData.secondName}`;
       return { 
         ...message.toJSON(), 
         userName 

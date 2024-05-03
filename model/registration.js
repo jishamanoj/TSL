@@ -50,7 +50,7 @@ const reg = sequelize.define('reg', {
     ans : { type: DataTypes.STRING },
     isans : { type: DataTypes.BOOLEAN, defaultValue:false},
     other: { type: DataTypes.STRING},
-    profilePicUrl: { type: DataTypes.STRING, allowNull: true },
+    profilePicUrl: { type: DataTypes.BOOLEAN, allowNull: true },
     maintanance_fee: { type: DataTypes.BOOLEAN, defaultValue:false},
     
  });
