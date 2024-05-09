@@ -7,7 +7,7 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
 
 });
 const ashramexpense = sequelize.define('ashramexpense', {
-    Date: {
+    Expense_Date: {
         type: DataTypes.STRING(40),
         allowNull: true,
       },
@@ -23,6 +23,9 @@ const ashramexpense = sequelize.define('ashramexpense', {
        
       
     },
+    emp_id:{
+        type: DataTypes.INTEGER,
+    } ,
    
     description:{
          type:DataTypes.TEXT

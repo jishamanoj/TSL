@@ -2004,47 +2004,46 @@ router.get('/get-messages', async (req, res) => {
 });
  
  
- 
 router.get('/meditation-date', async (req, res) => {
   try {
-      const { UId } = req.session;
- 
-     // const { UId } = req.body;
- 
- 
-      if (!UId) {
-          return res.status(401).json({ error: 'User not authenticated' });
-      }
- 
-      const user = await timeTracking.findAll({
-          attributes: ['UId', 'med_starttime', 'timeEstimate', 'ismeditated'],
-          where: {
-            UId: UId,
-          },
-      });
- 
-      if (!user || user.length === 0) {
-          return res.status(404).json({ error: 'No records found with timeEstimate >= 90' });
-      }
- 
-      // Modify the med_starttime in each record
-      const formattedUser = user.map(record => {
-          const parsedDate = moment(record.med_starttime, "YYYY-MM-DD HH:mm:ss");
-          const formattedDate = parsedDate.format("YYYY-MM-DD HH:mm:ss");
-          const replacedDate = formattedDate.replace(/-/g, ',');
- 
-          // Add the formatted date to the record
-          return { ...record.dataValues, med_starttime: replacedDate };
-      });
- 
-      return res.status(200).json(formattedUser);
+    const { UId } = req.session;
+    if (!UId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Validate and parse page query parameter
+    const page = req.query.page ? parseInt(req.query.page, 10) : 1;
+    const limit = 30;
+
+    const offset = (page - 1) * limit;
+
+    const totalCount = await timeTracking.count({ where: { UId } });
+    const totalPages = Math.ceil(totalCount / limit);
+
+    const user = await timeTracking.findAll({
+      attributes: ['UId', 'med_starttime', 'timeEstimate', 'ismeditated'],
+      where: {
+        UId: UId,
+      },
+      limit,
+      offset
+    });
+
+    // Format response data and send it
+    const responseData = {
+      totalPages,
+      currentPage: page,
+      totalCount,
+      data: user
+    };
+
+    return res.status(200).json(responseData);
+
   } catch (error) {
-      console.error('Error:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
- 
- 
  
 router.post('/addBankDetails' , async(req,res) =>{
   try{

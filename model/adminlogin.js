@@ -8,8 +8,12 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
 });
 const admin = sequelize.define('admin', {
     username: { type: DataTypes.STRING},
+    name:{ type: DataTypes.STRING},
     role: { type: DataTypes.STRING},
     password: { type: DataTypes.STRING},   
+    emp_Id : { type : DataTypes.INTEGER},
+    location : { type : DataTypes.STRING },
+    dateOfJoining : { type: DataTypes.STRING}
  },{timestamps:false});
 
 
