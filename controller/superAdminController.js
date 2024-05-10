@@ -207,6 +207,7 @@ router.get('/beneficiaries', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 ////////////////////////////////events///////////////////////////////
 
 router.post('/add-event', upload.single('image'), async (req, res) => {
@@ -253,12 +254,28 @@ router.post('/add-event', upload.single('image'), async (req, res) => {
   }
 });
 
+
 router.get('/events', async (req, res) => {
   try {
-    
-    const allEvents = await events.findAll();
+    const page = parseInt(req.query.page) || 1; // Parse page number from query string, default to page 1 if not provided
+    const pageSize = parseInt(req.query.pageSize) || 10; // Parse page size from query string, default to 10 if not provided
 
-    
+    // Fetch total count of events
+    const totalCount = await events.count();
+
+    // Calculate total number of pages
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    // Calculate offset based on the requested page and page size
+    const offset = (page - 1) * pageSize;
+
+    // Fetch events with pagination
+    const allEvents = await events.findAll({
+      limit: pageSize,
+      offset: offset
+    });
+
+    // Map events to desired format
     const everyEvents = allEvents.map(event => {
       return {
         id: event.id,
@@ -268,16 +285,116 @@ router.get('/events', async (req, res) => {
         place: event.place,
         date: event.date,
         event_time: event.event_time
-       // image: event.image.toString('base64'), 
+        // image: event.image.toString('base64'), 
       };
     });
 
-    res.status(200).json({ events: everyEvents });
+    // Respond with events and total pages
+    res.status(200).json({ events: everyEvents, totalPages });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+// router.post('/events-query', async (req, res) => {
+//   try {
+//     const queryConditions = req.body.queryConditions;
+//     const page = req.body.page || 1; // Default to page 1 if not provided
+//     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
+
+//     console.log(queryConditions);
+
+//     if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
+//       return res.status(400).json({ message: 'Invalid query conditions provided.' });
+//     }
+
+//     function isNumeric(num) {
+//       return !isNaN(num);
+//     }
+
+//     let sql = "SELECT * FROM sequel.events WHERE ";
+//     for (let i = 0; i < queryConditions.length; i++) {
+//       if(queryConditions[i].operator === "between"){
+
+//       sql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
+        
+//       }
+//       else{
+//       sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
+//       }
+//     }
+
+//     // Apply pagination
+//     const offset = (page - 1) * pageSize;
+//      sql += `LIMIT ${pageSize} OFFSET ${offset}`;
+
+//     console.log(sql);
+
+//     const [queryResults, metadata] = await sequelize.query(sql);
+
+    
+//    const totalCount = queryResults.length;
+
+ 
+//     const totalPages = Math.ceil(totalCount / pageSize);
+    
+//     // Assuming sequelize returns an array of rows in the first element of the results array
+//     res.json({ queryResults ,totalPages});
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: 'Internal server error.' });
+//   }
+// });
+
+
+router.post('/events-query', async (req, res) => {
+  try {
+    const queryConditions = req.body.queryConditions;
+    const page = req.body.page || 1; // Default to page 1 if not provided
+    const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
+
+    console.log(queryConditions);
+
+    if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
+      return res.status(400).json({ message: 'Invalid query conditions provided.' });
+    }
+
+    function isNumeric(num) {
+      return !isNaN(num);
+    }
+
+    let countSql = "SELECT COUNT(*) AS total FROM thasmai.events WHERE ";
+    let sql = "SELECT * FROM thasmai.events WHERE ";
+
+    for (let i = 0; i < queryConditions.length; i++) {
+      if (queryConditions[i].operator === "between") {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      } else {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      }
+    }
+
+    const countResult = await sequelize.query(countSql, { type: sequelize.QueryTypes.SELECT });
+    const totalCount = countResult[0].total;
+
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const offset = (page - 1) * pageSize;
+
+    sql += `LIMIT ${pageSize} OFFSET ${offset}`;
+    console.log(sql);
+
+    const [queryResults, metadata] = await sequelize.query(sql);
+
+    res.json({ queryResults, totalPages });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
 
 router.get('/get-event/:id', async (req, res) => {
   try {
@@ -408,7 +525,7 @@ router.post('/events-query', async (req, res) => {
       return !isNaN(num);
     }
 
-    let sql = "SELECT * FROM sequel.events WHERE ";
+    let sql = "SELECT * FROM sequel.thasmai WHERE ";
     for (let i = 0; i < queryConditions.length; i++) {
       if(queryConditions[i].operator === "between"){
 
@@ -426,16 +543,17 @@ router.post('/events-query', async (req, res) => {
 
     console.log(sql);
 
-    const [queryResults, metadata] = await sequelize.query(sql);
-
-    
-   const totalCount = queryResults.length;
+    const Results = await sequelize.query(sql);
+      
+    const totalCount = Results.length;
+    //console.log(Results,Results.length,'..............');
+   
 
  
     const totalPages = Math.ceil(totalCount / pageSize);
     
     // Assuming sequelize returns an array of rows in the first element of the results array
-    res.json({ queryResults ,totalPages});
+    res.json({ Results ,totalPages});
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error.' });
@@ -1101,7 +1219,7 @@ router.post('/execute-query', async (req, res) => {
       return !isNaN(num);
     }
 
-    let sql = "SELECT * FROM sequel.users WHERE ";
+    let sql = "SELECT * FROM thasmai.users WHERE ";
     for (let i = 0; i < queryConditions.length; i++) {
       sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
     }
@@ -1341,7 +1459,7 @@ router.post('/financial-query', async (req, res) => {
       return !isNaN(num);
     }
 
-    let sql = "SELECT * FROM sequel.users WHERE ";
+    let sql = "SELECT * FROM thasmai.users WHERE ";
 
     for (let i = 0; i < query.length; i++) {
       sql += `${query[i].field} ${query[i].operator} ${isNumeric(query[i].value) ? query[i].value : `'${query[i].value}'`} ${query[i].logicaloperator != "null" ? query[i].logicaloperator : ""} `;
@@ -1423,22 +1541,70 @@ router.get('/search', async (req, res) => {
 ////////////////////////////appointments/////////////////////////////////
 
 
+// router.get('/list-all-appointment', async (req, res) => {
+//   try {
+//     const appointmentData = await Appointment.findAll();
+//     //console.log(appointmentData);
+
+//     if (!appointmentData || appointmentData.length === 0) {
+//       return res.status(404).json({ message: 'No appointments found' });
+//     }
+//     const UIds = appointmentData.map(appointment => appointment.UId);
+
+//     const userData = await Users.findAll({
+//       where: { UId: { [Op.in]: UIds } },
+//       attributes: ['UId', 'coupons'],
+//     });
+//     const userCouponMap = new Map(userData.map(user => [user.UId, user.coupons]));
+
+
+//     const mergedResults = appointmentData.map(appointment => {
+//       const userCoupons = userCouponMap.get(appointment.UId) || 0;
+//       return {
+//         ...appointment.dataValues,
+//         userCoupons,
+//       };
+//     });
+// //console.log(mergedResults)
+//     res.json({appointments:mergedResults});
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// });
+
 router.get('/list-all-appointment', async (req, res) => {
   try {
-    const appointmentData = await Appointment.findAll();
-    //console.log(appointmentData);
+    const page = parseInt(req.query.page) || 1; // Parse page number from query string, default to page 1 if not provided
+    const pageSize = parseInt(req.query.pageSize) || 10; // Parse page size from query string, default to 10 if not provided
+
+    // Fetch total count of appointments
+    const totalCount = await Appointment.count();
+
+    // Calculate total number of pages
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    // Calculate offset based on the requested page and page size
+    const offset = (page - 1) * pageSize;
+
+    // Fetch appointments with pagination
+    const appointmentData = await Appointment.findAll({
+      limit: pageSize,
+      offset: offset
+    });
 
     if (!appointmentData || appointmentData.length === 0) {
       return res.status(404).json({ message: 'No appointments found' });
     }
+
     const UIds = appointmentData.map(appointment => appointment.UId);
 
     const userData = await Users.findAll({
       where: { UId: { [Op.in]: UIds } },
       attributes: ['UId', 'coupons'],
     });
-    const userCouponMap = new Map(userData.map(user => [user.UId, user.coupons]));
 
+    const userCouponMap = new Map(userData.map(user => [user.UId, user.coupons]));
 
     const mergedResults = appointmentData.map(appointment => {
       const userCoupons = userCouponMap.get(appointment.UId) || 0;
@@ -1447,13 +1613,14 @@ router.get('/list-all-appointment', async (req, res) => {
         userCoupons,
       };
     });
-//console.log(mergedResults)
-    res.json({appointments:mergedResults});
+
+    res.json({ appointments: mergedResults, totalPages });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 router.get('/list-appointment-details', async (req, res) => {
   try {
@@ -1635,6 +1802,52 @@ router.put('/update-gurujidate', async (req, res) => {
   }
 });
 
+// router.post('/appointment-query', async (req, res) => {
+//   try {
+//     const queryConditions = req.body.queryConditions;
+//     const page = req.body.page || 1; // Default to page 1 if not provided
+//     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
+
+//     console.log(queryConditions);
+
+//     if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
+//       return res.status(400).json({ message: 'Invalid query conditions provided.' });
+//     }
+
+//     function isNumeric(num) {
+//       return !isNaN(num);
+//     }
+
+//     let sql = "SELECT * FROM thasmai.appointments WHERE ";
+//     for (let i = 0; i < queryConditions.length; i++) {
+//       if(queryConditions[i].operator === "between"){
+
+//       sql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("-")[0]}" and "${queryConditions[i].value.split("-")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
+        
+//       }
+//       else{
+//       sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
+//       }
+//     }
+
+//     // Apply pagination
+//     const offset = (page - 1) * pageSize;
+//     // sql += `LIMIT ${pageSize} OFFSET ${offset}`;
+
+//     console.log(sql);
+
+//     const results = await sequelize.query(sql);
+//     console.log(results[0]);
+    
+//     // Assuming sequelize returns an array of rows in the first element of the results array
+//     res.json({ results: results[0] });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: 'Internal server error.' });
+//   }
+// });
+
+
 router.post('/appointment-query', async (req, res) => {
   try {
     const queryConditions = req.body.queryConditions;
@@ -1651,29 +1864,33 @@ router.post('/appointment-query', async (req, res) => {
       return !isNaN(num);
     }
 
+    let countSql = "SELECT COUNT(*) AS total FROM thasmai.appointments WHERE ";
     let sql = "SELECT * FROM thasmai.appointments WHERE ";
-    for (let i = 0; i < queryConditions.length; i++) {
-      if(queryConditions[i].operator === "between"){
 
-      sql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("-")[0]}" and "${queryConditions[i].value.split("-")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
-        
-      }
-      else{
-      sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
+    for (let i = 0; i < queryConditions.length; i++) {
+      if (queryConditions[i].operator === "between") {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("-")[0]}" and "${queryConditions[i].value.split("-")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("-")[0]}" and "${queryConditions[i].value.split("-")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      } else {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
       }
     }
 
-    // Apply pagination
-    const offset = (page - 1) * pageSize;
-    // sql += `LIMIT ${pageSize} OFFSET ${offset}`;
+    const countResult = await sequelize.query(countSql, { type: sequelize.QueryTypes.SELECT });
+    const totalCount = countResult[0].total;
 
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const offset = (page - 1) * pageSize;
+
+    sql += `LIMIT ${pageSize} OFFSET ${offset}`;
     console.log(sql);
 
     const results = await sequelize.query(sql);
     console.log(results[0]);
     
     // Assuming sequelize returns an array of rows in the first element of the results array
-    res.json({ results: results[0] });
+    res.json({ results: results[0], totalPages });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error.' });
@@ -2001,51 +2218,6 @@ router.get('/get-expensebyid/:id', async (req, res) => {
   }
 });
 
-router.post('/expense-query', async (req, res) => {
-  try {
-    const queryConditions = req.body.queryConditions;
-    const page = req.body.page || 1; // Default to page 1 if not provided
-    const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
-
-    console.log(queryConditions);
-
-    if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
-      return res.status(400).json({ message: 'Invalid query conditions provided.' });
-    }
-
-    function isNumeric(num) {
-      return !isNaN(num);
-    }
-
-    let sql = "SELECT * FROM sequel.ashramexpenses WHERE ";
-    for (let i = 0; i < queryConditions.length; i++) {
-      if(queryConditions[i].operator === "between"){
-
-      sql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
-        
-      }
-      else{
-      sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
-      }
-    }
-
-    // Apply pagination
-    const offset = (page - 1) * pageSize;
-    // sql += `LIMIT ${pageSize} OFFSET ${offset}`;
-
-    console.log(sql);
-
-    const results = await sequelize.query(sql);
-    console.log(results[0]);
-    
-    // Assuming sequelize returns an array of rows in the first element of the results array
-    res.json({ results: results[0] });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error.' });
-  }
-});
-
 // router.post('/expense-query', async (req, res) => {
 //   try {
 //     const queryConditions = req.body.queryConditions;
@@ -2064,32 +2236,81 @@ router.post('/expense-query', async (req, res) => {
 
 //     let sql = "SELECT * FROM sequel.ashramexpenses WHERE ";
 //     for (let i = 0; i < queryConditions.length; i++) {
+//       if(queryConditions[i].operator === "between"){
+
+//       sql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
+        
+//       }
+//       else{
 //       sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
+//       }
 //     }
 
 //     // Apply pagination
 //     const offset = (page - 1) * pageSize;
-//     sql += `LIMIT ${pageSize} OFFSET ${offset}`;
+//     // sql += `LIMIT ${pageSize} OFFSET ${offset}`;
 
-//     //console.log(sql);
+//     console.log(sql);
 
-//     const [queryResults, metadata] = await sequelize.query(sql);
-//     //console.log(results[0]);
-
-    
-//     const totalCount = queryResults.length;
-
- 
-//     const totalPages = Math.ceil(totalCount / limit);
+//     const results = await sequelize.query(sql);
+//     console.log(results[0]);
     
 //     // Assuming sequelize returns an array of rows in the first element of the results array
-//     res.json({ results: queryResults[0] ,totalPages });
+//     res.json({ results: results[0] });
 //   } catch (error) {
-//     console.log(error);
+//     console.error(error);
 //     res.status(500).json({ message: 'Internal server error.' });
 //   }
 // });
 
+router.post('/expense-query', async (req, res) => {
+  try {
+    const queryConditions = req.body.queryConditions;
+    const page = req.body.page || 1; // Default to page 1 if not provided
+    const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
+
+    console.log(queryConditions);
+
+    if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
+      return res.status(400).json({ message: 'Invalid query conditions provided.' });
+    }
+
+    function isNumeric(num) {
+      return !isNaN(num);
+    }
+
+    let countSql = "SELECT COUNT(*) AS total FROM thasmai.ashramexpenses WHERE ";
+    let sql = "SELECT * FROM thasmai.ashramexpenses WHERE ";
+
+    for (let i = 0; i < queryConditions.length; i++) {
+      if (queryConditions[i].operator === "between") {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      } else {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      }
+    }
+
+    const countResult = await sequelize.query(countSql, { type: sequelize.QueryTypes.SELECT });
+    const totalCount = countResult[0].total;
+
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const offset = (page - 1) * pageSize;
+
+    sql += `LIMIT ${pageSize} OFFSET ${offset}`;
+    console.log(sql);
+
+    const results = await sequelize.query(sql);
+    console.log(results[0]);
+    
+    // Assuming sequelize returns an array of rows in the first element of the results array
+    res.json({ results: results[0], totalPages });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
 
 
 router.post('/filter', async (req, res) => {
