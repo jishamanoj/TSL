@@ -2014,7 +2014,7 @@ router.get('/meditation-date', async (req, res) => {
     // Validate and parse page query parameter
     
     const page = req.query.page ? parseInt(req.query.page, 10) : 1;
-    const limit = 30;
+    const limit = 25;
 
     const offset = (page - 1) * limit;
 
