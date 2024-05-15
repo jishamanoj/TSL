@@ -2416,31 +2416,32 @@ router.post('/operatorCreation', async (req, res) => {
 });
 
 
-router.put('/updateOperator/:emp_Id' , async(req,res)=>{
-  try{
+router.put('/updateOperator/:emp_Id', async (req, res) => {
+  try {
     const emp_Id = req.params.emp_Id;
-    //console.log(emp_Id);
-//const emp_Id = req.body.emp_Id;
     const data = req.body;
-    if(!emp_Id){
-      return res.status(400).json({message:'id is required'});
 
+    if (!emp_Id) {
+      return res.status(400).json({ message: 'id is required' });
     }
-    const operator = await Admin.findOne({where:{emp_Id:emp_Id}});
-    //console.log(operator);
-    if(!operator){
-      return res.status(404).json({message:'id not found'});
-    }
-    
-    const hashedPassword = await bcrypt.hash(data.password,10);
-    await operator.update({ ...data, password: hashedPassword });
 
-    return res.status(200).json({message:'data updated successfully'});
-  } catch(error){
-    console.log(error);
-      return res.status(500).json({message:'internal server error'});
+    const operator = await Admin.findOne({ where: { emp_Id: emp_Id } });
+    if (!operator) {
+      return res.status(404).json({ message: 'id not found' });
     }
-  
+
+    if (data.password) {
+      const hashedPassword = await bcrypt.hash(data.password, 10);
+      data.password = hashedPassword;
+    }
+
+    await operator.update(data);
+
+    return res.status(200).json({ message: 'data updated successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'internal server error' });
+  }
 });
 
 
@@ -2454,6 +2455,81 @@ router.get('/operatorList' , async(req,res) =>{
   } catch(error){
     console.log(error);
     return res.status(500).json('internal server error');
+  }
+});
+
+router.get('/operator/:id' , async(req,res) =>{
+  try{
+    const id = req.params.id;
+    const operator = await Admin.findOne({where:{id:id}});
+    if(!operator){
+      return res.status(404).json('id not found');
+    }
+    return res.status(200).json({message:'operator details', operator});
+  } catch(error){
+    return res.status(500).json('internal server error');
+  }
+});
+router.post('/search-operator', async(req,res) =>{
+  try{
+    const {search, value} = req.body;
+    if(!search || !value){
+      return res.status(404).json('missing values');
+    }
+    const operator = await Admin.findOne({where:{[search]: value}});
+    if(!operator){
+      return res.status(404).json('operator not found');
+    }
+    return res.status(200).json(operator);
+  } catch(error) {
+    return res.status(500).json('internal server error');
+  }
+});
+router.post('/search_users', async (req, res) => {
+  try {
+    console.log("searching users");
+
+    const { search, page } = req.body;
+    const pageSize = 10;
+    
+    const pageNumber = page || 1;
+
+    console.log(`Listing users - Page: ${pageNumber}, PageSize: ${pageSize}`);
+
+    if (!search) {
+      return res.status(400).json({ message: 'Search input is required in the request body.' });
+    }
+
+    const escapedSearch = search.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+
+    const query = {
+      [Op.or]: [
+        { first_name: search.toLowerCase() },
+        { UId: { [Op.regexp]: `^${escapedSearch}` } },
+      ],
+    };
+
+    const users = await reg.findAll({
+      where: query,
+      attributes: ['first_name', 'last_name', 'email', 'phone', 'UId'],
+      offset: (pageNumber - 1) * pageSize,
+      limit: pageSize,
+    });
+
+    const usersWithBase64Image = users.map(user => {
+      return {
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        phone: user.phone,
+        UId: user.UId,
+      };
+    });
+
+    res.status(200).json(usersWithBase64Image);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
