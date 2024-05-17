@@ -30,6 +30,8 @@ const multer =require('multer');
 const timeTracking = require('../model/timeTracking');
 const gurujiMessage = require('../model/gurujiMessage');
 const ashramexpense = require('../model/expense');
+const blogs = require('../model/blogs');
+
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: "gs://thasmai-star-life.appspot.com"
@@ -2383,6 +2385,58 @@ router.post('/filter', async (req, res) => {
   }
 });
 
+router.post('/expense-excel', async (req, res) => {
+  try {
+    const queryConditions = req.body.queryConditions;
+
+    if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
+      return res.status(400).json({ message: 'Invalid query conditions provided.' });
+    }
+
+    function isNumeric(num) {
+      return !isNaN(num);
+    }
+
+    let sql = "SELECT * FROM sequel.ashramexpenses WHERE ";
+    for (let i = 0; i < queryConditions.length; i++) {
+      if (queryConditions[i].operator === "between") {
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      } else {
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'`} ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      }
+    }
+
+    console.log(sql);
+
+    const [queryResults, metadata] = await sequelize.query(sql);
+
+ 
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Expenses');
+
+    if (queryResults.length > 0) {
+      worksheet.columns = Object.keys(queryResults[0]).map(key => ({
+        header: key,
+        key: key,
+        width: 20
+      }));
+
+      queryResults.forEach(result => {
+        worksheet.addRow(result);
+      });
+    }
+
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=expenses.xlsx');
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
 
 /////////////////operator creation//////////////////
 
@@ -2447,16 +2501,28 @@ router.put('/updateOperator/:emp_Id', async (req, res) => {
 
 router.get('/operatorList' , async(req,res) =>{
   try{
-    const list = await Admin.findAll({where: {role:'operator'}});
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const limit =10;
+    const offset = (page - 1) * limit;
+    
+    
+     const totalCount = await Admin.count({where:{role:'operator'}});
+     const totalPages = Math.ceil(totalCount/limit);
+
+     const list = await Admin.findAll({where: {role:'operator'},
+    limit,
+    offset});
     if(!list){
       return res.status(404).json({message:'operators not found'});
     }
-    return res.status(200).json({message:'operators list' , list});
+    return res.status(200).json({message:'operators list' ,totalCount,totalPages, list});
   } catch(error){
     console.log(error);
     return res.status(500).json('internal server error');
   }
 });
+
+
 
 router.get('/operator/:id' , async(req,res) =>{
   try{
@@ -2532,6 +2598,257 @@ router.post('/search_users', async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
+
+//////////////////////////blog//////////////////////////////
+
+router.post('/add-blog', upload.single('image'), async (req, res) => {
+  const { blog_name, blog_description,date} = req.body;
+  const eventImageFile = req.file;
+ 
+  try {
+ 
+ 
+    const newEvent = await blogs.create({
+      blog_name,
+      blog_description,
+      date
+    });
+ 
+ 
+    let image = ''; 
+    if (eventImageFile) {
+      const eventImagePath = `blog_image/${newEvent.id}/${eventImageFile.originalname}`;
+ 
+ 
+      await storage.upload(eventImageFile.path, {
+        destination: eventImagePath,
+        metadata: {
+          contentType: eventImageFile.mimetype
+        }
+      });
+ 
+      image = `gs://${storage.name}/${eventImagePath}`;
+    }
+ 
+    await newEvent.update({ image });
+ 
+    res.status(201).json({ message: 'blog created successfully', blog: newEvent });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+router.get('/listblogs', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    // Fetch total count of blogs
+    const totalBlogs = await blogs.count();
+
+    // Fetch blogs with pagination
+    const upcomingEvents = await blogs.findAll({
+      offset: offset,
+      limit: limit
+    });
+
+    // Calculate total pages
+    const totalPages = Math.ceil(totalBlogs / limit);
+
+    // Map through each event and fetch image if available
+    const upcomingEventsFormatted = await Promise.all(upcomingEvents.map(async event => {
+      let image = null;
+      if (event.image) {
+        // If image URL exists, fetch the image URL from Firebase Storage
+        const file = storage.file(event.image.split(storage.name + '/')[1]);
+        const [exists] = await file.exists();
+        if (exists) {
+          image = await file.getSignedUrl({
+            action: 'read',
+            expires: '03-01-2500' // Adjust expiration date as needed
+          });
+          image = image[0];
+        }
+      }
+      // Return formatted event data with image
+      return {
+        id: event.id,
+        blog_name: event.blog_name,
+        blog_description: event.blog_description,
+        date: event.date,
+        image
+      };
+    }));
+
+    return res.status(200).json({
+      blogs: upcomingEventsFormatted,
+      totalPages: totalPages,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.get('/get-blog/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+ 
+    // Fetch user details by UId from the reg table
+    const user = await blogs.findOne({ where: { id } });
+ 
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+ 
+    let image = null;
+    if (user.image) {
+      // If profilePicUrl exists, fetch the image URL from Firebase Storage
+      const file = storage.file(user.image.split(storage.name + '/')[1]);
+      const [exists] = await file.exists();
+      if (exists) {
+        image = await file.getSignedUrl({
+          action: 'read',
+          expires: '03-01-2500' // Adjust expiration date as needed
+        });
+      }
+    }
+ 
+    // Send the response with user data including profilePicUrl
+    return res.status(200).json({
+      user: {
+        ...user.toJSON(),
+        image
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+router.put('/update-blog/:id', upload.single('image'), async (req, res) => {
+  const id = req.params.id;
+  const userData = req.body;
+  const eventImageFile = req.file;
+ 
+  try {
+ 
+    if (!id) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+ 
+    // Find the user by UId
+    const user = await blogs.findOne({ where: { id } });
+ 
+    // Update user details
+    if (user) {
+      // Update all fields provided in the request, excluding the profilePic field
+      delete userData.image; // Remove profilePic from userData
+      await user.update(userData);
+ 
+      // Fetch current profile picture URL
+      let currentProfilePicUrl = user.image;
+ 
+      // Store or update profile picture in Firebase Storage
+      let image = currentProfilePicUrl; // Default to current URL
+      if (eventImageFile) {
+        const profilePicPath = `blog_image/${id}/${eventImageFile.originalname}`;
+        // Upload new profile picture to Firebase Storage
+        await storage.upload(eventImageFile.path, {
+          destination: profilePicPath,
+          metadata: {
+            contentType: eventImageFile.mimetype
+          }
+        });
+ 
+        // Get the URL of the uploaded profile picture
+        image = `gs://${storage.name}/${profilePicPath}`;
+ 
+        // Delete the current profile picture from Firebase Storage
+        if (currentProfilePicUrl) {
+          const currentProfilePicPath = currentProfilePicUrl.split(storage.name + '/')[1];
+          await storage.file(currentProfilePicPath).delete();
+        }
+      }
+ 
+      // Update user's profilePicUrl in reg table
+      await user.update({ image });
+ 
+      return res.status(200).json({ message: 'blog details updated successfully' });
+    } else {
+      return res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    //console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+router.delete('/delete-blogs/:blogId', async (req, res) => {
+  try {
+      const eventId = req.params.blogId;
+      const event = await blogs.findByPk(eventId);
+ 
+      if (!event) {
+          return res.status(404).json({ error: 'Event not found' });
+      }
+      await event.destroy();
+ 
+      res.status(200).json({ message: 'blog deleted successfully' });
+  } catch (error) {
+      console.log(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+router.post('/blogs-query', async (req, res) => {
+  try {
+    const queryConditions = req.body.queryConditions;
+    const page = req.body.page || 1; // Default to page 1 if not provided
+    const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
+
+    console.log(queryConditions);
+
+    if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
+      return res.status(400).json({ message: 'Invalid query conditions provided.' });
+    }
+
+    function isNumeric(num) {
+      return !isNaN(num);
+    }
+
+    let countSql = "SELECT COUNT(*) AS total FROM sequel.blogs WHERE ";
+    let sql = "SELECT * FROM sequel.blogs WHERE ";
+
+    for (let i = 0; i < queryConditions.length; i++) {
+      if (queryConditions[i].operator === "between") {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      } else {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      }
+    }
+
+    const countResult = await sequelize.query(countSql, { type: sequelize.QueryTypes.SELECT });
+    const totalCount = countResult[0].total;
+
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const offset = (page - 1) * pageSize;
+
+    sql += `LIMIT ${pageSize} OFFSET ${offset}`;
+    console.log(sql);
+
+    const [queryResults, metadata] = await sequelize.query(sql);
+
+    res.json({ queryResults, totalPages });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
+
 
 module.exports = router;
 

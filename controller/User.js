@@ -425,14 +425,14 @@ router.post("/verify_otp", upload.single('profilePic'), async (req, res) => {
       });
 
       // Create a record in the BankDetails table
-      await BankDetails.create({
-        AadarNo: "",
-        IFSCCode: "",
-        branchName: "",
-        accountName: "",
-        accountNo: "",
-        UId: user.UId
-      });
+      // await BankDetails.create({
+      //   AadarNo: "",
+      //   IFSCCode: "",
+      //   branchName: "",
+      //   accountName: "",
+      //   accountNo: "",
+      //   UId: user.UId
+      // });
 
       const responseData = {
         message: "Success",
@@ -2046,36 +2046,43 @@ router.get('/meditation-date', async (req, res) => {
   }
 });
  
-router.post('/addBankDetails' , async(req,res) =>{
-  try{
-    const  UId  = req.session.UId;
-    const { AadarNo,bankName,IFSCCode,branchName,accountName,accountNo } = req.body;
-    if(!UId) {
-       return res.status(401).json({error:'User NOt Authorised'});
- 
+router.post('/addBankDetails', async (req, res) => {
+  try {
+    const UId = req.session.UId;
+    const { AadarNo, bankName, IFSCCode, branchName, accountName, accountNo } = req.body;
+
+    if (!UId) {
+      return res.status(401).json({ error: 'User not authorized' });
     }
- 
-    const existingUser = await Users.findOne({ where :{ UId }});
- 
-     if(!existingUser) {
-      return res.status(404).json({error: 'User not found'});
-     }
-     const bankDetails = await BankDetails.create({
-      UId : existingUser.UId,
+
+    // Basic validation for the input fields
+    if (!AadarNo || !bankName || !IFSCCode || !branchName || !accountName || !accountNo) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    const existingUser = await Users.findOne({ where: { UId } });
+
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const bankDetails = await BankDetails.create({
+      UId: existingUser.UId,
       AadarNo,
       bankName,
       IFSCCode,
       branchName,
       accountName,
       accountNo
-     });
-     return res.status(200).json('bank details added');
-  } catch(error) {
-    console.error('Error:' , error);
-    return res.status(500).json({error:'internal server error'});
- 
+    });
+
+    return res.status(200).json({ message: 'Bank details added successfully' });
+  } catch (error) {
+    console.error('Error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 router.get('/getBankDetails', async (req, res) => {
   try {
@@ -2476,6 +2483,65 @@ router.put('/updateUserDetails', async (req, res) => {
  
       // Fetch current profile picture URL
  
+      return res.status(200).json({ message: 'User details updated successfully' });
+    } else {
+      return res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
+  const UId = req.session.UId
+  const userData = req.body;
+  const profilePicFile = req.file;
+
+  try {
+    // Check if the user is authenticated
+    if (!UId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Find the user by UId
+    const user = await reg.findOne({ where: { UId } });
+
+    // Update user details
+    if (user) {
+      // Update all fields provided in the request, excluding the profilePic field
+      // delete userData.profilePic; // Remove profilePic from userData
+      // await user.update(userData);
+
+      // Fetch current profile picture URL
+      let currentProfilePicUrl = user.profilePicUrl;
+
+      // Store or update profile picture in Firebase Storage
+      let profilePicUrl = currentProfilePicUrl; // Default to current URL
+      if (profilePicFile) {
+        const profilePicPath = `profile_pictures/${UId}/${profilePicFile.originalname}`;
+
+        // Upload new profile picture to Firebase Storage
+        await storage.upload(profilePicFile.path, {
+          destination: profilePicPath,
+          metadata: {
+            contentType: profilePicFile.mimetype
+          }
+        });
+
+        // Get the URL of the uploaded profile picture
+        profilePicUrl = `gs://${storage.name}/${profilePicPath}`;
+
+        // Delete the current profile picture from Firebase Storage
+        if (currentProfilePicUrl) {
+          const currentProfilePicPath = currentProfilePicUrl.split(storage.name + '/')[1];
+          await storage.file(currentProfilePicPath).delete();
+        }
+      }
+
+      // Update user's profilePicUrl in reg table
+      await user.update({ profilePicUrl });
+
       return res.status(200).json({ message: 'User details updated successfully' });
     } else {
       return res.status(404).json({ error: 'User not found' });
