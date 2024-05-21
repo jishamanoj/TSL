@@ -2516,9 +2516,6 @@ router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
- 
-
-
 
 router.post('/appFeedback' , async( req, res) => {
   const UId = req.session.UId;
@@ -2614,50 +2611,93 @@ router.get('/rewardList', async(req,res) =>{
 });
 
  
-router.get('/videos', async (req, res) => {
+router.get('/get-video', async (req, res) => {
   try {
-    // Fetch all videos from the database
-    const allVideos = await Video.findAll();
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
 
-    // Map through each video and construct the response object
-    const videosWithImages = allVideos.map(video => {
-      return {
-        id: video.id,
-        playList_heading: video.playList_heading,
-        Video_heading: video.Video_heading,
-        videoLink: video.videoLink,
-        category: video.category,
-        playList_image: `gs://${process.env.GCLOUD_STORAGE_BUCKET}/playlist_images/${video.id}/${video.playList_image}`
-      };
+    const totalBlogs = await Video.count();
+    const upcomingEvents = await Video.findAll({
+      offset: offset,
+      limit: limit
     });
 
-    // Return the response with all video details and image URLs
-    res.status(200).json(videosWithImages);
+    // Calculate total pages
+    const totalPages = Math.ceil(totalBlogs / limit);
+
+    // Map through each event and fetch image if available
+    const upcomingEventsFormatted = await Promise.all(upcomingEvents.map(async event => {
+      let playList_image = null;
+      if (event.playList_image) {
+        // If image URL exists, fetch the image URL from Firebase Storage
+        const file = storage.file(event.playList_image.split(storage.name + '/')[1]);
+        const [exists] = await file.exists();
+        if (exists) {
+          playList_image = await file.getSignedUrl({
+            action: 'read',
+            expires: '03-01-2500' // Adjust expiration date as needed
+          });
+          playList_image = playList_image[0];
+        }
+      }
+      // Return formatted event data with image
+      return {
+        id: event.id,
+        playList_heading: event.playList_heading,
+        Video_heading: event.Video_heading,
+        videoLink: event.videoLink,
+        category:event.category,
+        playList_image
+      };
+    }));
+
+    return res.status(200).json({
+      videos: upcomingEventsFormatted,
+      totalPages: totalPages,
+    });
   } catch (error) {
-    console.error('Error fetching videos:', error);
+    console.log(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
  
-router.get('/transaction_summary' , async(req,res) =>{
-  try{
-    const { UId} = req.session;
-    if(!UId){
+router.get('/transaction_summary', async (req, res) => {
+  try {
+    const { UId } = req.session;
+    if (!UId) {
       return res.status(401).json('UId is required');
     }
-    const user = await Users.findOne({where:{UId}});
-    if(!user){
-      return res.status(404).json('user not found');
-    }
-    const totalDekshinas = await dekshina.sum('amount', { where: { UId } });
-    const totalGuruji = await donation.sum('amount', { where: { UId } });
 
-    
-    return res.status(200).json({message: 'transaction summary' , totalDekshinas,totalGuruji });
-  } catch (error){
-    return res.status(404).json('internal server error');
+    const user = await Users.findOne({ where: { UId } });
+    if (!user) {
+      return res.status(404).json('User not found');
+    }
+
+    // Fetching the sum and count of dekshinas.amount
+    const totalDekshinasAmount = await dekshina.sum('amount', { where: { UId } });
+    const totalDekshinasCount = await dekshina.count({ where: { UId } });
+
+    // Fetching the sum and count of guruji.amount
+    const totalGurujiAmount = await donation.sum('amount', { where: { UId } });
+    const totalGurujiCount = await donation.count({ where: { UId } });
+
+    // Calculate the total amount and total transaction count
+    const totalAmount = (totalDekshinasAmount || 0) + (totalGurujiAmount || 0);
+    const totalTransactionCount = totalDekshinasCount + totalGurujiCount;
+
+    return res.status(200).json({
+      message: 'Transaction summary',
+      totalDekshinasAmount,
+      totalGurujiAmount,
+      totalAmount,
+      totalTransactionCount
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json('Internal server error');
   }
- });
+});
  
  
 module.exports = router;
