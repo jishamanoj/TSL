@@ -21,7 +21,7 @@ router.put('/processPayment', async (req, response) => {
   // const userId = req.session.userId;
   const UId = req.body.UId;
  
-  console.log("...............................",UId,name);
+  //console.log("...............................",UId,name);
 console.log(reg)
 try {
   // Find the user in the reg table by userId

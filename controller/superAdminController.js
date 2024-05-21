@@ -2639,6 +2639,7 @@ router.post('/add-blog', upload.single('image'), async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 router.get('/listblogs', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -2728,6 +2729,7 @@ router.get('/get-blog/:id', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 router.put('/update-blog/:id', upload.single('image'), async (req, res) => {
   const id = req.params.id;
   const userData = req.body;
@@ -2785,6 +2787,7 @@ router.put('/update-blog/:id', upload.single('image'), async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 router.delete('/delete-blogs/:blogId', async (req, res) => {
   try {
       const eventId = req.params.blogId;
@@ -2801,6 +2804,7 @@ router.delete('/delete-blogs/:blogId', async (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 router.post('/blogs-query', async (req, res) => {
   try {
     const queryConditions = req.body.queryConditions;
