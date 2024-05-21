@@ -35,7 +35,12 @@ const globalMessage = require('../model/globalMessage');
 const feedBack = require('../model/feedback');
 const gurujiMessage = require('../model/gurujiMessage');
 const events = require('../model/events');
- 
+const meditationFees = require('../model/meditationFees');
+const maintenance = require('../model/maintenance'); 
+const Video = require('../model/videos');
+
+
+
 router.get('/getAllUsers', async (req, res) => {
   try {
     // Fetch all users from the reg table
@@ -425,14 +430,14 @@ router.post("/verify_otp", upload.single('profilePic'), async (req, res) => {
       });
 
       // Create a record in the BankDetails table
-      // await BankDetails.create({
-      //   AadarNo: "",
-      //   IFSCCode: "",
-      //   branchName: "",
-      //   accountName: "",
-      //   accountNo: "",
-      //   UId: user.UId
-      // });
+      await BankDetails.create({
+        AadarNo: "",
+        IFSCCode: "",
+        branchName: "",
+        accountName: "",
+        accountNo: "",
+        UId: user.UId
+      });
 
       const responseData = {
         message: "Success",
@@ -781,51 +786,6 @@ router.post('/login', async (req, res) => {
  
  
  
-// router.get('/getUserById/:UId', async (req, res) => {
-//     try {
-//         const { UId } = req.params;
- 
-//         // Fetch user details by UId from the reg table
-//         const user = await reg.findOne({ where: { UId } });
- 
-//         if (!user) {
-//             return res.status(404).json({ error: 'User not found' });
-//         }
- 
-//         let profilePicUrl = null;
-//         if (user.profilePicUrl) {
-//             // If profilePicUrl exists, fetch the image URL from Firebase Storage
-//             const file = storage.file(user.profilePicUrl.split(storage.name + '/')[1]);
-//             const [exists] = await file.exists();
-//             if (exists) {
-//                 profilePicUrl = await file.getSignedUrl({
-//                     action: 'read',
-//                     expires: '03-01-2500' // Adjust expiration date as needed
-//                 });
-//             }
-//         }
- 
-//         // Fetch only 'cycle' and 'day' fields from the meditation table based on the UId
-//         const meditationData = await meditation.findOne({
-//             where: { UId },
-//             attributes: ['cycle', 'day' , 'session_num']
-//         });
- 
-//         // Send the response with user data including profilePicUrl and meditationData
-//         return res.status(200).json({
-//             user: {
-//                 ...user.toJSON(),
-//                 profilePicUrl,
-//                 meditationData // Include only 'cycle' and 'day' fields
-//             }
-//         });
-//     } catch (error) {
-//         console.error(error);
-//         return res.status(500).json({ error: 'Internal Server Error' });
-//     }
-// });
- 
- 
 router.get('/getUserById', async (req, res) => {
   try {
       const { UId } = req.session;
@@ -882,64 +842,64 @@ router.get('/getUserById', async (req, res) => {
  
  
  
-router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
-    const UId = req.session.UId
-   // const userData = req.body;
-    const profilePicFile = req.file;
+// router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
+//     const UId = req.session.UId
+  
+//     const profilePicFile = req.file;
  
-    try {
-      // Check if the user is authenticated
-      if (!UId) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
+//     try {
+//       // Check if the user is authenticated
+//       if (!UId) {
+//         return res.status(401).json({ error: 'Unauthorized' });
+//       }
  
-      // Find the user by UId
-      const user = await reg.findOne({ where: { UId } });
+//       // Find the user by UId
+//       const user = await reg.findOne({ where: { UId } });
  
-      // Update user details
-      if (user) {
-        // Update all fields provided in the request, excluding the profilePic field
-        delete userData.profilePic; // Remove profilePic from userData
-       // await user.update(userData);
+//       // Update user details
+//       if (user) {
+//         // Update all fields provided in the request, excluding the profilePic field
+//         delete userData.profilePic; // Remove profilePic from userData
+//        // await user.update(userData);
  
-        // Fetch current profile picture URL
-        let currentProfilePicUrl = user.profilePicUrl;
+//         // Fetch current profile picture URL
+//         let currentProfilePicUrl = user.profilePicUrl;
  
-        // Store or update profile picture in Firebase Storage
-        let profilePicUrl = currentProfilePicUrl; // Default to current URL
-        if (profilePicFile) {
-          const profilePicPath = `profile_pictures/${UId}/${profilePicFile.originalname}`;
+//         // Store or update profile picture in Firebase Storage
+//         let profilePicUrl = currentProfilePicUrl; // Default to current URL
+//         if (profilePicFile) {
+//           const profilePicPath = `profile_pictures/${UId}/${profilePicFile.originalname}`;
  
-          // Upload new profile picture to Firebase Storage
-          await storage.upload(profilePicFile.path, {
-            destination: profilePicPath,
-            metadata: {
-              contentType: profilePicFile.mimetype
-            }
-          });
+//           // Upload new profile picture to Firebase Storage
+//           await storage.upload(profilePicFile.path, {
+//             destination: profilePicPath,
+//             metadata: {
+//               contentType: profilePicFile.mimetype
+//             }
+//           });
  
-          // Get the URL of the uploaded profile picture
-          profilePicUrl = `gs://${storage.name}/${profilePicPath}`;
+//           // Get the URL of the uploaded profile picture
+//           profilePicUrl = `gs://${storage.name}/${profilePicPath}`;
  
-          // Delete the current profile picture from Firebase Storage
-          if (currentProfilePicUrl) {
-            const currentProfilePicPath = currentProfilePicUrl.split(storage.name + '/')[1];
-            await storage.file(currentProfilePicPath).delete();
-          }
-        }
+//           // Delete the current profile picture from Firebase Storage
+//           if (currentProfilePicUrl) {
+//             const currentProfilePicPath = currentProfilePicUrl.split(storage.name + '/')[1];
+//             await storage.file(currentProfilePicPath).delete();
+//           }
+//         }
  
-        // Update user's profilePicUrl in reg table
-        await user.update({ profilePicUrl });
+//         // Update user's profilePicUrl in reg table
+//         await user.update({ profilePicUrl });
  
-        return res.status(200).json({ message: 'User details updated successfully' });
-      } else {
-        return res.status(404).json({ error: 'User not found' });
-      }
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  });
+//         return res.status(200).json({ message: 'User details updated successfully' });
+//       } else {
+//         return res.status(404).json({ error: 'User not found' });
+//       }
+//     } catch (error) {
+//       console.error(error);
+//       return res.status(500).json({ error: 'Internal Server Error' });
+//     }
+//   });
  
  
  
@@ -961,8 +921,10 @@ router.get('/flag', async (req, res) => {
         return res.status(404).json({ error: 'User not found' });
       }
  
+      const payment = await maintenance.findOne({where:{UId}});
+      const meditation = await meditationFees.findOne({where:{UId}});
       // Return the isans status of the user
-      return res.status(200).json({ message: { isans: user.isans} });
+      return res.status(200).json({ message: { isans: user.isans ,maintenance_payment_status:payment.maintenance_payment_status,meditation_fee_payment_status:meditation.fee_payment_status} });
  
     } catch (error) {
       console.error(error);
@@ -1077,6 +1039,7 @@ router.get('/user-details', async (req, res) => {
   }
 });
  
+
 router.delete('/delete-user/:phone', async (req, res) => {
     const phone = req.params.phone;
  
@@ -1926,30 +1889,30 @@ router.post('/send-email', async (req, res) => {
   }
 });
  
-  router.get('/user-details', async (req, res) => {
-    try {
-        const { UId } = req.session;
-//const UId = req.body.UId;
-console.log('UId:', UId);
-        if (!UId) {
-            return res.status(401).json({ error: 'User not authenticated' });
-        }
+//   router.get('/user-details', async (req, res) => {
+//     try {
+//         const { UId } = req.session;
+// //const UId = req.body.UId;
+// console.log('UId:', UId);
+//         if (!UId) {
+//             return res.status(401).json({ error: 'User not authenticated' });
+//         }
  
-        const user = await reg.findOne({
-            attributes: ['first_name', 'last_name', 'UId', 'DOJ', 'expiredDate'],
-            where: { UId },
-        });
+//         const user = await reg.findOne({
+//             attributes: ['first_name', 'last_name', 'UId', 'DOJ', 'expiredDate'],
+//             where: { UId },
+//         });
  
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
+//         if (!user) {
+//             return res.status(404).json({ error: 'User not found' });
+//         }
  
-        return res.status(200).json(user);
-    } catch (error) {
-        console.error('Error:', error);
-        return res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
+//         return res.status(200).json(user);
+//     } catch (error) {
+//         console.error('Error:', error);
+//         return res.status(500).json({ error: 'Internal Server Error' });
+//     }
+// });
  
  
  
@@ -2050,6 +2013,7 @@ router.post('/addBankDetails', async (req, res) => {
   try {
     const UId = req.session.UId;
     const { AadarNo, bankName, IFSCCode, branchName, accountName, accountNo } = req.body;
+    console.log(AadarNo, bankName, IFSCCode, branchName, accountName, accountNo);
 
     if (!UId) {
       return res.status(401).json({ error: 'User not authorized' });
@@ -2103,6 +2067,7 @@ router.put('/updteBankDetails', async (req, res) => {
   try {
     const { UId } = req.session;
     const bankdetails = req.body;
+    console.log(bankdetails);
  
     if (!UId) {
       return res.status(404).json('unauthenticated');
@@ -2495,7 +2460,7 @@ router.put('/updateUserDetails', async (req, res) => {
 
 router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
   const UId = req.session.UId
-  const userData = req.body;
+//  const userData = req.body;
   const profilePicFile = req.file;
 
   try {
@@ -2552,6 +2517,9 @@ router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
   }
 });
  
+
+
+
 router.post('/appFeedback' , async( req, res) => {
   const UId = req.session.UId;
   const { feedback, rating } = req.body;
@@ -2578,6 +2546,8 @@ router.post('/appFeedback' , async( req, res) => {
 router.get('/listevents', async (req, res) => {
   try {
     const currentDate = new Date();
+
+    currentDate.setHours(0, 0, 0, 0);
     const upcomingEvents = await events.findAll({
       where: {
         date: {
@@ -2644,9 +2614,50 @@ router.get('/rewardList', async(req,res) =>{
 });
 
  
+router.get('/videos', async (req, res) => {
+  try {
+    // Fetch all videos from the database
+    const allVideos = await Video.findAll();
+
+    // Map through each video and construct the response object
+    const videosWithImages = allVideos.map(video => {
+      return {
+        id: video.id,
+        playList_heading: video.playList_heading,
+        Video_heading: video.Video_heading,
+        videoLink: video.videoLink,
+        category: video.category,
+        playList_image: `gs://${process.env.GCLOUD_STORAGE_BUCKET}/playlist_images/${video.id}/${video.playList_image}`
+      };
+    });
+
+    // Return the response with all video details and image URLs
+    res.status(200).json(videosWithImages);
+  } catch (error) {
+    console.error('Error fetching videos:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
  
- 
- 
+router.get('/transaction_summary' , async(req,res) =>{
+  try{
+    const { UId} = req.session;
+    if(!UId){
+      return res.status(401).json('UId is required');
+    }
+    const user = await Users.findOne({where:{UId}});
+    if(!user){
+      return res.status(404).json('user not found');
+    }
+    const totalDekshinas = await dekshina.sum('amount', { where: { UId } });
+    const totalGuruji = await donation.sum('amount', { where: { UId } });
+
+    
+    return res.status(200).json({message: 'transaction summary' , totalDekshinas,totalGuruji });
+  } catch (error){
+    return res.status(404).json('internal server error');
+  }
+ });
  
  
 module.exports = router;

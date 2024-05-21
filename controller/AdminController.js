@@ -16,10 +16,12 @@ const Admin = require("../model/adminlogin");
 
 
 
-router.put('/processPayment', async (request, response) => {
+router.put('/processPayment', async (req, response) => {
  
   // const userId = req.session.userId;
-  const UId = request.body.UId;
+  const UId = req.body.UId;
+ 
+  console.log("...............................",UId,name);
 console.log(reg)
 try {
   // Find the user in the reg table by userId

@@ -67,7 +67,7 @@ router.post('/meditation-paymentVerification', async (req, res) => {
         amount,
         payment_date,
         payment_time,
-        fee_payment_status
+        fee_payment_status:true
       });
       res.status(200).json({success:true})
     } catch (error) {
@@ -129,7 +129,7 @@ router.post('/maintenance-paymentVerification', async (req, res) => {
         amount,
         payment_date,
         payment_time,
-        maintenance_payment_status
+        maintenance_payment_status:true
       });
       res.status(200).json({success:true})
     } catch (error) {
@@ -191,7 +191,7 @@ router.post('/dekshina-paymentVerification', async (req, res) => {
         amount,
         payment_date,
         payment_time,
-        dekshina_payment_status
+        dekshina_payment_status:true
       });
       res.status(200).json({success:true})
     } catch (error) {
@@ -254,7 +254,7 @@ router.post('/donation-paymentVerification', async (req, res) => {
         amount,
         payment_date,
         payment_time,
-        donation_payment_status
+        donation_payment_status:true
       });
       res.status(200).json({success:true})
     } catch (error) {

@@ -31,7 +31,7 @@ const timeTracking = require('../model/timeTracking');
 const gurujiMessage = require('../model/gurujiMessage');
 const ashramexpense = require('../model/expense');
 const blogs = require('../model/blogs');
-
+const Video = require('../model/videos');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: "gs://thasmai-star-life.appspot.com"
@@ -2848,6 +2848,44 @@ router.post('/blogs-query', async (req, res) => {
   }
 });
 
+router.post('/add-video', upload.single('playList_image'), async (req, res) => {
+  const { playList_heading, Video_heading, videoLink, category } = req.body;
+  const playListImageFile = req.file;
+
+  try {
+    // Create a new video record
+    const newVideo = await Video.create({
+      playList_heading,
+      Video_heading,
+      videoLink,
+      category
+    });
+
+    let playList_image = ''; 
+    if (playListImageFile) {
+      const playListImagePath = `playlist_images/${newVideo.id}/${playListImageFile.originalname}`;
+
+      // Upload the image to Firebase Storage
+      await storage.upload(playListImageFile.path, {
+        destination: playListImagePath,
+        metadata: {
+          contentType: playListImageFile.mimetype
+        }
+      });
+
+      // Construct the URL for the uploaded image
+      playList_image = `gs://${storage.name}/${playListImagePath}`;
+    }
+
+    // Update the video record with the image URL
+    await newVideo.update({ playList_image });
+
+    res.status(201).json({ message: 'Video created successfully', video: newVideo });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 
 module.exports = router;
