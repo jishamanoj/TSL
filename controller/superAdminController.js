@@ -2524,10 +2524,10 @@ router.get('/operatorList' , async(req,res) =>{
 
 
 
-router.get('/operator/:id' , async(req,res) =>{
+router.get('/operator/:emp_Id' , async(req,res) =>{
   try{
-    const id = req.params.id;
-    const operator = await Admin.findOne({where:{id:id}});
+    const emp_Id = req.params.emp_Id;
+    const operator = await Admin.findOne({where:{emp_Id:emp_Id}});
     if(!operator){
       return res.status(404).json('id not found');
     }

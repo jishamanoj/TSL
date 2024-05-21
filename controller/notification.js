@@ -271,7 +271,22 @@ router.post('/donation-paymentVerification', async (req, res) => {
   }
 });
  
- 
+router.post('/save-token', async (req, res) => {
+  try {
+    const {UId} = req.session
+    const { token } = req.body;
+
+    const operator = await notification.create({
+      UId,
+      token,
+    });
+
+    return res.status(200).json({ message: 'token saved successfully' ,operator});
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: 'internal server error' });
+  }
+});
  
 async function sendNotificationToUser(UId, title, message) {
   try {

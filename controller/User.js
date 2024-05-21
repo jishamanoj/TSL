@@ -38,7 +38,7 @@ const events = require('../model/events');
 const meditationFees = require('../model/meditationFees');
 const maintenance = require('../model/maintenance'); 
 const Video = require('../model/videos');
-
+const Broadcast =require('../model/broadcast');
 
 
 router.get('/getAllUsers', async (req, res) => {
@@ -667,7 +667,7 @@ router.post('/verify-userotp', async (req, res) => {
     const regUser = await reg.findOne({ where: { email: email } });
  
     if (!regUser) {
-        return res.status(404).json({ message: "User not found" });
+        return res.status(401).json({ message: "User not found" });
     }
     const storedOTP = "1234"; // This is just an example, replace it with the actual stored OTP
  
@@ -692,7 +692,7 @@ router.post('/resetPassword', async (req, res) => {
       const regUser = await reg.findOne({ where: { email: email } });
  
       if (!regUser) {
-          return res.status(404).json({ message: "User not found" });
+          return res.status(401).json({ message: "User not found" });
       }
  
       const hashedPassword = await bcrypt.hash(new_password, 10);
@@ -794,7 +794,7 @@ router.get('/getUserById', async (req, res) => {
       const user = await reg.findOne({ where: { UId }, attributes: ['first_name', 'last_name' , 'DOB' , 'gender' , 'email', 'address','pincode', 'state', 'district' , 'country', 'phone' ,'reference' , 'languages' ,'UId', 'DOJ' ,'expiredDate', 'classAttended', 'isans','profilePicUrl', 'maintanance_fee' ] });
  
       if (!user) {
-          return res.status(404).json({ error: 'User not found' });
+          return res.status(401).json({ error: 'User not found' });
       }
  
       let profilePicUrl = null;
@@ -910,7 +910,7 @@ router.get('/flag', async (req, res) => {
  
       // Check if UId exists in the session
       if (!UId) {
-        return res.status(404).json({ error: 'invalid UId' });
+        return res.status(401).json({ error: 'invalid UId' });
       }
  
       // Find the user by UId
@@ -983,7 +983,7 @@ router.get('/reference/:UId', async (req, res) => {
       });
  
       if (!user) {
-          return res.status(404).json({ message: 'User not found' });
+          return res.status(401).json({ message: 'User not found' });
       }
  
       const fullName = `${user.first_name} ${user.last_name}`.trim();
@@ -1018,7 +1018,7 @@ router.get('/user-details', async (req, res) => {
       });
  
       if (!userDetails) {
-          return res.status(404).json({ message: 'User not found' });
+          return res.status(401).json({ message: 'User not found' });
       }
  
       // Fetch details from BankDetails table
@@ -1048,7 +1048,7 @@ router.delete('/delete-user/:phone', async (req, res) => {
         const user = await reg.findOne({ where: { phone } });
  
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(401).json({ message: 'User not found' });
         }
  
         // Delete the user
@@ -1067,7 +1067,7 @@ router.delete('/deleteuser/:phone', async (req, res) => {
         // Find the user based on the phone number
         const user = await reg.findOne({ where: { phone } });
             if (!user) {
-                return res.status(404).json({ message: 'User not found' });
+                return res.status(401).json({ message: 'User not found' });
             }
 const bank = await bankDetails.findOne({ where: {regId: user.id} });
 await user.destroy();
@@ -1199,7 +1199,7 @@ router.post('/meditation', async (req, res) => {
       // Check if UId exists in the reg table
       const userExists = await Users.findOne({ where: { UId } });
       if (!userExists) {
-          return res.status(404).json({ error: 'User not found in reg table' });
+          return res.status(401).json({ error: 'User not found in reg table' });
       }
  
       const refStartDate = moment(`${startdatetime}`, "YYYY-MM-DD HH:mm:ss", true);
@@ -1435,7 +1435,7 @@ router.put('/rating', async (req, res) => {
   try {
     const appointment = await Appointment.findOne({ where: { id: id } });
     if (!appointment) {
-      return res.status(404).json({ error: 'Appointment not found' });
+      return res.status(401).json({ error: 'Appointment not found' });
     }
  
     await Appointment.update({ rating: rating ,feedback :feedback}, { where: { id: id } });
@@ -1569,7 +1569,7 @@ router.delete('/group-members/:id', async (req, res) => {
  
     // Check if the group member exists
     if (!groupMember) {
-      return res.status(404).json({ error: 'Group member not found' });
+      return res.status(401).json({ error: 'Group member not found' });
     }
  
     // Delete the group member
@@ -2053,7 +2053,7 @@ router.get('/getBankDetails', async (req, res) => {
     const { UId } = req.session;
  
     if (!UId) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(401).json({ message: 'User not found' });
     }
     const userBankDetails = await BankDetails.findOne({where: {UId}}); // assuming you've defined it as "BankDetail" in the reg model
       res.status(200).json(userBankDetails);
@@ -2070,7 +2070,7 @@ router.put('/updteBankDetails', async (req, res) => {
     console.log(bankdetails);
  
     if (!UId) {
-      return res.status(404).json('unauthenticated');
+      return res.status(401).json('unauthenticated');
     }
  
     const existingUser = await reg.findOne({ where: { UId } });
@@ -2120,7 +2120,7 @@ router.get('/fetch-details', async (req, res) => {
  
       // Validate UId
       if (!UId) {
-          return res.status(400).json({ error: 'UId parameter is required' });
+          return res.status(401).json({ error: 'UId parameter is required' });
       }
  
       // Fetch details from both tables
@@ -2159,7 +2159,7 @@ router.put('/appointment-feedback/:id', async (req, res) => {
  
   try {
       if (!id) {
-          return res.status(400).json({ error: 'ID not found' });
+          return res.status(401).json({ error: 'ID not found' });
       }
  
       const dataToUpdate = {
@@ -2187,7 +2187,7 @@ router.put('/maintances-fee', async (req, res) => {
  
   try {
       if (!UId) {
-          return res.status(404).json({ message: 'UId is not found' });
+          return res.status(401).json({ message: 'UId is not found' });
       }
  
       const dataToUpdate = {
@@ -2359,8 +2359,8 @@ router.get('/privateMessage/:page' , async(req, res) =>{
  
 router.get('/globalMessage/:page', async (req, res) => {
   try {
-   const { UId } = req.session;
-   // const UId = req.query.UId;
+   //const { UId } = req.session;
+    const UId = req.query.UId;
     if(!UId){
       return res.status(401).json('User not Authenticated');
     }
@@ -2699,5 +2699,14 @@ router.get('/transaction_summary', async (req, res) => {
   }
 });
  
- 
+router.get('/broadcasts', async (req, res) => {
+  try {
+      const broadcasts = await Broadcast.findAll();
+      res.status(200).json(broadcasts);
+  } catch (error) {
+      console.error('Error fetching broadcasts:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 module.exports = router;
