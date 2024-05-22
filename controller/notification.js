@@ -276,7 +276,7 @@ router.post('/save-token', async (req, res) => {
     const {UId} = req.session
     const { token } = req.body;
 
-    const operator = await notification.create({
+    const operator = await Notification.create({
       UId,
       token,
     });

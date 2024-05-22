@@ -2590,7 +2590,7 @@ router.get('/listevents', async (req, res) => {
  
 router.get('/rewardList', async(req,res) =>{
   try{
-    const { UId } = req.session;
+    const { UId } = req.body;
    if (!UId) {
       return res.status(401).json({ error: 'User not authenticated' });
   }
@@ -2598,7 +2598,9 @@ router.get('/rewardList', async(req,res) =>{
     attributes: ['UId', 'distributed_coupons', 'description', 'distribution_time' ],
     where: { UId },
 });
-
+if (!user) {
+  return res.status(402).json({error: 'No rewards recieved '});
+}
 
   const rewards =  user.distributed_coupons * 2500;
 //console.log(rewards);
