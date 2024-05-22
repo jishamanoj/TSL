@@ -1417,10 +1417,16 @@ router.post('/addSupport', async (req, res) => {
 
 
 router.get('/list-users', async (req, res) => {
+  const pageSize = 10;
+  const page = parseInt(req.query.page) || 1;
+  const offset = (page - 1) * pageSize;
+
   try {
-    // Step 1: Fetch the list of users
-    const usersList = await Users.findAll({
+    // Step 1: Fetch the list of users with pagination
+    const { rows: usersList, count: totalUsers } = await Users.findAndCountAll({
       attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'Level', 'node_number'],
+      limit: pageSize,
+      offset: offset,
     });
 
     // Extract UIds from the usersList
@@ -1442,7 +1448,12 @@ router.get('/list-users', async (req, res) => {
       };
     });
 
-    res.json({ users: mergedResults });
+    res.json({ 
+      users: mergedResults,
+      totalUsers: totalUsers,
+      totalPages: Math.ceil(totalUsers / pageSize),
+      currentPage: page 
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
@@ -1452,6 +1463,8 @@ router.get('/list-users', async (req, res) => {
 router.post('/financial-query', async (req, res) => {
   try {
     const query = req.body.queryConditions;
+    const page = req.body.page || 1; // Default to page 1 if not provided
+    const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
 
     if (!query || !Array.isArray(query) || query.length === 0) {
       return res.status(400).json({ message: 'Invalid query conditions provided.' });
@@ -1466,6 +1479,10 @@ router.post('/financial-query', async (req, res) => {
     for (let i = 0; i < query.length; i++) {
       sql += `${query[i].field} ${query[i].operator} ${isNumeric(query[i].value) ? query[i].value : `'${query[i].value}'`} ${query[i].logicaloperator != "null" ? query[i].logicaloperator : ""} `;
     }
+
+    // Apply pagination
+    const offset = (page - 1) * pageSize;
+    sql += `LIMIT ${pageSize} OFFSET ${offset}`;
 
     console.log(sql);
 
