@@ -2590,7 +2590,7 @@ router.get('/listevents', async (req, res) => {
  
 router.get('/rewardList', async(req,res) =>{
   try{
-    const { UId } = req.body;
+    const { UId } = req.session;
    if (!UId) {
       return res.status(401).json({ error: 'User not authenticated' });
   }
