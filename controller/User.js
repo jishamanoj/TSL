@@ -904,33 +904,44 @@ router.get('/getUserById', async (req, res) => {
  
  
 router.get('/flag', async (req, res) => {
-    try {
-      // Retrieve UId from the session
-      const UId = req.session.UId;
- 
-      // Check if UId exists in the session
-      if (!UId) {
-        return res.status(401).json({ error: 'invalid UId' });
-      }
- 
-      // Find the user by UId
-      const user = await reg.findOne({ where: { UId } });
- 
-      // Check if user exists
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
- 
-      const payment = await maintenance.findOne({where:{UId}});
-      const meditation = await meditationFees.findOne({where:{UId}});
-      // Return the isans status of the user
-      return res.status(200).json({ message: { isans: user.isans ,maintenance_payment_status:payment.maintenance_payment_status,meditation_fee_payment_status:meditation.fee_payment_status} });
- 
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: 'Internal Server Error' });
+  try {
+    // Retrieve UId from the session
+    const UId = req.session.UId;
+
+    // Check if UId exists in the session
+    if (!UId) {
+      return res.status(404).json({ error: 'invalid UId' });
     }
-  });
+
+    // Find the user by UId
+    const user = await reg.findOne({ where: { UId } });
+
+    // Check if user exists
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const payment = await maintenance.findOne({ where: { UId } });
+    const meditation = await meditationFees.findOne({ where: { UId } });
+
+    // Prepare the response object
+    let response = {
+      isans: user.isans,
+      maintenance_payment_status: payment ? payment.maintenance_payment_status : null,
+      meditation_fee_payment_status: meditation ? meditation.fee_payment_status : null
+    };
+
+    // Filter out null values
+    response = Object.fromEntries(Object.entries(response).filter(([_, v]) => v !== null));
+
+    // Return the filtered response
+    return res.status(200).json({ message: response });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
  
  
  
