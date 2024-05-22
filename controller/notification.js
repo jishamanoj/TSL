@@ -273,20 +273,24 @@ router.post('/donation-paymentVerification', async (req, res) => {
  
 router.post('/save-token', async (req, res) => {
   try {
-    const {UId} = req.session
-    const { token } = req.body;
+    const { UId, token } = req.body;
 
-    const operator = await Notification.create({
-      UId,
-      token,
-    });
+    const existingRecord = await Notification.findOne({ where: { UId } });
 
-    return res.status(200).json({ message: 'token saved successfully' ,operator});
+    if (existingRecord) {
+      existingRecord.token = token;
+      await existingRecord.save();
+    } else {
+      await Notification.create({ UId, token });
+    }
+
+    return res.status(200).json({ message: 'Token saved successfully' });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ error: 'internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
+
  
 async function sendNotificationToUser(UId, title, message) {
   try {
