@@ -2397,7 +2397,7 @@ router.post('/expense-excel', async (req, res) => {
       return !isNaN(num);
     }
 
-    let sql = "SELECT * FROM sequel.ashramexpenses WHERE ";
+    let sql = "SELECT * FROM thasmai.ashramexpenses WHERE ";
     for (let i = 0; i < queryConditions.length; i++) {
       if (queryConditions[i].operator === "between") {
         sql += `${queryConditions[i].field} ${queryConditions[i].operator} "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
