@@ -2726,6 +2726,29 @@ router.get('/categories', async (req, res) => {
   }
 });
 
+router.get('/videos-by-playlist', async (req, res) => {
+  const { playList_heading } = req.query;
+
+  if (!playList_heading) {
+    return res.status(400).json({ error: 'playList_heading query parameter is required' });
+  }
+
+  try {
+    const videos = await Video.findAll({
+      where: { playList_heading },
+      attributes: ['Video_heading', 'videoLink']
+    });
+
+    if (!videos.length) {
+      return res.status(404).json({ error: 'No videos found for the provided playList_heading' });
+    }
+
+    res.status(200).json({ videos });
+  } catch (error) {
+    console.error('Error fetching videos:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 
 module.exports = router;

@@ -528,7 +528,7 @@ router.post('/events-query', async (req, res) => {
       return !isNaN(num);
     }
 
-    let sql = "SELECT * FROM sequel.thasmai WHERE ";
+    let sql = "SELECT * FROM thasmai.events WHERE ";
     for (let i = 0; i < queryConditions.length; i++) {
       if(queryConditions[i].operator === "between"){
 
@@ -1461,6 +1461,12 @@ router.get('/list-users', async (req, res) => {
   }
 });
 
+router.post('/query',async (req, res) => {
+  const results = await sequelize.query(`${req.body.query}`);
+  if(results){
+    return res.json({ response: results });
+  }}
+)
 router.post('/financial-query', async (req, res) => {
   try {
     const queryConditions = req.body.queryConditions;
@@ -3027,8 +3033,8 @@ router.post('/blogs-query', async (req, res) => {
       return !isNaN(num);
     }
 
-    let countSql = "SELECT COUNT(*) AS total FROM sequel.blogs WHERE ";
-    let sql = "SELECT * FROM sequel.blogs WHERE ";
+    let countSql = "SELECT COUNT(*) AS total FROM thasmai.blogs WHERE ";
+    let sql = "SELECT * FROM thasmai.blogs WHERE ";
 
     for (let i = 0; i < queryConditions.length; i++) {
       if (queryConditions[i].operator === "between") {
