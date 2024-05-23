@@ -2568,7 +2568,7 @@ router.get('/rewardList', async(req,res) =>{
     where: { UId },
 });
 if (!user) {
-  return res.status(402).json({error: 'No rewards recieved '});
+  return res.status(402).json({message: 'No rewards recieved '});
 }
 
   const rewards =  user.distributed_coupons * 2500;
@@ -2662,6 +2662,44 @@ router.get('/transaction_summary', async (req, res) => {
       totalGurujiAmount,
       totalAmount,
       totalTransactionCount
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json('Internal server error');
+  }
+});
+
+router.get('/transaction_list', async (req, res) => {
+  try {
+    const { UId } = req.session;
+    if (!UId) {
+      return res.status(401).json('UId is required');
+    }
+
+    const user = await Users.findOne({ where: { UId } });
+    if (!user) {
+      return res.status(404).json('User not found');
+    }
+
+    const dekshinas = await dekshina.findAll({ where: { UId } });
+    const donations = await donation.findAll({ where: { UId } });
+    const meditation = await meditationFees.findAll({ where: { UId } });
+    const maintenancefee = await maintenance.findAll({ where: { UId } });
+
+    // Merge the results
+    const transactions = [
+      ...dekshinas.map(d => ({ ...d.dataValues, type: 'dekshina' })),
+      ...donations.map(d => ({ ...d.dataValues, type: 'donation' })),
+      ...meditation.map(m => ({ ...m.dataValues, type: 'meditation' })),
+      ...maintenancefee.map(m => ({ ...m.dataValues, type: 'maintenance' }))
+    ];
+
+    // Sort by date in descending order
+    transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    return res.status(200).json({
+      message: 'Transaction list',
+      transactions
     });
   } catch (error) {
     console.error(error);
