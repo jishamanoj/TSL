@@ -2677,7 +2677,7 @@ router.get('/get-video', async (req, res) => {
  
 router.get('/transaction_summary', async (req, res) => {
   try {
-    const { UId } = req.session;
+    const UId  = req.session.UId;
     if (!UId) {
       return res.status(401).json('UId is required');
     }
