@@ -38,7 +38,8 @@ const meditationFees = require('../model/meditationFees');
 const maintenance = require('../model/maintenance'); 
 const Video = require('../model/videos');
 const Broadcast =require('../model/broadcast');
-
+const dekshina = require('../model/dekshina');
+const donation = require('../model/donation');
 
 router.get('/getAllUsers', async (req, res) => {
   try {

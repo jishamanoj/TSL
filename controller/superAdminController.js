@@ -1222,7 +1222,7 @@ router.post('/execute-query', async (req, res) => {
       return !isNaN(num);
     }
 
-    let sql = "SELECT * FROM thasmai.users WHERE ";
+    let sql = "SELECT * FROM thasmai.Users WHERE ";
     for (let i = 0; i < queryConditions.length; i++) {
       sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
     }
@@ -1467,6 +1467,7 @@ router.post('/query',async (req, res) => {
     return res.json({ response: results });
   }}
 )
+
 router.post('/financial-query', async (req, res) => {
   try {
     const queryConditions = req.body.queryConditions;
@@ -1483,8 +1484,8 @@ router.post('/financial-query', async (req, res) => {
       return !isNaN(num);
     }
 
-    let countSql = "SELECT COUNT(*) AS total FROM thasmai.users WHERE ";
-    let sql = "SELECT * FROM thasmai.users WHERE ";
+    let countSql = "SELECT COUNT(*) AS total FROM thasmai.Users WHERE ";
+    let sql = "SELECT * FROM thasmai.Users WHERE ";
 
     for (let i = 0; i < queryConditions.length; i++) {
       if (queryConditions[i].operator === "between") {
@@ -1644,8 +1645,8 @@ router.post('/donation-query', async (req, res) => {
       return !isNaN(num);
     }
  
-    let countSql = "SELECT COUNT(*) AS total FROM thasmai.users WHERE ";
-    let sql = "SELECT * FROM thasmai.users WHERE ";
+    let countSql = "SELECT COUNT(*) AS total FROM thasmai.Users WHERE ";
+    let sql = "SELECT * FROM thasmai.Users WHERE ";
  
     for (let i = 0; i < queryConditions.length; i++) {
       if (queryConditions[i].operator === "between") {
