@@ -32,6 +32,7 @@ const gurujiMessage = require('../model/gurujiMessage');
 const ashramexpense = require('../model/expense');
 const blogs = require('../model/blogs');
 const Video = require('../model/videos');
+const donation = require('../model/donation')
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: "gs://thasmai-star-life.appspot.com"
@@ -1462,11 +1463,13 @@ router.get('/list-users', async (req, res) => {
 
 router.post('/financial-query', async (req, res) => {
   try {
-    const query = req.body.queryConditions;
+    const queryConditions = req.body.queryConditions;
     const page = req.body.page || 1; // Default to page 1 if not provided
     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
 
-    if (!query || !Array.isArray(query) || query.length === 0) {
+    console.log(queryConditions);
+
+    if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
       return res.status(400).json({ message: 'Invalid query conditions provided.' });
     }
 
@@ -1474,16 +1477,26 @@ router.post('/financial-query', async (req, res) => {
       return !isNaN(num);
     }
 
+    let countSql = "SELECT COUNT(*) AS total FROM thasmai.users WHERE ";
     let sql = "SELECT * FROM thasmai.users WHERE ";
 
-    for (let i = 0; i < query.length; i++) {
-      sql += `${query[i].field} ${query[i].operator} ${isNumeric(query[i].value) ? query[i].value : `'${query[i].value}'`} ${query[i].logicaloperator != "null" ? query[i].logicaloperator : ""} `;
+    for (let i = 0; i < queryConditions.length; i++) {
+      if (queryConditions[i].operator === "between") {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      } else {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      }
     }
 
-    // Apply pagination
-    const offset = (page - 1) * pageSize;
-    sql += `LIMIT ${pageSize} OFFSET ${offset}`;
+    const countResult = await sequelize.query(countSql, { type: sequelize.QueryTypes.SELECT });
+    const totalCount = countResult[0].total;
 
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const offset = (page - 1) * pageSize;
+
+    sql += `LIMIT ${pageSize} OFFSET ${offset}`;
     console.log(sql);
 
     const userResults = await sequelize.query(sql);
@@ -1504,7 +1517,7 @@ router.post('/financial-query', async (req, res) => {
       };
     });
 
-    res.json({ results: mergedResults });
+    res.json({ results: mergedResults,totalPages });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error.' });
@@ -1556,6 +1569,184 @@ router.get('/search', async (req, res) => {
   }
 });
 
+router.get('/list-donation', async (req, res) => {
+  const pageSize = 10;
+  const page = parseInt(req.query.page) || 1;
+  const offset = (page - 1) * pageSize;
+ 
+  try {
+    // Step 1: Fetch the list of users with pagination
+    const { rows: usersList, count: totalUsers } = await Users.findAndCountAll({
+      attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'Level', 'node_number'],
+      limit: pageSize,
+      offset: offset,
+    });
+ 
+    // Extract UIds from the usersList
+    const UIds = usersList.map(user => user.UId);
+ 
+    // Step 2: Fetch the total sum of distributed_coupons for each UId
+    const distributionResults = await donation.findAll({
+      where: { UId: { [Op.in]: UIds } },
+      attributes: ['UId', [sequelize.fn('sum', sequelize.col('amount')), 'total_donation']],
+      group: ['UId'],
+    });
+ 
+    const latestDonations = await donation.findAll({
+      where: { UId: { [Op.in]: UIds } },
+      attributes: ['UId', 'amount', 'id'],
+      order: [['id', 'DESC']],
+      group: ['id']
+    });
+ 
+    // Step 3: Merge the results and send the response
+    const mergedResults = usersList.map(user => {
+      const distributionResult = distributionResults.find(result => result.UId === user.UId);
+      const latestDonation = latestDonations.find(result => result.UId === user.UId);
+      return {
+        ...user.dataValues,
+        total_donation: distributionResult ? distributionResult.dataValues.total_donation : 0,
+        latest_donation: latestDonation ? latestDonation.amount : 0,
+      };
+    });
+ 
+    res.json({ 
+      users: mergedResults,
+      totalUsers: totalUsers,
+      totalPages: Math.ceil(totalUsers / pageSize),
+      currentPage: page 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+ 
+router.post('/donation-query', async (req, res) => {
+  try {
+    const queryConditions = req.body.queryConditions;
+    const page = req.body.page || 1; // Default to page 1 if not provided
+    const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
+ 
+    console.log(queryConditions);
+ 
+    if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
+      return res.status(400).json({ message: 'Invalid query conditions provided.' });
+    }
+ 
+    function isNumeric(num) {
+      return !isNaN(num);
+    }
+ 
+    let countSql = "SELECT COUNT(*) AS total FROM thasmai.users WHERE ";
+    let sql = "SELECT * FROM thasmai.users WHERE ";
+ 
+    for (let i = 0; i < queryConditions.length; i++) {
+      if (queryConditions[i].operator === "between") {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      } else {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      }
+    }
+ 
+    const countResult = await sequelize.query(countSql, { type: sequelize.QueryTypes.SELECT });
+    const totalCount = countResult[0].total;
+ 
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const offset = (page - 1) * pageSize;
+ 
+    sql += `LIMIT ${pageSize} OFFSET ${offset}`;
+    console.log(sql);
+ 
+    const userResults = await sequelize.query(sql);
+ 
+    const UIds = userResults[0].map(user => user.UId);
+ 
+    const distributionResults = await donation.findAll({
+      where: { UId: { [Op.in]: UIds } },
+      attributes: ['UId', [sequelize.fn('sum', sequelize.col('amount')), 'total_donation']],
+      group: ['UId'],
+    });
+ 
+    const latestDonations = await donation.findAll({
+      where: { UId: { [Op.in]: UIds } },
+      attributes: ['UId', 'amount', 'id'],
+      order: [['id', 'DESC']],
+      group: ['id']
+    });
+ 
+    const mergedResults = userResults[0].map(user => {
+      const distributionResult = distributionResults.find(result => result.UId === user.UId);
+      const latestDonation = latestDonations.find(result => result.UId === user.UId);
+      return {
+        ...user,
+        total_donation: distributionResult ? distributionResult.dataValues.total_donation : 0,
+        latest_donation: latestDonation ? latestDonation.amount : 0,
+      };
+    });
+ 
+    res.json({ results: mergedResults,totalPages });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+ 
+router.get('/donation-search', async (req, res) => {
+  try {
+    const field = req.query.field; 
+    const value = req.query.value; 
+ 
+    if (!field || !value) {
+      return res.status(400).json({ message: 'Please provide both field and value parameters' });
+    }
+ 
+    const userDetails = await Users.findAll({
+      where: {
+        [field]: value,
+      },
+    });
+ 
+    if (!userDetails || userDetails.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+ 
+    // Step 2: Extract UIds from the search results
+    const UIds = userDetails.map(user => user.UId);
+ 
+    // Step 3: Fetch the total sum of distributed_coupons for each UId
+    const distributionResults = await donation.findAll({
+      where: { UId: { [Op.in]: UIds } },
+      attributes: ['UId', [sequelize.fn('sum', sequelize.col('amount')), 'total_donation']],
+      group: ['UId'],
+    });
+ 
+    const latestDonations = await donation.findAll({
+      where: { UId: { [Op.in]: UIds } },
+      attributes: ['UId', 'amount', 'id'],
+      order: [['id', 'DESC']],
+      group: ['id']
+    });
+ 
+    // Step 4: Merge the user details with the distribution results
+    const mergedResults = userDetails.map(user => {
+      const distributionResult = distributionResults.find(result => result.UId === user.UId);
+      const latestDonation = latestDonations.find(result => result.UId === user.UId);
+      return {
+        ...user.dataValues,
+        total_distributed_coupons: distributionResult ? distributionResult.dataValues.total_distributed_coupons : 0,
+        latest_donation: latestDonation ? latestDonation.amount : 0,
+      };
+    });
+ 
+    res.json({ message: 'Success', data: mergedResults });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
 ////////////////////////////appointments/////////////////////////////////
 
@@ -2486,7 +2677,6 @@ router.post('/operatorCreation', async (req, res) => {
   }
 });
 
-
 router.put('/updateOperator/:emp_Id', async (req, res) => {
   try {
     const emp_Id = req.params.emp_Id;
@@ -2515,7 +2705,6 @@ router.put('/updateOperator/:emp_Id', async (req, res) => {
   }
 });
 
-
 router.get('/operatorList' , async(req,res) =>{
   try{
     const page = req.query.page ? parseInt(req.query.page) : 1;
@@ -2539,8 +2728,6 @@ router.get('/operatorList' , async(req,res) =>{
   }
 });
 
-
-
 router.get('/operator/:emp_Id' , async(req,res) =>{
   try{
     const emp_Id = req.params.emp_Id;
@@ -2553,6 +2740,7 @@ router.get('/operator/:emp_Id' , async(req,res) =>{
     return res.status(500).json('internal server error');
   }
 });
+
 router.post('/search-operator', async(req,res) =>{
   try{
     const {search, value} = req.body;
@@ -2568,6 +2756,7 @@ router.post('/search-operator', async(req,res) =>{
     return res.status(500).json('internal server error');
   }
 });
+
 router.post('/search_users', async (req, res) => {
   try {
     console.log("searching users");

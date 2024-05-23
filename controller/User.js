@@ -19,7 +19,6 @@ const Appointment = require("../model/appointment");
 const nodemailer = require('nodemailer');
 const meditation = require('../model/meditation');
 const message = require('../model/gurujiMessage');
-
 const applicationconfig = require('../model/applicationConfig');
 const multer = require('multer');
 const admin = require('firebase-admin');
@@ -75,7 +74,6 @@ router.get('/getAllUsers', async (req, res) => {
   }
 });
  
- 
 router.post('/countries', async (req, res) => {
     const data = req.body; // Assuming req.body is an array of objects
  
@@ -94,7 +92,6 @@ router.post('/countries', async (req, res) => {
     }
 });
  
- 
 router.get('/countrieslist', async (req, res) => {
     try {
       const countries = await Country.findAll({
@@ -107,8 +104,6 @@ router.get('/countrieslist', async (req, res) => {
       res.status(500).send({ message: 'An error occurred while fetching countries' });
     }
   });
- 
- 
  
 // router.post('/registerUser', async (req, res) => {
 //     const { email, phone } = req.body;
@@ -189,13 +184,10 @@ router.post('/registerUser', async (req, res) => {
     }
 });
  
- 
- 
 function generateOTP() {
     // Generate a random 4-digit OTP
     return Math.floor(1000 + Math.random() * 9000).toString();
 }
- 
  
 router.get('/displayDataFromRedis/:key', async (req, res) => {
     const key = req.params.key;
@@ -216,8 +208,6 @@ router.get('/displayDataFromRedis/:key', async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
- 
- 
  
 // router.post("/verify_otp", async (req, res) => {
 //     console.log("<........verify OTP user........>");
@@ -462,8 +452,6 @@ router.post("/verify_otp", upload.single('profilePic'), async (req, res) => {
   }
 });
  
- 
- 
 function calculateExpirationDate() {
     const d = new Date();
     d.setFullYear(d.getFullYear() + 5);
@@ -552,7 +540,6 @@ router.get('/listName/:UId', async (req, res) => {
 // });
  
  
- 
 router.get('/rulesAndConditions', async (req, res) => {
   try {
     // Extract the questionId from the request parameters
@@ -613,8 +600,6 @@ router.post('/requestPasswordReset', async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
 }
 });
- 
- 
  
 // router.post('/resetPassword', async (req, res) => {
 //     const { email, otp, new_password } = req.body;
@@ -682,8 +667,6 @@ router.post('/verify-userotp', async (req, res) => {
   }
 });
  
- 
- 
 router.post('/resetPassword', async (req, res) => {
   const { email, new_password } = req.body;
  
@@ -712,8 +695,6 @@ router.post('/resetPassword', async (req, res) => {
   }
 });
  
- 
- 
 const sessionMiddleware = session({
     secret: '8be00e304a7ab94f27b5e5172cc0f3b2c575e87d',
     resave: false,
@@ -724,8 +705,6 @@ const sessionMiddleware = session({
   });
  
   router.use(sessionMiddleware);
- 
- 
  
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
@@ -784,8 +763,6 @@ router.post('/login', async (req, res) => {
     }
   });
  
- 
- 
 router.get('/getUserById', async (req, res) => {
   try {
       const { UId } = req.session;
@@ -839,8 +816,6 @@ router.get('/getUserById', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
- 
- 
  
 // router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
 //     const UId = req.session.UId
@@ -901,8 +876,6 @@ router.get('/getUserById', async (req, res) => {
 //     }
 //   });
  
- 
- 
 router.get('/flag', async (req, res) => {
   try {
     // Retrieve UId from the session
@@ -943,8 +916,6 @@ router.get('/flag', async (req, res) => {
   }
 });
  
- 
- 
 router.post('/meditation-data', async (req, res) => {
     try {
       const UId = req.session.UId;
@@ -981,9 +952,7 @@ router.post('/meditation-data', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   });
- 
- 
- 
+
 router.get('/reference/:UId', async (req, res) => {
   const UId = req.params.UId;
  
@@ -1005,8 +974,6 @@ router.get('/reference/:UId', async (req, res) => {
   }
 });
  
- 
- 
 router.get('/list-questions', async (req, res) => {
     try {
       const Questions = await questions.findAll();
@@ -1016,8 +983,6 @@ router.get('/list-questions', async (req, res) => {
       res.status(500).json({ message: 'Internal Server Error' });
     }
   });
- 
- 
  
 router.get('/user-details', async (req, res) => {
   const UId = req.session.UId;
@@ -1050,7 +1015,6 @@ router.get('/user-details', async (req, res) => {
   }
 });
  
-
 router.delete('/delete-user/:phone', async (req, res) => {
     const phone = req.params.phone;
  
@@ -1925,8 +1889,6 @@ router.post('/send-email', async (req, res) => {
 //     }
 // });
  
- 
- 
 router.get('/meditation-detail', async (req, res) => {
   try {
        const { UId } = req.session;
@@ -1951,8 +1913,6 @@ router.get('/meditation-detail', async (req, res) => {
   }
 });
  
- 
- 
 router.get('/get-messages', async (req, res) => {
   try {
       const  { UId } = req.session;
@@ -1976,7 +1936,6 @@ router.get('/get-messages', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
- 
  
 router.get('/meditation-date', async (req, res) => {
   try {
@@ -2058,7 +2017,6 @@ router.post('/addBankDetails', async (req, res) => {
   }
 });
 
-
 router.get('/getBankDetails', async (req, res) => {
   try {
     const { UId } = req.session;
@@ -2110,7 +2068,6 @@ catch (error) {
   res.status(500).json({ error: 'Internal server error' });
 }
 });
- 
  
 router.get('/show', async (req, res) => {
 try {
@@ -2623,7 +2580,6 @@ if (!user) {
   }
 });
 
- 
 router.get('/get-video', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -2721,5 +2677,55 @@ router.get('/broadcasts', async (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+router.get('/categories', async (req, res) => {
+  try {
+    // Fetch distinct categories
+    const categories = await Video.findAll({
+      attributes: [
+        [sequelize.fn('DISTINCT', sequelize.col('category')), 'category']
+      ],
+    });
+
+    // Prepare a response list
+    const categoryList = await Promise.all(categories.map(async (category) => {
+      const video = await Video.findOne({
+        where: {
+          category: category.get('category'),
+          playList_image: {
+            [Op.ne]: null
+          }
+        },
+        attributes: ['playList_image']
+      });
+
+     // let playList_image = null;
+
+      if (video && video.playList_image) {
+        const file = storage.file(video.playList_image.split(`${storage.name}/`)[1]);
+        const [exists] = await file.exists();
+        if (exists) {
+          const [url] = await file.getSignedUrl({
+            action: 'read',
+            expires: '03-01-2500' // Adjust expiration date as needed
+          });
+          playList_image = url;
+        }
+      }
+
+      return {
+        category: category.get('category'),
+        playList_image
+      };
+    }));
+
+    res.status(200).json({ categories: categoryList });
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
 
 module.exports = router;
