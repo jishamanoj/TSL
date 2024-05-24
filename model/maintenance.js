@@ -11,7 +11,7 @@ const maintenance = sequelize.define('maintenance', {
     razorpay_payment_id: { type: DataTypes.STRING},
     razorpay_signature: { type: DataTypes.STRING}, 
     UId:{ type: DataTypes.INTEGER}  ,
-    amount : { type : DataTypes.INTEGER},
+    amount : { type : DataTypes.DOUBLE},
     payment_date :{ type:DataTypes.STRING},
     payment_time:{ type: DataTypes.STRING},
     maintenance_payment_status:{ type: DataTypes.BOOLEAN}

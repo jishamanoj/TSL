@@ -2664,11 +2664,12 @@ router.get('/transaction_summary', async (req, res) => {
     // Calculate the total amount and total transaction count
     const totalguru = (totalDekshinasAmount || 0) + (totalMeditationAmount || 0) + (totalMaintenanceAmount || 0)
     const totalTransactionCount = totalDekshinasCount + totalMeditationCount + totalMaintenanceCount + totaltrustCount;
-
+    const total = totalguru + totaltrust ;
     return res.status(200).json({
       message: 'Transaction summary',
       totaltrust,
       totalguru,
+      total,
       totalTransactionCount
     });
   } catch (error) {

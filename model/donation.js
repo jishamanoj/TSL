@@ -11,7 +11,7 @@ const donation = sequelize.define('donation', {
     razorpay_payment_id: { type: DataTypes.STRING},
     razorpay_signature: { type: DataTypes.STRING}, 
     UId:{ type: DataTypes.INTEGER}  ,
-    amount : { type : DataTypes.INTEGER},
+    amount : { type : DataTypes.DOUBLE},
     payment_date :{ type:DataTypes.STRING},
     payment_time:{ type: DataTypes.STRING},
     donation_payment_status:{ type: DataTypes.BOOLEAN}
