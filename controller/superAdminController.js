@@ -34,6 +34,7 @@ const blogs = require('../model/blogs');
 const Video = require('../model/videos');
 const donation = require('../model/donation');
 const meditationTime = require('../model/medtitationTime')
+const meditationFees = require('../model/meditationFees')
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: "gs://thasmai-star-life.appspot.com"
@@ -1755,6 +1756,379 @@ router.get('/donation-search', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+router.get('/list-fees', async (req, res) => {
+  const pageSize = 10;
+  const page = parseInt(req.query.page) || 1;
+  const offset = (page - 1) * pageSize;
+ 
+  try {
+    // Step 1: Fetch the list of users with pagination
+    const { rows: usersList, count: totalUsers } = await Users.findAndCountAll({
+      attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'Level', 'node_number'],
+      limit: pageSize,
+      offset: offset,
+    });
+ 
+    // Extract UIds from the usersList
+    const UIds = usersList.map(user => user.UId);
+ 
+    // Step 2: Fetch the total sum of distributed_coupons for each UId
+    const distributionResults = await meditationFees.findAll({
+      where: { UId: { [Op.in]: UIds } },
+      attributes: ['UId', [sequelize.fn('sum', sequelize.col('amount')), 'total_fees']],
+      group: ['UId'],
+    });
+ 
+    const latestDonations = await meditationFees.findAll({
+      where: { UId: { [Op.in]: UIds } },
+      attributes: ['UId', 'amount', 'id'],
+      order: [['id', 'DESC']],
+      group: ['id']
+    });
+ 
+    // Step 3: Merge the results and send the response
+    const mergedResults = usersList.map(user => {
+      const distributionResult = distributionResults.find(result => result.UId === user.UId);
+      const latestDonation = latestDonations.find(result => result.UId === user.UId);
+      return {
+        ...user.dataValues,
+        total_fees: distributionResult ? distributionResult.dataValues.total_fees : 0,
+        latest_donation: latestDonation ? latestDonation.amount : 0,
+      };
+    });
+ 
+    res.json({ 
+      users: mergedResults,
+      totalUsers: totalUsers,
+      totalPages: Math.ceil(totalUsers / pageSize),
+      currentPage: page 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+ 
+router.post('/fees-query', async (req, res) => {
+  try {
+    const queryConditions = req.body.queryConditions;
+    const page = req.body.page || 1; // Default to page 1 if not provided
+    const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
+ 
+    console.log(queryConditions);
+ 
+    if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
+      return res.status(400).json({ message: 'Invalid query conditions provided.' });
+    }
+ 
+    function isNumeric(num) {
+      return !isNaN(num);
+    }
+ 
+    let countSql = "SELECT COUNT(*) AS total FROM thasmai.Users WHERE ";
+    let sql = "SELECT * FROM thasmai.Users WHERE ";
+ 
+    for (let i = 0; i < queryConditions.length; i++) {
+      if (queryConditions[i].operator === "between") {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      } else {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      }
+    }
+ 
+    const countResult = await sequelize.query(countSql, { type: sequelize.QueryTypes.SELECT });
+    const totalCount = countResult[0].total;
+ 
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const offset = (page - 1) * pageSize;
+ 
+    sql += `LIMIT ${pageSize} OFFSET ${offset}`;
+    console.log(sql);
+ 
+    const userResults = await sequelize.query(sql);
+ 
+    const UIds = userResults[0].map(user => user.UId);
+ 
+    const distributionResults = await meditationFees.findAll({
+      where: { UId: { [Op.in]: UIds } },
+      attributes: ['UId', [sequelize.fn('sum', sequelize.col('amount')), 'total_fees']],
+      group: ['UId'],
+    });
+ 
+    const latestDonations = await meditationFees.findAll({
+      where: { UId: { [Op.in]: UIds } },
+      attributes: ['UId', 'amount', 'id'],
+      order: [['id', 'DESC']],
+      group: ['id']
+    });
+ 
+    const mergedResults = userResults[0].map(user => {
+      const distributionResult = distributionResults.find(result => result.UId === user.UId);
+      const latestDonation = latestDonations.find(result => result.UId === user.UId);
+      return {
+        ...user,
+        total_fees: distributionResult ? distributionResult.dataValues.total_fees : 0,
+        latest_donation: latestDonation ? latestDonation.amount : 0,
+      };
+    });
+ 
+    res.json({ results: mergedResults,totalPages });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+ 
+router.get('/fees-search', async (req, res) => {
+  try {
+    const field = req.query.field; 
+    const value = req.query.value; 
+ 
+    if (!field || !value) {
+      return res.status(400).json({ message: 'Please provide both field and value parameters' });
+    }
+ 
+    const userDetails = await Users.findAll({
+      where: {
+        [field]: value,
+      },
+    });
+ 
+    if (!userDetails || userDetails.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+ 
+    // Step 2: Extract UIds from the search results
+    const UIds = userDetails.map(user => user.UId);
+ 
+    // Step 3: Fetch the total sum of distributed_coupons for each UId
+    const distributionResults = await meditationFees.findAll({
+      where: { UId: { [Op.in]: UIds } },
+      attributes: ['UId', [sequelize.fn('sum', sequelize.col('amount')), 'total_fees']],
+      group: ['UId'],
+    });
+ 
+    const latestDonations = await meditationFees.findAll({
+      where: { UId: { [Op.in]: UIds } },
+      attributes: ['UId', 'amount', 'id'],
+      order: [['id', 'DESC']],
+      group: ['id']
+    });
+ 
+    // Step 4: Merge the user details with the distribution results
+    const mergedResults = userDetails.map(user => {
+      const distributionResult = distributionResults.find(result => result.UId === user.UId);
+      const latestDonation = latestDonations.find(result => result.UId === user.UId);
+      return {
+        ...user.dataValues,
+        total_fees: distributionResult ? distributionResult.dataValues.total_fees : 0,
+        latest_donation: latestDonation ? latestDonation.amount : 0,
+      };
+    });
+ 
+    res.json({ message: 'Success', data: mergedResults });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+ 
+router.get('/list-operation', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10; 
+ 
+    const offset = (page - 1) * pageSize;
+    totalUsers = await ashramexpense.count({})
+ 
+    // Fetching all events with pagination
+    const allEvents = await ashramexpense.findAll({
+      limit: pageSize,
+      offset: offset
+    });
+ 
+    // Fetching all events without pagination to calculate the sum
+    const allEventsForSum = await ashramexpense.findAll();
+ 
+    // Creating a map to store the sum of amounts for each emp_id
+    const amountSumMap = allEventsForSum.reduce((acc, event) => {
+      if (acc[event.emp_id]) {
+        acc[event.emp_id] += event.amount;
+      } else {
+        acc[event.emp_id] = event.amount;
+      }
+      return acc;
+    }, {});
+ 
+    const everyEvents = await Promise.all(allEvents.map(async event => {
+      const admin = await Admin.findOne({ where: { emp_id: event.emp_id } });
+      const adminName = admin ? admin.name : null;
+ 
+      return {
+        id: event.id,
+        expenseType: event.expenseType,
+        amount: event.amount,
+        description: event.description,
+        Expense_Date: event.Expense_Date,
+        emp_id: event.emp_id,
+        emp_name: adminName,
+        totalAmount: amountSumMap[event.emp_id] // Adding the total amount for the same emp_id
+      };
+    }));
+ 
+    res.status(200).json({ expense: everyEvents ,totalPages: Math.ceil(totalUsers / pageSize)});
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+ 
+router.get('/list-ashram-appointments', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10; 
+ 
+    // Fetch total count of events
+    const totalCount = await Appointment.count();
+ 
+    // Calculate total number of pages
+    const totalPages = Math.ceil(totalCount / pageSize);
+ 
+    // Calculate offset based on the requested page and page size
+    const offset = (page - 1) * pageSize;
+ 
+    // Fetch events with pagination
+    const allEvents = await Appointment.findAll({
+      limit: pageSize,
+      offset: offset
+    });
+ 
+    const everyEvents = await Promise.all(allEvents.map(async event => {
+      const admin = await Users.findOne({ where: { UId: event.UId } });
+      const adminName = admin ? admin.coupons : null;
+ 
+      return {
+        id: event.id,
+        UId: event.UId,
+        phone: event.phone,
+        appointmentDate: event.appointmentDate,
+        num_of_people: event.num_of_people,
+        user_name:event.user_name,
+        payment:event.payment,
+        days: event.days,
+        discount:event.discount,
+        coupons: adminName,
+ 
+      };
+    }));
+ 
+    // Respond with events and total pages
+    res.status(200).json({ events: everyEvents, totalPages });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+ 
+router.post('/ashram-query', async (req, res) => {
+  try {
+    const queryConditions = req.body.queryConditions;
+    const page = req.body.page || 1; 
+    const pageSize = req.body.pageSize || 10; 
+ 
+    console.log(queryConditions);
+ 
+    if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
+      return res.status(400).json({ message: 'Invalid query conditions provided.' });
+    }
+ 
+    function isNumeric(num) {
+      return !isNaN(num);
+    }
+ 
+    let countSql = "SELECT COUNT(*) AS total FROM thasmai.appointments WHERE ";
+    let sql = "SELECT * FROM thasmai.appointments WHERE ";
+ 
+    for (let i = 0; i < queryConditions.length; i++) {
+      if (queryConditions[i].operator === "between") {
+        const [start, end] = queryConditions[i].value.split("/");
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} "${start}" AND "${end}" ${queryConditions[i].logicaloperator !== "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} "${start}" AND "${end}" ${queryConditions[i].logicaloperator !== "null" ? queryConditions[i].logicaloperator : ""} `;
+      } else {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'`} ${queryConditions[i].logicaloperator !== "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'`} ${queryConditions[i].logicaloperator !== "null" ? queryConditions[i].logicaloperator : ""} `;
+      }
+    }
+ 
+    const countResult = await sequelize.query(countSql, { type: sequelize.QueryTypes.SELECT });
+    const totalCount = countResult[0].total;
+ 
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const offset = (page - 1) * pageSize;
+ 
+    sql += `LIMIT ${pageSize} OFFSET ${offset}`;
+    console.log(sql);
+ 
+    const queryResults = await sequelize.query(sql, { type: sequelize.QueryTypes.SELECT });
+ 
+    const detailedResults = await Promise.all(queryResults.map(async appointment => {
+      const user = await sequelize.query(`SELECT coupons FROM thasmai.Users WHERE UId = ${appointment.UId}`, { type: sequelize.QueryTypes.SELECT });
+      const coupons = user[0] ? user[0].coupons : null;
+ 
+      return {
+        ...appointment,
+        coupons: coupons
+      };
+    }));
+ 
+    res.json({ queryResults: detailedResults, totalPages });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+ 
+router.get('/ashram-search', async (req, res) => {
+  try {
+    const field = req.query.field; // Retrieve the field from query parameters
+    const value = req.query.value; // Retrieve the value from query parameters
+ 
+    if (!field || !value) {
+      return res.status(400).json({ message: 'Please provide both field and value parameters' });
+    }
+ 
+    const lowerCaseValue = value.toLowerCase();
+ 
+    // Search the database for appointments matching the field and value
+    const userDetails = await Appointment.findAll({
+      where: {
+        [field]: lowerCaseValue,
+      },
+    });
+ 
+    if (!userDetails || userDetails.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+ 
+    // Fetch the coupons field from the Users table for each appointment
+    const resultsWithCoupons = await Promise.all(userDetails.map(async appointment => {
+      const user = await Users.findOne({ where: { UId: appointment.UId } });
+      return {
+        ...appointment.dataValues,
+        coupons: user ? user.coupons : null,
+      };
+    }));
+ 
+    res.json({ message: 'Success', data: resultsWithCoupons });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 
 ////////////////////////////appointments/////////////////////////////////
 
