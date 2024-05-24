@@ -2634,7 +2634,7 @@ router.get('/get-video', async (req, res) => {
  
 router.get('/transaction_summary', async (req, res) => {
   try {
-    const UId  = req.session.UId;
+    const { UId } = req.session;
     if (!UId) {
       return res.status(401).json('UId is required');
     }
@@ -2648,19 +2648,26 @@ router.get('/transaction_summary', async (req, res) => {
     const totalDekshinasAmount = await dekshina.sum('amount', { where: { UId } });
     const totalDekshinasCount = await dekshina.count({ where: { UId } });
 
+    // Fetching the sum and count of meditationFees.amount
+    const totalMeditationAmount = await meditationFees.sum('amount', { where: { UId } });
+    const totalMeditationCount = await meditationFees.count({ where: { UId } });
+
+     // Fetching the sum and count of meditationFees.amount
+     const totalMaintenanceAmount = await maintenance.sum('amount', { where: { UId } });
+     const totalMaintenanceCount = await maintenance.count({ where: { UId } });
+ 
     // Fetching the sum and count of guruji.amount
-    const totalGurujiAmount = await donation.sum('amount', { where: { UId } });
-    const totalGurujiCount = await donation.count({ where: { UId } });
+    const totaltrust = await donation.sum('amount', { where: { UId } });
+    const totaltrustCount = await donation.count({ where: { UId } });
 
     // Calculate the total amount and total transaction count
-    const totalAmount = (totalDekshinasAmount || 0) + (totalGurujiAmount || 0);
-    const totalTransactionCount = totalDekshinasCount + totalGurujiCount;
+    const totalguru = (totalDekshinasAmount || 0) + (totalMeditationAmount || 0) + (totalMaintenanceAmount || 0)
+    const totalTransactionCount = totalDekshinasCount + totalMeditationCount + totalMaintenanceCount + totaltrustCount;
 
     return res.status(200).json({
       message: 'Transaction summary',
-      totalDekshinasAmount,
-      totalGurujiAmount,
-      totalAmount,
+      totaltrust,
+      totalguru,
       totalTransactionCount
     });
   } catch (error) {
