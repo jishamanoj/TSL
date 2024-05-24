@@ -40,6 +40,7 @@ const Video = require('../model/videos');
 const Broadcast =require('../model/broadcast');
 const dekshina = require('../model/dekshina');
 const donation = require('../model/donation');
+const meditationTime = require('../model/medtitationTime')
 
 router.get('/getAllUsers', async (req, res) => {
   try {
@@ -2794,6 +2795,52 @@ router.get('/videos-by-playlist', async (req, res) => {
     res.status(200).json({ videos });
   } catch (error) {
     console.error('Error fetching videos:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+ 
+// router.get('/meditation-time', async (req, res) => {
+//   const { UId } = req.session;
+
+//   try {
+//     // Find the meditation time details for the given country
+//     const meditationTimeDetails = await meditationTime.findOne({ where: { country } });
+
+//     if (meditationTimeDetails) {
+//       res.status(200).json(meditationTimeDetails);
+//     } else {
+//       res.status(404).json({ error: 'No meditation time details found for the specified country' });
+//     }
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
+
+router.get('/meditation-time', async (req, res) => {
+  const { UId } = req.session;
+
+  try {
+    // Fetch the country from the reg table using UId
+    const userRegDetails = await reg.findOne({ where: { UId } });
+
+    if (!userRegDetails) {
+      return res.status(404).json({ error: 'User registration details not found' });
+    }
+
+    const { country } = userRegDetails;
+
+    // Find the meditation time details for the given country
+    const meditationTimeDetails = await meditationTime.findOne({ where: { country } });
+
+    if (meditationTimeDetails) {
+      res.status(200).json(meditationTimeDetails);
+    } else {
+      res.status(404).json({ error: 'No meditation time details found for the specified country' });
+    }
+  } catch (error) {
+    console.log(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });

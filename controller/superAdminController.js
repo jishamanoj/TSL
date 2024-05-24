@@ -32,7 +32,8 @@ const gurujiMessage = require('../model/gurujiMessage');
 const ashramexpense = require('../model/expense');
 const blogs = require('../model/blogs');
 const Video = require('../model/videos');
-const donation = require('../model/donation')
+const donation = require('../model/donation');
+const meditationTime = require('../model/medtitationTime')
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: "gs://thasmai-star-life.appspot.com"
@@ -3104,6 +3105,28 @@ router.post('/add-video', upload.single('playList_image'), async (req, res) => {
   }
 });
 
+router.post('/add-meditation-time', async (req, res) => {
+  const { country, general_video, morning_time_from,morning_time_to, evening_time_from,evening_time_to, morning_video, evening_video } = req.body;
+
+  try {
+    // Create a new meditation time record
+    const newMeditationTime = await meditationTime.create({
+      country,
+      general_video,
+      morning_time_from,
+      morning_time_to,
+      evening_time_from,
+      evening_time_to,
+      morning_video,
+      evening_video
+    });
+
+    res.status(201).json({ message: 'Meditation time added successfully', data: newMeditationTime });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 module.exports = router;
 
