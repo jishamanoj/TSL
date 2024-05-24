@@ -2717,20 +2717,21 @@ router.get('/broadcasts', async (req, res) => {
   }
 });
 
-router.get('/categories', async (req, res) => {
+
+router.get('/playlists', async (req, res) => {
   try {
-    // Fetch distinct categories
-    const categories = await Video.findAll({
+    // Fetch distinct playList_headings
+    const playLists = await Video.findAll({
       attributes: [
-        [sequelize.fn('DISTINCT', sequelize.col('category')), 'category']
+        [sequelize.fn('DISTINCT', sequelize.col('playList_heading')), 'playList_heading']
       ],
     });
 
     // Prepare a response list
-    const categoryList = await Promise.all(categories.map(async (category) => {
+    const playListList = await Promise.all(playLists.map(async (playList) => {
       const video = await Video.findOne({
         where: {
-          category: category.get('category'),
+          playList_heading: playList.get('playList_heading'),
           playList_image: {
             [Op.ne]: null
           }
@@ -2738,7 +2739,7 @@ router.get('/categories', async (req, res) => {
         attributes: ['playList_image']
       });
 
-     // let playList_image = null;
+      let playList_image = null;
 
       if (video && video.playList_image) {
         const file = storage.file(video.playList_image.split(`${storage.name}/`)[1]);
@@ -2753,17 +2754,18 @@ router.get('/categories', async (req, res) => {
       }
 
       return {
-        category: category.get('category'),
+        playList_heading: playList.get('playList_heading'),
         playList_image
       };
     }));
 
-    res.status(200).json({ categories: categoryList });
+    res.status(200).json({ playlists: playListList });
   } catch (error) {
-    console.error('Error fetching categories:', error);
+    console.error('Error fetching playlists:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 router.get('/videos-by-playlist', async (req, res) => {
   const { playList_heading } = req.query;

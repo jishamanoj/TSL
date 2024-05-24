@@ -273,7 +273,7 @@ router.post('/donation-paymentVerification', async (req, res) => {
  
 router.post('/save-token', async (req, res) => {
   try {
-   const { UId } = req.session;
+   const { UId } = req.body;
     const { token } = req.body;
 
     const existingRecord = await Notification.findOne({ where: { UId } });
