@@ -1013,8 +1013,8 @@ router.get('/TSL', async (req, res) => {
 
 router.get('/list-meditators', async (req, res) => {
   try {
-    const page = parseInt(req.body.page) || 1; 
-    const limit = parseInt(req.body.limit) || 10; 
+    const page = parseInt(req.query.page) || 1; 
+    const limit = parseInt(req.query.limit) || 10; 
     const offset = (page - 1) * limit;
 
     const users = await Users.findAll({
