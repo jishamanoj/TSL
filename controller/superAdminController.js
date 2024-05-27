@@ -590,11 +590,13 @@ router.post('/events-query', async (req, res) => {
 //   }
 // });
 
-
 router.get('/searchfield', async (req, res) => {
   try {
-    const field = req.query.field; // Retrieve the field from query parameters
-    const value = req.query.value; // Retrieve the value from query parameters
+    const field = req.query.field;
+    const value = req.query.value; 
+    const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
+    const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page if not provided
+    const offset = (page - 1) * limit;
 
     if (!field || !value) {
       return res.status(400).json({ message: 'Please provide both field and value parameters' });
@@ -602,18 +604,32 @@ router.get('/searchfield', async (req, res) => {
       
     const lowerCaseValue = value.toLowerCase();
 
-    // You can now use the field and value to search the database and fetch details
-    const userDetails = await Users.findAll({
+    // Fetch users avoiding the first 10 UserIds
+    const { count, rows: userDetails } = await Users.findAndCountAll({
       where: {
         [field]: lowerCaseValue,
+        UserId: { [Op.gte]: 11 }, 
       },
+      limit,
+      offset,
     });
 
-    if (!userDetails) {
+    if (userDetails.length === 0) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({ message: 'Success', data: userDetails });
+    const totalPages = Math.ceil(count / limit);
+
+    res.json({
+      message: 'Success',
+      data: userDetails,
+      pagination: {
+        totalItems: count,
+        totalPages,
+        currentPage: page,
+        itemsPerPage: limit,
+      },
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
@@ -997,19 +1013,37 @@ router.get('/TSL', async (req, res) => {
 
 router.get('/list-meditators', async (req, res) => {
   try {
+    const page = parseInt(req.body.page) || 1; 
+    const limit = parseInt(req.body.limit) || 10; 
+    const offset = (page - 1) * limit;
+
     const users = await Users.findAll({
       attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'ban'],
-      order: [['UserId', 'ASC']], // Order by UId in ascending order
-           where: {
-       UserId: { [Op.gte]: 11 }, // Start from UId 11
+      order: [['userId', 'ASC']], // Order by UId in ascending order
+      where: {
+        UserId: { [Op.gte]: 11 }, // Start from UId 11
       },
+      limit: limit,
+      offset: offset,
     });
 
     const totalCoupons = users.reduce((sum, user) => sum + user.coupons, 0);
 
-    res.json({ users, totalCoupons });
+    // Get total count of users for pagination
+    const totalUsers = await Users.count({
+      where: {
+        UserId   : { [Op.gte]: 11 },
+      },
+    });
 
-   // res.json(users);
+    res.json({
+      users,
+      totalCoupons,
+      currentPage: page,
+      totalPages: Math.ceil(totalUsers / limit),
+      totalUsers,
+    });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
@@ -1214,8 +1248,6 @@ router.post('/execute-query', async (req, res) => {
     const page = req.body.page || 1; // Default to page 1 if not provided
     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
 
-   // console.log(queryConditions);
-
     if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
       return res.status(400).json({ message: 'Invalid query conditions provided.' });
     }
@@ -1224,55 +1256,36 @@ router.post('/execute-query', async (req, res) => {
       return !isNaN(num);
     }
 
-    let sql = "SELECT * FROM thasmai.Users WHERE ";
+    let baseCondition = "UserId >= 11";
+    let countSql = `SELECT COUNT(*) AS total FROM thasmai.Users WHERE ${baseCondition} AND `;
+    let sql = `SELECT * FROM thasmai.Users WHERE ${baseCondition} AND `;
+
     for (let i = 0; i < queryConditions.length; i++) {
-      sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
+      if (queryConditions[i].operator === "between") {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} "${queryConditions[i].value.split("/")[0]}" AND "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} "${queryConditions[i].value.split("/")[0]}" AND "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      } else {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'`} ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'`} ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      }
     }
 
-    // Apply pagination
+    const countResult = await sequelize.query(countSql, { type: sequelize.QueryTypes.SELECT });
+    const totalCount = countResult[0].total;
+
+    const totalPages = Math.ceil(totalCount / pageSize);
     const offset = (page - 1) * pageSize;
+
     sql += `LIMIT ${pageSize} OFFSET ${offset}`;
 
-    //console.log(sql);
+    const [queryResults, metadata] = await sequelize.query(sql);
 
-    const results = await sequelize.query(sql);
-   // console.log(results[0]);
-    
-    // Assuming sequelize returns an array of rows in the first element of the results array
-    res.json({ results: results[0] });
+    res.json({ queryResults, totalPages });
   } catch (error) {
-    //console.error(error);
+    console.error(error);
     res.status(500).json({ message: 'Internal server error.' });
   }
 });
-
-// router.post('/execute-query', async (req, res) => {
-//   try {
-//     const query = req.body.queryConditions;
-//     console.log(query);
-
-//     if (!query || !Array.isArray(query) || query.length === 0) {
-//       return res.status(400).json({ message: 'Invalid query conditions provided.' });
-//     }
-//     function isNumeric(num){
-//       return !isNaN(num)
-//     }
-
-//     let sql = "SELECT * FROM sequel.users WHERE "
-//     for (let i = 0; i < query.length; i++) {
-//     sql += `${query[i].field} ${query[i].operator} ${isNumeric(query[i].value) ? query[i].value : `'${query[i].value}'` } ${query[i].logicaloperator != "null" ? query[i].logicaloperator : "" } `
-//     }
-
-//     console.log(sql);
-
-//     const results = await sequelize.query(sql);
-//     console.log(results[0]);
-//     res.json({ results: results[0] });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: 'Internal server error.' });
-//   }
-// });
 
 
 router.post('/save-token', async (req, res) => {
@@ -1985,6 +1998,58 @@ router.get('/list-operation', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+router.post('/operation-query', async (req, res) => {
+  try {
+    const queryConditions = req.body.queryConditions;
+    const page = req.body.page || 1; // Default to page 1 if not provided
+    const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
+
+    console.log(queryConditions);
+
+    if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
+      return res.status(400).json({ message: 'Invalid query conditions provided.' });
+    }
+
+    function isNumeric(num) {
+      return !isNaN(num);
+    }
+
+    let countSql = "SELECT COUNT(*) AS total FROM thasmai.ashramexpenses WHERE ";
+    let sql = `
+      SELECT ae.*, ad.name as emp_name, SUM(ae.amount) OVER (PARTITION BY ae.emp_id) as totalAmount
+      FROM sequel.ashramexpenses ae
+      LEFT JOIN thasmai.admins ad ON ae.emp_id = ad.emp_id
+      WHERE `;
+
+    for (let i = 0; i < queryConditions.length; i++) {
+      if (queryConditions[i].operator === "between") {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} "${queryConditions[i].value.split("/")[0]}" AND "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} "${queryConditions[i].value.split("/")[0]}" AND "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      } else {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'`} ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'`} ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      }
+    }
+
+    const countResult = await sequelize.query(countSql, { type: sequelize.QueryTypes.SELECT });
+    const totalCount = countResult[0].total;
+
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const offset = (page - 1) * pageSize;
+
+    sql += `LIMIT ${pageSize} OFFSET ${offset}`;
+    console.log(sql);
+
+    const [queryResults, metadata] = await sequelize.query(sql);
+
+    res.json({ queryResults, totalPages });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
  
 router.get('/list-ashram-appointments', async (req, res) => {
   try {
@@ -2133,37 +2198,7 @@ router.get('/ashram-search', async (req, res) => {
 ////////////////////////////appointments/////////////////////////////////
 
 
-// router.get('/list-all-appointment', async (req, res) => {
-//   try {
-//     const appointmentData = await Appointment.findAll();
-//     //console.log(appointmentData);
 
-//     if (!appointmentData || appointmentData.length === 0) {
-//       return res.status(404).json({ message: 'No appointments found' });
-//     }
-//     const UIds = appointmentData.map(appointment => appointment.UId);
-
-//     const userData = await Users.findAll({
-//       where: { UId: { [Op.in]: UIds } },
-//       attributes: ['UId', 'coupons'],
-//     });
-//     const userCouponMap = new Map(userData.map(user => [user.UId, user.coupons]));
-
-
-//     const mergedResults = appointmentData.map(appointment => {
-//       const userCoupons = userCouponMap.get(appointment.UId) || 0;
-//       return {
-//         ...appointment.dataValues,
-//         userCoupons,
-//       };
-//     });
-// //console.log(mergedResults)
-//     res.json({appointments:mergedResults});
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// });
 
 router.get('/list-all-appointment', async (req, res) => {
   try {
@@ -3190,6 +3225,8 @@ router.post('/search_users', async (req, res) => {
 
 //////////////////////////blog//////////////////////////////
 
+
+
 router.post('/add-blog', upload.single('image'), async (req, res) => {
   const { blog_name, blog_description,date} = req.body;
   const eventImageFile = req.file;
@@ -3439,6 +3476,7 @@ router.post('/blogs-query', async (req, res) => {
     res.status(500).json({ message: 'Internal server error.' });
   }
 });
+/////////////////////add play list ///////////////////////
 
 router.post('/add-video', upload.single('playList_image'), async (req, res) => {
   const { playList_heading, Video_heading, videoLink, category } = req.body;
@@ -3501,6 +3539,12 @@ router.post('/add-meditation-time', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+//////////////////////////zoom meeting/////////////////////////////
+
+
+
+
 
 module.exports = router;
 

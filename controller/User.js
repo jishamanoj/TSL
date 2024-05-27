@@ -41,6 +41,7 @@ const Broadcast =require('../model/broadcast');
 const dekshina = require('../model/dekshina');
 const donation = require('../model/donation');
 const meditationTime = require('../model/medtitationTime')
+const ZoomRecord = require('../model/zoomRecorder'); 
 
 router.get('/getAllUsers', async (req, res) => {
   try {
@@ -2696,15 +2697,12 @@ router.get('/transaction_list', async (req, res) => {
     const maintenancefee = await maintenance.findAll({ where: { UId } });
 
     // Merge the results
-    const transactions = [
-      ...dekshinas.map(d => ({ ...d.dataValues, type: 'dekshina' })),
-      ...donations.map(d => ({ ...d.dataValues, type: 'donation' })),
-      ...meditation.map(m => ({ ...m.dataValues, type: 'meditation' })),
-      ...maintenancefee.map(m => ({ ...m.dataValues, type: 'maintenance' }))
-    ];
+    const transactions = dekshinas.concat(donations, meditation, maintenancefee);  
+
 
     // Sort by date in descending order
-    transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    transactions.sort((a, b) => new Date(b.payment_date, ) - new Date(a.payment_date));
 
     return res.status(200).json({
       message: 'Transaction list',
@@ -2727,13 +2725,64 @@ router.get('/broadcasts', async (req, res) => {
 });
 
 
+// router.get('/playlists', async (req, res) => {
+//   try {
+//     // Fetch distinct playList_headings
+//     const playLists = await Video.findAll({
+//       attributes: [
+//         [sequelize.fn('DISTINCT', sequelize.col('playList_heading')), 'playList_heading']
+//       ],
+//     });
+
+//     // Prepare a response list
+//     const playListList = await Promise.all(playLists.map(async (playList) => {
+//       const video = await Video.findOne({
+//         where: {
+//           playList_heading: playList.get('playList_heading'),
+//           playList_image: {
+//             [Op.ne]: null
+//           }
+//         },
+//         attributes: ['playList_image']
+//       });
+
+//       let playList_image = null;
+
+//       if (video && video.playList_image) {
+//         const file = storage.file(video.playList_image.split(`${storage.name}/`)[1]);
+//         const [exists] = await file.exists();
+//         if (exists) {
+//           const [url] = await file.getSignedUrl({
+//             action: 'read',
+//             expires: '03-01-2500' // Adjust expiration date as needed
+//           });
+//           playList_image = url;
+//         }
+//       }
+
+//       return {
+//         playList_heading: playList.get('playList_heading'),
+//         playList_image
+//       };
+//     }));
+
+//     res.status(200).json({ playlists: playListList });
+//   } catch (error) {
+//     console.error('Error fetching playlists:', error);
+//     res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
+
 router.get('/playlists', async (req, res) => {
   try {
-    // Fetch distinct playList_headings
+    // Fetch distinct playList_headings with their respective distinct Video_heading counts
     const playLists = await Video.findAll({
       attributes: [
-        [sequelize.fn('DISTINCT', sequelize.col('playList_heading')), 'playList_heading']
+        [sequelize.fn('DISTINCT', sequelize.col('playList_heading')), 'playList_heading'],
+        [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('Video_heading'))), 'videoHeadingCount']
       ],
+      group: ['playList_heading']
     });
 
     // Prepare a response list
@@ -2764,7 +2813,8 @@ router.get('/playlists', async (req, res) => {
 
       return {
         playList_heading: playList.get('playList_heading'),
-        playList_image
+        playList_image,
+        videoHeadingCount: playList.get('videoHeadingCount')
       };
     }));
 
@@ -2846,5 +2896,27 @@ router.get('/meditation-time', async (req, res) => {
   }
 });
 
+router.post('/zoom_Records', async(req,res)=>{
+  try{
+    const {UId} = req.session;
+    const {zoom_date,zoom_time} = req.body;
+
+    if(!UId){
+      return res.status(401).json({message: 'UId is required'});
+    }
+     const user = await Users.findOne({where:{UId}});
+     if(!user){
+      return res.status(404).json({message:'user not found'});
+     }
+     const zoom = await ZoomRecord.create(
+       { UId:user.UId,
+        zoom_date,
+        zoom_time
+       });
+      return res.status(200).json({message:'zoom record created successfully'}); 
+  } catch(error){
+    return res.status(500).json('internal server error' , error);
+  }
+});
 
 module.exports = router;
