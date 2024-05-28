@@ -42,7 +42,7 @@ const dekshina = require('../model/dekshina');
 const donation = require('../model/donation');
 const meditationTime = require('../model/medtitationTime')
 const ZoomRecord = require('../model/zoomRecorder'); 
-
+const zoom = require('../model/zoom');
 router.get('/getAllUsers', async (req, res) => {
   try {
     // Fetch all users from the reg table
@@ -886,7 +886,7 @@ router.get('/flag', async (req, res) => {
 
     // Check if UId exists in the session
     if (!UId) {
-      return res.status(404).json({ error: 'invalid UId' });
+      return res.status(401).json({ error: 'invalid UId' });
     }
 
     // Find the user by UId
@@ -1462,7 +1462,7 @@ router.put('/updateAppointment/:id', async (req, res) => {
     // Check if appointment exists
     const appointment = await Appointment.findOne({ where: { id } });
     if (!appointment) {
-      return res.status(404).json({ error: 'Appointment not found' });
+      return res.status(401).json({ error: 'Appointment not found' });
     }
  
     // Update Appointment
@@ -2697,12 +2697,15 @@ router.get('/transaction_list', async (req, res) => {
     const maintenancefee = await maintenance.findAll({ where: { UId } });
 
     // Merge the results
-    const transactions = dekshinas.concat(donations, meditation, maintenancefee);  
-
+    const transactions = [
+      ...dekshinas.map(d => ({ ...d.dataValues, type: 'dekshina' })),
+      ...donations.map(d => ({ ...d.dataValues, type: 'donation' })),
+      ...meditation.map(m => ({ ...m.dataValues, type: 'meditation' })),
+      ...maintenancefee.map(m => ({ ...m.dataValues, type: 'maintenance' }))
+    ];
 
     // Sort by date in descending order
-    
-    transactions.sort((a, b) => new Date(b.payment_date, ) - new Date(a.payment_date));
+    transactions.sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date));
 
     return res.status(200).json({
       message: 'Transaction list',
@@ -2871,6 +2874,7 @@ router.get('/videos-by-playlist', async (req, res) => {
 
 router.get('/meditation-time', async (req, res) => {
   const { UId } = req.session;
+  const time = req.query.time;
 
   try {
     // Fetch the country from the reg table using UId
@@ -2885,11 +2889,19 @@ router.get('/meditation-time', async (req, res) => {
     // Find the meditation time details for the given country
     const meditationTimeDetails = await meditationTime.findOne({ where: { country } });
 
-    if (meditationTimeDetails) {
-      res.status(200).json(meditationTimeDetails);
-    } else {
-      res.status(404).json({ error: 'No meditation time details found for the specified country' });
+    if (!meditationTimeDetails) {
+      return res.status(404).json({ error: 'Meditation time details not found for the specified country' });
     }
+
+    // Determine which video to return based on the time
+    if (time >= meditationTimeDetails.morning_time_from && time <= meditationTimeDetails.morning_time_to) {
+      return res.json({ video: meditationTimeDetails.morning_video });
+    } else if (time >= meditationTimeDetails.evening_time_from && time <= meditationTimeDetails.evening_time_to) {
+      return res.json({ video: meditationTimeDetails.evening_video });
+    } else {
+      return res.json({ video: meditationTimeDetails.general_video });
+    }
+
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -2918,5 +2930,49 @@ router.post('/zoom_Records', async(req,res)=>{
     return res.status(500).json('internal server error' , error);
   }
 });
+router.post('/zoom', async (req, res) => {
+  const { zoomdate, zoomStartTime, zoomStopTime, zoomLink } = req.body;
+
+  try {
+    const newZoom = await zoom.create({
+      zoomdate,
+      zoomStartTime,
+      zoomStopTime,
+      zoomLink
+    });
+
+    res.status(201).json({ message: 'Zoom record created successfully', newZoom });
+  } catch (error) {
+    console.error('Error creating zoom record:', error);
+    res.status(400).json({ error: 'Error creating zoom record', details: error.message });
+  }
+});
+
+router.get('/get-zoomclass', async (req, res) => {
+  try {
+    const { currentDate } = req.query;
+
+    if (!currentDate) {
+      return res.status(400).json({ error: 'currentDate query parameter is required' });
+    }
+
+    // Direct string comparison since both are strings
+    const zoomRecords = await zoom.findAll({
+      where: {
+        zoomdate: currentDate
+      }
+    });
+
+    if (zoomRecords.length > 0) {
+      res.status(200).json(zoomRecords);
+    } else {
+      res.status(404).json({ message: 'No zoom records found for the specified date' });
+    }
+  } catch (error) {
+    console.error('Error fetching zoom records:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 
 module.exports = router;

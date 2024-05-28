@@ -3517,9 +3517,17 @@ router.post('/add-video', upload.single('playList_image'), async (req, res) => {
   }
 });
 
-router.post('/add-meditation-time', async (req, res) => {
-  const { country, general_video, morning_time_from,morning_time_to, evening_time_from,evening_time_to, morning_video, evening_video } = req.body;
-
+router.post('/add-meditation-time', upload.fields([
+ 
+  { name: 'morning_image', maxCount: 1 },
+  { name: 'evening_image', maxCount: 1 },
+  { name: 'general_image', maxCount: 1 }
+]), async (req, res) => {
+  const { country, general_video, morning_time_from, morning_time_to, evening_time_from, evening_time_to, morning_video, evening_video } = req.body;
+  const morningImageFile = req.files['morning_image'] ? req.files['morning_image'][0] : null;
+  const eveningImageFile = req.files['evening_image'] ? req.files['evening_image'][0] : null;
+  const generalImageFile = req.files['general_image'] ? req.files['general_image'][0] : null;
+ 
   try {
     // Create a new meditation time record
     const newMeditationTime = await meditationTime.create({
@@ -3532,8 +3540,197 @@ router.post('/add-meditation-time', async (req, res) => {
       morning_video,
       evening_video
     });
-
+ 
+ 
+    let morning_image = '';
+    let evening_image = '';
+    let general_image = '';
+ 
+    if (morningImageFile) {
+      const morningImagePath = `meditation_images/${newMeditationTime.id}/morning/${morningImageFile.originalname}`;
+      await storage.upload(morningImageFile.path, {
+        destination: morningImagePath,
+        metadata: {
+          contentType: morningImageFile.mimetype
+        }
+      });
+      morning_image = `gs://${storage.name}/${morningImagePath}`;
+    }
+ 
+    if (eveningImageFile) {
+      const eveningImagePath = `meditation_images/${newMeditationTime.id}/evening/${eveningImageFile.originalname}`;
+      await storage.upload(eveningImageFile.path, {
+        destination: eveningImagePath,
+        metadata: {
+          contentType: eveningImageFile.mimetype
+        }
+      });
+      evening_image = `gs://${storage.name}/${eveningImagePath}`;
+    }
+ 
+    if (generalImageFile) {
+      const generalImagePath = `meditation_images/${newMeditationTime.id}/general/${generalImageFile.originalname}`;
+      await storage.upload(generalImageFile.path, {
+        destination: generalImagePath,
+        metadata: {
+          contentType: generalImageFile.mimetype
+        }
+      });
+      general_image = `gs://${storage.name}/${generalImagePath}`;
+    }
+ 
+    // Update the new record with the image URLs
+    await newMeditationTime.update({ morning_image, evening_image, general_image });
+ 
     res.status(201).json({ message: 'Meditation time added successfully', data: newMeditationTime });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+ 
+ 
+router.put('/update-meditation-time/:id', upload.fields([
+  { name: 'morning_image', maxCount: 1 },
+  { name: 'evening_image', maxCount: 1 },
+  { name: 'general_image', maxCount: 1 }
+]), async (req, res) => {
+  const { id } = req.params;
+  const { country, general_video, morning_time_from, morning_time_to, evening_time_from, evening_time_to, morning_video, evening_video } = req.body;
+  const morningImageFile = req.files['morning_image'] ? req.files['morning_image'][0] : null;
+  const eveningImageFile = req.files['evening_image'] ? req.files['evening_image'][0] : null;
+  const generalImageFile = req.files['general_image'] ? req.files['general_image'][0] : null;
+ 
+  try {
+    // Find the existing meditation time record
+    const existingMeditationTime = await meditationTime.findByPk(id);
+ 
+    if (!existingMeditationTime) {
+      return res.status(404).json({ error: 'Meditation time record not found' });
+    }
+ 
+    // Update the text fields
+    existingMeditationTime.country = country || existingMeditationTime.country;
+    existingMeditationTime.general_video = general_video || existingMeditationTime.general_video;
+    existingMeditationTime.morning_time_from = morning_time_from || existingMeditationTime.morning_time_from;
+    existingMeditationTime.morning_time_to = morning_time_to || existingMeditationTime.morning_time_to;
+    existingMeditationTime.evening_time_from = evening_time_from || existingMeditationTime.evening_time_from;
+    existingMeditationTime.evening_time_to = evening_time_to || existingMeditationTime.evening_time_to;
+    existingMeditationTime.morning_video = morning_video || existingMeditationTime.morning_video;
+    existingMeditationTime.evening_video = evening_video || existingMeditationTime.evening_video;
+ 
+    // Function to delete old image from Firebase Storage
+    const deleteOldImage = async (imageUrl) => {
+      if (imageUrl) {
+        const filePath = imageUrl.replace(`gs://${storage.name}/`, '');
+        await storage.file(filePath).delete().catch(() => {
+          console.log(`Failed to delete old image at ${filePath}`);
+        });
+      }
+    };
+ 
+    // Upload new images to Firebase Storage and get the URLs
+    if (morningImageFile) {
+      await deleteOldImage(existingMeditationTime.morning_image);
+ 
+      const morningImagePath = `meditation_images/${id}/morning/${morningImageFile.originalname}`;
+      await storage.upload(morningImageFile.path, {
+        destination: morningImagePath,
+        metadata: {
+          contentType: morningImageFile.mimetype
+        }
+      });
+      existingMeditationTime.morning_image = `gs://${storage.name}/${morningImagePath}`;
+    }
+ 
+    if (eveningImageFile) {
+      await deleteOldImage(existingMeditationTime.evening_image);
+ 
+      const eveningImagePath = `meditation_images/${id}/evening/${eveningImageFile.originalname}`;
+      await storage.upload(eveningImageFile.path, {
+        destination: eveningImagePath,
+        metadata: {
+          contentType: eveningImageFile.mimetype
+        }
+      });
+      existingMeditationTime.evening_image = `gs://${storage.name}/${eveningImagePath}`;
+    }
+ 
+    if (generalImageFile) {
+      await deleteOldImage(existingMeditationTime.general_image);
+ 
+      const generalImagePath = `meditation_images/${id}/general/${generalImageFile.originalname}`;
+      await storage.upload(generalImageFile.path, {
+        destination: generalImagePath,
+        metadata: {
+          contentType: generalImageFile.mimetype
+        }
+      });
+      existingMeditationTime.general_image = `gs://${storage.name}/${generalImagePath}`;
+    }
+ 
+    // Save the updated record
+    await existingMeditationTime.save();
+ 
+    res.status(200).json({ message: 'Meditation time updated successfully', data: existingMeditationTime });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+ 
+router.get('/meditation-time', async (req, res) => {
+  const {UId}  = req.session;
+  const time = req.query.time;
+ 
+  try {
+    // Fetch the country from the reg table using UId
+    const userRegDetails = await reg.findOne({ where: { UId } });
+ 
+    if (!userRegDetails) {
+      return res.status(404).json({ error: 'User registration details not found' });
+    }
+ 
+    const { country } = userRegDetails;
+ 
+    // Find the meditation time details for the given country
+    const meditationTimeDetails = await meditationTime.findOne({ where: { country } });
+ 
+    if (!meditationTimeDetails) {
+      return res.status(404).json({ error: 'Meditation time details not found for the specified country' });
+    }
+ 
+    // Function to get signed URL from Firebase Storage
+    const getSignedUrl = async (gsUrl) => {
+      if (!gsUrl) return null;
+      const filePath = gsUrl.replace(`gs://${storage.name}/`, '');
+      const file = storage.file(filePath);
+      const [exists] = await file.exists();
+      if (exists) {
+        const [url] = await file.getSignedUrl({
+          action: 'read',
+          expires: '03-01-2500' // Adjust expiration date as needed
+        });
+        return url;
+      }
+      return null;
+    };
+ 
+    // Determine which video and image to return based on the time
+    let video, image;
+    if (time >= meditationTimeDetails.morning_time_from && time <= meditationTimeDetails.morning_time_to) {
+      video = meditationTimeDetails.morning_video;
+      image = await getSignedUrl(meditationTimeDetails.morning_image);
+    } else if (time >= meditationTimeDetails.evening_time_from && time <= meditationTimeDetails.evening_time_to) {
+      video = meditationTimeDetails.evening_video;
+      image = await getSignedUrl(meditationTimeDetails.evening_image);
+    } else {
+      video = meditationTimeDetails.general_video;
+      image = await getSignedUrl(meditationTimeDetails.general_image);
+    }
+ 
+    res.json({ video, image });
+ 
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: 'Internal Server Error' });
