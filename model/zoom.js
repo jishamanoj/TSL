@@ -9,8 +9,8 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
 });
 const zoom = sequelize.define('zoom',{
 zoomdate:{type:DataTypes.STRING},
-zoomStartTime:{type:DataTypes.TIME},
-zoomStopTime:{type:DataTypes.TIME},
+zoomStartTime:{type:DataTypes.STRING},
+zoomStopTime:{type:DataTypes.STRING},
 zoomLink:{type:DataTypes.STRING},
 },
 {
