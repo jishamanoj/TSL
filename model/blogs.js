@@ -8,7 +8,7 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
 });
 const blogs = sequelize.define('blogs', {
     blog_name: { type: DataTypes.STRING},
-    blog_description: { type: DataTypes.TEXT},
+    blog_description: { type: DataTypes.STRING},
     date: {type: DataTypes.STRING},
     image: {
         type:DataTypes.STRING

@@ -35,6 +35,8 @@ const Video = require('../model/videos');
 const donation = require('../model/donation');
 const meditationTime = require('../model/medtitationTime')
 const meditationFees = require('../model/meditationFees')
+const maintenance = require('../model/maintenance')
+const zoomRecord = require('../model/zoomRecorder')
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: "gs://thasmai-star-life.appspot.com"
@@ -302,7 +304,7 @@ router.get('/events', async (req, res) => {
   }
 });
 
-// router.post('/events-query', async (req, res) => {
+// rout`er.post('/events-query', async (req, res) => {
 //   try {
 //     const queryConditions = req.body.queryConditions;
 //     const page = req.body.page || 1; // Default to page 1 if not provided
@@ -2550,21 +2552,46 @@ router.get('/profiledetails/:UId', async (req, res) => {
 
     const bankDetails = await BankDetails.findOne({ where: { UId } });
     const cycle = await meditation.findOne({ where: { UId }, attributes: ['cycle', 'day', 'session_num'] });
-
+    let meditationData = {};
+    if (cycle) {
+      meditationData = { ...cycle.dataValues };
+    } else {
+      meditationData = null;
+    }
     const meditationlog= await timeTracking.findAll({
       where: { UId },
       order: [['createdAt', 'DESC']], 
       limit: 5, 
     });
-    console.log(meditationlog)
-    const meditationData = { ...cycle.dataValues  };
+    //console.log(meditationlog)
     
+    
+
+    const dekshinas = await dekshina.findAll({ where: { UId } });
+    const donations = await donation.findAll({ where: { UId } });
+    const meditationfees = await meditationFees.findAll({ where: { UId } });
+    const maintenancefee = await maintenance.findAll({ where: { UId } });
+
+    // Merge the results
+    const transactions = dekshinas.concat(donations, meditationfees, maintenancefee);  
+
+    // Sort by date in descending order 
+    transactions.sort((a, b) => new Date(b.payment_date, ) - new Date(a.payment_date));
+
+    const zoomrecord = await zoomRecord.findAll({
+      where: { UId },
+      order: [['id', 'DESC']],
+      limit: 5
+    });
+
     return res.status(200).json({
       user,
       profilePic,
       bankDetails,
       meditationData,
-      meditationlog
+      meditationlog,
+      transactions,
+      zoomrecord
     });
   } catch (error) {
     console.log(error);

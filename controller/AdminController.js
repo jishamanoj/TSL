@@ -24,8 +24,10 @@ router.put('/processPayment', async (req, response) => {
   console.log("...............................",UId);
 console.log(reg)
 try {
-  // Find the user in the reg table by userId
- // const userReg = await reg.findByPk(userId);
+  const existingUser = await Users.findOne({ where: { UId } });
+  if (existingUser) {
+    return response.status(400).json({ error: 'UId already exists in the Users table' });
+  }
 const userReg = await reg.findOne({
   where :{UId} })
   console.log("............................",userReg.first_name);

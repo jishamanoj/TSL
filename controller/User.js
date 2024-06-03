@@ -43,6 +43,7 @@ const donation = require('../model/donation');
 const meditationTime = require('../model/medtitationTime')
 const ZoomRecord = require('../model/zoomRecorder'); 
 const zoom = require('../model/zoom');
+
 router.get('/getAllUsers', async (req, res) => {
   try {
     // Fetch all users from the reg table
@@ -1961,6 +1962,7 @@ router.get('/meditation-date', async (req, res) => {
       attributes: ['UId', 'med_starttime', 'timeEstimate', 'ismeditated'],
       where: {
         UId: UId,
+        ismeditated:1
       },
       limit,
       offset

@@ -8,7 +8,7 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
 });
 const globalMessage = sequelize.define('globalMessage',{
     UId: { type: DataTypes.INTEGER},
-    message: { type: DataTypes.TEXT},
+    message: { type: DataTypes.STRING},
     messageTime: { type: DataTypes.STRING},
     messageDate:{ type: DataTypes.STRING},
     isAdminMessage:{type: DataTypes.BOOLEAN},
