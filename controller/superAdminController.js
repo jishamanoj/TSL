@@ -1552,15 +1552,23 @@ router.get('/search', async (req, res) => {
   try {
     const field = req.query.field; 
     const value = req.query.value; 
+    const page = parseInt(req.query.page) || 1; 
+    const limit = parseInt(req.query.limit) || 10; 
 
     if (!field || !value) {
       return res.status(400).json({ message: 'Please provide both field and value parameters' });
     }
 
+    // Calculate the offset
+    const offset = (page - 1) * limit;
+
+    // Step 1: Fetch user details with pagination
     const userDetails = await Users.findAll({
       where: {
         [field]: value,
       },
+      limit,
+      offset,
     });
 
     if (!userDetails || userDetails.length === 0) {
@@ -1586,7 +1594,26 @@ router.get('/search', async (req, res) => {
       };
     });
 
-    res.json({ message: 'Success', data: mergedResults });
+    // Optional: Fetch the total number of users for pagination meta info
+    const totalUsers = await Users.count({
+      where: {
+        [field]: value,
+      },
+    });
+
+    // Calculate the total number of pages
+    const totalPages = Math.ceil(totalUsers / limit);
+
+    res.json({ 
+      message: 'Success', 
+      data: mergedResults,
+      pagination: {
+        totalUsers,
+        totalPages,
+        currentPage: page,
+        pageSize: limit
+      }
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
@@ -1722,50 +1749,76 @@ router.get('/donation-search', async (req, res) => {
   try {
     const field = req.query.field; 
     const value = req.query.value; 
- 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
     if (!field || !value) {
       return res.status(400).json({ message: 'Please provide both field and value parameters' });
     }
- 
+
+    const offset = (page - 1) * limit;
+
+    // Step 1: Fetch user details with pagination
     const userDetails = await Users.findAll({
       where: {
         [field]: value,
       },
+      limit,
+      offset,
     });
- 
+
     if (!userDetails || userDetails.length === 0) {
       return res.status(404).json({ message: 'User not found' });
     }
- 
+
     // Step 2: Extract UIds from the search results
     const UIds = userDetails.map(user => user.UId);
- 
+
     // Step 3: Fetch the total sum of distributed_coupons for each UId
     const distributionResults = await donation.findAll({
       where: { UId: { [Op.in]: UIds } },
       attributes: ['UId', [sequelize.fn('sum', sequelize.col('amount')), 'total_donation']],
       group: ['UId'],
     });
- 
+
     const latestDonations = await donation.findAll({
       where: { UId: { [Op.in]: UIds } },
       attributes: ['UId', 'amount', 'id'],
       order: [['id', 'DESC']],
       group: ['id']
     });
- 
+
     // Step 4: Merge the user details with the distribution results
     const mergedResults = userDetails.map(user => {
       const distributionResult = distributionResults.find(result => result.UId === user.UId);
       const latestDonation = latestDonations.find(result => result.UId === user.UId);
       return {
         ...user.dataValues,
-        total_distributed_coupons: distributionResult ? distributionResult.dataValues.total_distributed_coupons : 0,
+        total_donation: distributionResult ? distributionResult.dataValues.total_donation : 0,
         latest_donation: latestDonation ? latestDonation.amount : 0,
       };
     });
- 
-    res.json({ message: 'Success', data: mergedResults });
+
+    // Optional: Fetch the total number of users for pagination meta info
+    const totalUsers = await Users.count({
+      where: {
+        [field]: value,
+      },
+    });
+
+    // Calculate the total number of pages
+    const totalPages = Math.ceil(totalUsers / limit);
+
+    res.json({ 
+      message: 'Success', 
+      data: mergedResults,
+      pagination: {
+        totalUsers,
+        totalPages,
+        currentPage: page,
+        pageSize: limit
+      }
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
@@ -1901,38 +1954,45 @@ router.get('/fees-search', async (req, res) => {
   try {
     const field = req.query.field; 
     const value = req.query.value; 
- 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
     if (!field || !value) {
       return res.status(400).json({ message: 'Please provide both field and value parameters' });
     }
- 
+
+    const offset = (page - 1) * limit;
+
+    // Step 1: Fetch user details with pagination
     const userDetails = await Users.findAll({
       where: {
         [field]: value,
       },
+      limit,
+      offset,
     });
- 
+
     if (!userDetails || userDetails.length === 0) {
       return res.status(404).json({ message: 'User not found' });
     }
- 
+
     // Step 2: Extract UIds from the search results
     const UIds = userDetails.map(user => user.UId);
- 
-    // Step 3: Fetch the total sum of distributed_coupons for each UId
+
+    // Step 3: Fetch the total sum of fees for each UId
     const distributionResults = await meditationFees.findAll({
       where: { UId: { [Op.in]: UIds } },
       attributes: ['UId', [sequelize.fn('sum', sequelize.col('amount')), 'total_fees']],
       group: ['UId'],
     });
- 
+
     const latestDonations = await meditationFees.findAll({
       where: { UId: { [Op.in]: UIds } },
       attributes: ['UId', 'amount', 'id'],
       order: [['id', 'DESC']],
       group: ['id']
     });
- 
+
     // Step 4: Merge the user details with the distribution results
     const mergedResults = userDetails.map(user => {
       const distributionResult = distributionResults.find(result => result.UId === user.UId);
@@ -1943,14 +2003,32 @@ router.get('/fees-search', async (req, res) => {
         latest_donation: latestDonation ? latestDonation.amount : 0,
       };
     });
- 
-    res.json({ message: 'Success', data: mergedResults });
+
+    // Optional: Fetch the total number of users for pagination meta info
+    const totalUsers = await Users.count({
+      where: {
+        [field]: value,
+      },
+    });
+
+    // Calculate the total number of pages
+    const totalPages = Math.ceil(totalUsers / limit);
+
+    res.json({ 
+      message: 'Success', 
+      data: mergedResults,
+      pagination: {
+        totalUsers,
+        totalPages,
+        currentPage: page,
+        pageSize: limit
+      }
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
- 
 router.get('/list-operation', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -2051,6 +2129,87 @@ router.post('/operation-query', async (req, res) => {
     res.status(500).json({ message: 'Internal server error.' });
   }
 });
+
+router.get('/operation-search', async (req, res) => {
+  try {
+    const field = req.query.field; // Retrieve the field from query parameters
+    const value = req.query.value; // Retrieve the value from query parameters
+    const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
+    const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page if not provided
+    const offset = (page - 1) * limit;
+
+    if (!field || !value) {
+      return res.status(400).json({ message: 'Please provide both field and value parameters' });
+    }
+
+    const lowerCaseValue = value.toLowerCase();
+
+    // Fetch expenses matching the field and value with pagination
+    const { count, rows: allEvents } = await ashramexpense.findAndCountAll({
+      where: {
+        [field]: lowerCaseValue,
+      },
+      limit,
+      offset,
+    });
+
+    if (allEvents.length === 0) {
+      return res.status(404).json({ message: 'No matching expenses found' });
+    }
+
+    // Fetch all events to calculate the total sum of amounts for each emp_id
+    const allEventsForSum = await ashramexpense.findAll({
+      where: {
+        [field]: lowerCaseValue,
+      },
+    });
+
+    // Create a map to store the sum of amounts for each emp_id
+    const amountSumMap = allEventsForSum.reduce((acc, event) => {
+      if (acc[event.emp_id]) {
+        acc[event.emp_id] += event.amount;
+      } else {
+        acc[event.emp_id] = event.amount;
+      }
+      return acc;
+    }, {});
+
+    // Fetch the admin name and total amount for each expense
+    const everyEvents = await Promise.all(allEvents.map(async event => {
+      const admin = await Admin.findOne({ where: { emp_id: event.emp_id } });
+      const adminName = admin ? admin.name : null;
+
+      return {
+        id: event.id,
+        expenseType: event.expenseType,
+        amount: event.amount,
+        description: event.description,
+        Expense_Date: event.Expense_Date,
+        emp_id: event.emp_id,
+        emp_name: adminName,
+        totalAmount: amountSumMap[event.emp_id], // Adding the total amount for the same emp_id
+      };
+    }));
+
+    const totalPages = Math.ceil(count / limit);
+
+    res.json({
+      message: 'Success',
+      data: everyEvents,
+      pagination: {
+        totalItems: count,
+        totalPages,
+        currentPage: page,
+        itemsPerPage: limit,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
 
  
 router.get('/list-ashram-appointments', async (req, res) => {
@@ -2162,25 +2321,30 @@ router.get('/ashram-search', async (req, res) => {
   try {
     const field = req.query.field; // Retrieve the field from query parameters
     const value = req.query.value; // Retrieve the value from query parameters
- 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
     if (!field || !value) {
       return res.status(400).json({ message: 'Please provide both field and value parameters' });
     }
- 
+      
     const lowerCaseValue = value.toLowerCase();
- 
-    // Search the database for appointments matching the field and value
+    const offset = (page - 1) * limit;
+
+    // Step 1: Search the database for appointments matching the field and value with pagination
     const userDetails = await Appointment.findAll({
       where: {
         [field]: lowerCaseValue,
       },
+      limit,
+      offset,
     });
- 
+
     if (!userDetails || userDetails.length === 0) {
       return res.status(404).json({ message: 'User not found' });
     }
- 
-    // Fetch the coupons field from the Users table for each appointment
+
+    // Step 2: Fetch the coupons field from the Users table for each appointment
     const resultsWithCoupons = await Promise.all(userDetails.map(async appointment => {
       const user = await Users.findOne({ where: { UId: appointment.UId } });
       return {
@@ -2188,8 +2352,27 @@ router.get('/ashram-search', async (req, res) => {
         coupons: user ? user.coupons : null,
       };
     }));
- 
-    res.json({ message: 'Success', data: resultsWithCoupons });
+
+    // Optional: Fetch the total number of appointments for pagination meta info
+    const totalAppointments = await Appointment.count({
+      where: {
+        [field]: lowerCaseValue,
+      },
+    });
+
+    // Calculate the total number of pages
+    const totalPages = Math.ceil(totalAppointments / limit);
+
+    res.json({ 
+      message: 'Success', 
+      data: resultsWithCoupons,
+      pagination: {
+        totalAppointments,
+        totalPages,
+        currentPage: page,
+        pageSize: limit
+      }
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
@@ -2526,7 +2709,7 @@ router.post('/appointment-query', async (req, res) => {
   }
 });
 
-router.get('/profiledetails/:UId', async (req, res) => {
+router.get('/profiledetails/:UId', async (req, res) => {``
   try {
     const { UId } = req.params;
 //console.log(UId);
@@ -2596,6 +2779,15 @@ router.get('/profiledetails/:UId', async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.get('/completeAppointment' , async(req,res) =>{
+  try{
+    const appointment = await Appointment.findAll({where: {appointment_status:'Completed'}});
+    return res.status(200).json(appointment);
+  } catch(error){
+    return res.status(500).json('internal server error');
   }
 });
 

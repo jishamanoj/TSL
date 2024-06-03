@@ -16,7 +16,7 @@ const feedback = sequelize.define('feedback' , {
 sequelize.sync({alter: true})
     .then((data) => {
        // console.log(data);
-        console.log('meditation table created');
+        console.log('feedback table created');
     })
     .catch((err) => {
         console.log(err);
