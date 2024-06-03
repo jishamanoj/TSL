@@ -2875,9 +2875,9 @@ router.get('/videos-by-playlist', async (req, res) => {
 
 
 router.get('/meditation-time', async (req, res) => {
-  const { UId } = req.session;
-  const time = req.query.time;
-
+  const { UId, time } = req.query;
+  console.log(time, UId);
+  
   try {
     // Fetch the country from the reg table using UId
     const userRegDetails = await reg.findOne({ where: { UId } });
@@ -2892,20 +2892,31 @@ router.get('/meditation-time', async (req, res) => {
     const meditationTimeDetails = await meditationTime.findOne({ where: { country } });
 
     if (!meditationTimeDetails) {
-      return res.status(404).json({ error: 'Meditation time details not found for the specified country' });
+      return res.status(404).json({ error: 'Meditation time details not found' });
     }
 
-    // Determine which video to return based on the time
-    if (time >= meditationTimeDetails.morning_time_from && time <= meditationTimeDetails.morning_time_to) {
-      return res.json({ video: meditationTimeDetails.morning_video });
-    } else if (time >= meditationTimeDetails.evening_time_from && time <= meditationTimeDetails.evening_time_to) {
-      return res.json({ video: meditationTimeDetails.evening_video });
+    const { morning_time_from, morning_time_to, evening_time_from, evening_time_to, morning_video, evening_video, general_video } = meditationTimeDetails.dataValues;
+
+    if (time >= morning_time_from && time <= morning_time_to) {
+      return res.json({
+        video: morning_video,
+        fromTime: morning_time_from,
+        toTime: morning_time_to
+      });
+    } else if (time >= evening_time_from && time <= evening_time_to) {
+      return res.json({
+        video: evening_video,
+        fromTime: evening_time_from,
+        toTime: evening_time_to
+      });
     } else {
-      return res.json({ video: meditationTimeDetails.general_video });
+      return res.json({
+        video: general_video
+      });
     }
-
+    
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
