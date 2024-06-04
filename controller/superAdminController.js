@@ -37,6 +37,7 @@ const meditationTime = require('../model/medtitationTime')
 const meditationFees = require('../model/meditationFees')
 const maintenance = require('../model/maintenance')
 const zoomRecord = require('../model/zoomRecorder')
+const zoom = require('../model/zoom');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: "gs://thasmai-star-life.appspot.com"
@@ -1319,30 +1320,30 @@ router.get('/financialconfig', async (req,res) => {
   }
 });
 
-router.put('/update-configuration/:id', async (req, res) => {
-  const id = req.params.id;
-  const configdata = req.body;
-
+router.put('/update-configuration', async (req, res) => {
   try {
-      if (!id) {
-          return res.status(400).json({ error: 'ID not found' });
-      }
+    const id = req.body.id;
+    const configData = req.body;
 
-      // Find by id
-      const data = await financialconfig.findOne({ where: { id } });
+    if (!id) {
+      const newData = await financialconfig.create({
+        ...configData
+      });
+      return res.status(200).json({message:'Data created successfully', newData});
 
-      // Update data
-      if (data) {
-         // console.log("finconfig data updated");
-          await data.update(configdata);
-          return res.status(200).json({ message: 'Data updated successfully' });
-          
-      } else {
-          return res.status(404).json({ error: 'Data not found' });
-      }
+    }
+
+    // Try to find the existing record
+    const data = await financialconfig.findOne({ where: { id } });
+
+    if (data) {
+      // If found, update the existing record
+      await data.update(configData);
+      return res.status(201).json({ message: 'Data updated successfully' });
+    } 
   } catch (error) {
-      //console.log(error);
-      return res.status(500).json({ error: 'Internal Server Error' });
+    console.log(error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -1358,28 +1359,30 @@ router.get('/appconfig',async(req,res) =>{
   }
 });
 
-router.put('/update-appconfig/:id', async(req, res) =>{
-  const id = req.params.id;
-  const configdata = req.body;
+router.put('/update-appconfig', async (req, res) => {
+  try {
+    const id = req.body.id;
+    const configData = req.body;
 
-  try{
-      if(!id) {
-          return res.status(400).json({error:'ID not found'});
-      }
-      // find by id
-      const data = await applicationconfig.findOne({where:{id}});
+    if (!id) {
+      const newData = await applicationconfig.create({
+        ...configData
+      });
+      return res.status(200).json({message:'Data created successfully', newData});
 
-      //updating
-      if(data){
-         // console.log("updating");
-          await data.update(configdata);
-          return res.status(200).json({message:'Data updated successfully'});
-      } else {
-          return res.status(404).json({ error:'Data not found'});
-      }
-  } catch(error) {
-     // console.log(error);
-      return res.status(500).json({error:'internal server error'});
+    }
+
+    // Try to find the existing record
+    const data = await applicationconfig.findOne({ where: { id } });
+
+    if (data) {
+      // If found, update the existing record
+      await data.update(configData);
+      return res.status(201).json({ message: 'Data updated successfully' });
+    } 
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -3958,7 +3961,22 @@ router.get('/meditation-time', async (req, res) => {
 
 //////////////////////////zoom meeting/////////////////////////////
 
+router.get('/get-zoomclass', async (req, res) => {
+  try {
+    // Fetch all records from the zoom table
+    const zoomRecords = await zoom.findAll();
 
+    // Check if any records are found
+    if (zoomRecords.length > 0) {
+      res.status(200).json(zoomRecords);
+    } else {
+      res.status(404).json({ message: 'No zoom records found' });
+    }
+  } catch (error) {
+    console.error('Error fetching zoom records:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 
 
