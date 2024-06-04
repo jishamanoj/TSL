@@ -12,19 +12,19 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
 const Video = sequelize.define('video', {
     playList_heading:{
         type: DataTypes.STRING,
-        allowNull: false 
+        
     },
     Video_heading:{
         type: DataTypes.STRING,
-        allowNull: false 
+       
     },
     videoLink: { 
         type: DataTypes.STRING, 
-        allowNull: false 
+        
     },
     category: { 
         type: DataTypes.STRING, 
-        allowNull: false 
+        
     },
     playList_image: {
         type:DataTypes.STRING
