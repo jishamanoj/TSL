@@ -3990,6 +3990,17 @@ router.get('/meditation-time', async (req, res) => {
   }
 });
 
+router.get('/meditationTimeList' , async (req, res) =>{
+  try{
+    const timelist = await meditationTime.findAll();
+    return res.status(200).json(timelist);
+  
+  } catch(error){
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 //////////////////////////zoom meeting/////////////////////////////
 
 router.get('/get-zoomclass', async (req, res) => {
