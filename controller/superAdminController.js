@@ -3990,12 +3990,81 @@ router.get('/meditation-time', async (req, res) => {
   }
 });
 
-router.get('/meditationTimeList' , async (req, res) =>{
-  try{
-    const timelist = await meditationTime.findAll();
-    return res.status(200).json(timelist);
-  
-  } catch(error){
+router.get('/meditationTimeList', async (req, res) => {
+  try {
+    // Fetch all meditation time details
+    const meditationTimes = await meditationTime.findAll();
+
+    // Function to get signed URL from Firebase Storage
+    const getSignedUrl = async (gsUrl) => {
+      if (!gsUrl) return null;
+      const filePath = gsUrl.replace(`gs://${storage.name}/`, '');
+      const file = storage.file(filePath);
+      const [exists] = await file.exists();
+      if (exists) {
+        const [url] = await file.getSignedUrl({
+          action: 'read',
+          expires: '03-01-2500' // Adjust expiration date as needed
+        });
+        return url;
+      }
+      return null;
+    };
+
+    // Map over all meditation time records to include signed URLs for images
+    const result = await Promise.all(meditationTimes.map(async (record) => {
+      return {
+        ...record.toJSON(),
+        morning_image: await getSignedUrl(record.morning_image),
+        evening_image: await getSignedUrl(record.evening_image),
+        general_image: await getSignedUrl(record.general_image)
+      };
+    }));
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.get('/meditation-time/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Find the meditation time record by ID
+    const meditationTimeRecord = await meditationTime.findByPk(id);
+
+    if (!meditationTimeRecord) {
+      return res.status(404).json({ error: 'Meditation time record not found' });
+    }
+
+    // Function to get signed URL from Firebase Storage
+    const getSignedUrl = async (gsUrl) => {
+      if (!gsUrl) return null;
+      const filePath = gsUrl.replace(`gs://${storage.name}/`, '');
+      const file = storage.file(filePath);
+      const [exists] = await file.exists();
+      if (exists) {
+        const [url] = await file.getSignedUrl({
+          action: 'read',
+          expires: '03-01-2500' // Adjust expiration date as needed
+        });
+        return url;
+      }
+      return null;
+    };
+
+    // Include signed URLs for images
+    const result = {
+      ...meditationTimeRecord.toJSON(),
+      morning_image: await getSignedUrl(meditationTimeRecord.morning_image),
+      evening_image: await getSignedUrl(meditationTimeRecord.evening_image),
+      general_image: await getSignedUrl(meditationTimeRecord.general_image)
+    };
+
+    res.status(200).json(result);
+  } catch (error) {
     console.log(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
