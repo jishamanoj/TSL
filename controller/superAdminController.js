@@ -38,6 +38,8 @@ const meditationFees = require('../model/meditationFees')
 const maintenance = require('../model/maintenance')
 const zoomRecord = require('../model/zoomRecorder')
 const zoom = require('../model/zoom');
+const questions = require('../model/question');
+const dekshina = require('../model/dekshina')
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: "gs://thasmai-star-life.appspot.com"
@@ -1350,7 +1352,13 @@ router.put('/update-configuration', async (req, res) => {
 router.get('/appconfig',async(req,res) =>{
   try{
       //console.log("get appconfig data");
-      const appconfig = await applicationconfig.findAll();
+      const appconfig = await applicationconfig.findAll({
+        where: {
+            id: {
+                [Op.ne]: 11
+            }
+        }
+    });
       
       res.status(200).json({message:'Fetching data successfully',appconfig});
   } catch(error) {
@@ -1424,6 +1432,7 @@ router.put('/update-support/:id', async (req, res) => {
       return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
+
 router.post('/addSupport', async (req, res) => {
   try {
     const data = req.body;
@@ -1431,6 +1440,31 @@ router.post('/addSupport', async (req, res) => {
     return res.status(200).json({ message: 'Success', support });
   } catch (error) {
     return res.status(500).json({ error: 'Internal server error', message: error.message });
+  }
+});
+
+router.put('/questions/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const configData = req.body;
+
+    if (!id) {
+      return res.status(401).json({ message: 'id required' });
+    }
+
+    // Try to find the existing record
+    const data = await questions.findAll({ where: { id } });
+
+    if (data && data.length > 0) { // Check if a record was found
+      // If found, update the existing record
+      await data[0].update(configData); // Update the first record found
+      return res.status(201).json({ message: 'Data updated successfully' });
+    } else {
+      return res.status(404).json({ message: 'Data not found' });
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -2211,9 +2245,6 @@ router.get('/operation-search', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
-
-
  
 router.get('/list-ashram-appointments', async (req, res) => {
   try {
@@ -3390,7 +3421,7 @@ router.post('/search-operator', async(req,res) =>{
     if(!operator){
       return res.status(404).json('operator not found');
     }
-    return res.status(200).json(operator);
+    return res.status(200).json([operator]);
   } catch(error) {
     return res.status(500).json('internal server error');
   }
