@@ -4210,6 +4210,81 @@ router.post('/feedback-query', async (req, res) => {
 });
 
 
+router.get('/impNotes' , async(req,res) =>{
+  try{
+    const notes = await globalMessage.findAll({
+      where: {
+        message: {
+          [Op.startsWith]: 'IMP'
+        }
+      }
+    });
+    const messageData = await Promise.all(notes.map(async (message) => {
+      const userData = await Users.findOne({ where: { UId: message.UId }, attributes: ['firstName', 'secondName'] });
+      console.log("userData.............",userData);
+      const userName = `${userData.firstName} ${userData.secondName}`;
+      return { 
+        ...message.toJSON(), 
+        userName 
+      };
+ 
+    }));
+
+    return res.status(200).json(messageData);
+  } catch(error){
+    return res.status(500).json('internal server error');
+  }
+});
+
+router.get('/videos', async (req, res) => {
+  try {
+      const videos = await Video.findAll();
+
+      // Initialize groupedVideos as an empty array
+      let groupedVideos = [];
+
+      await Promise.all(videos.map(async video => {
+          let playList_image = null;
+          if (video.playList_image) {
+              // If playList_image URL exists, fetch the image URL from Firebase Storage
+              const file = storage.file(video.playList_image.split(storage.name + '/')[1]);
+              const [exists] = await file.exists();
+              if (exists) {
+                  playList_image = await file.getSignedUrl({
+                      action: 'read',
+                      expires: '03-01-2500' // Adjust expiration date as needed
+                  });
+                  playList_image = playList_image[0];
+              }
+          }
+
+          const existingGroup = groupedVideos.find(group => group.playList_heading === video.playList_heading);
+          if (existingGroup) {
+              existingGroup.videos.push({
+                  id: video.id,
+                  Video_heading: video.Video_heading,
+                  videoLink: video.videoLink
+              });
+          } else {
+              groupedVideos.push({
+                  playList_heading: video.playList_heading,
+                  playList_image,
+                  videos: [{
+                      id: video.id,
+                      Video_heading: video.Video_heading,
+                      videoLink: video.videoLink
+                  }]
+              });
+          }
+      }));
+
+      res.json(groupedVideos);
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 module.exports = router;
 
 
