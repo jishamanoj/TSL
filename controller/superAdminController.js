@@ -4089,7 +4089,22 @@ router.get('/get-zoomclass', async (req, res) => {
   }
 });
 
+router.delete('/delete-zoom/:zoomId', async (req, res) => {
+  try {
+      const zoomId = req.params.zoomId;
+      const event = await zoom.findByPk(zoomId);
 
+      if (!event) {
+          return res.status(404).json({ error: 'not found' });
+      }
+      await event.destroy();
+
+      res.status(200).json({ message: 'deleted successfully' });
+  } catch (error) {
+      console.log(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 module.exports = router;
 

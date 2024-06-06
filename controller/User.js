@@ -2875,7 +2875,8 @@ router.get('/videos-by-playlist', async (req, res) => {
 
 
 router.get('/meditation-time', async (req, res) => {
-  const { UId, time } = req.query;
+  const { UId} = req.session;
+  const { time } = req.query;
   console.log(time, UId);
   
   try {
@@ -2915,6 +2916,35 @@ router.get('/meditation-time', async (req, res) => {
       });
     }
     
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.get('/meditationTimeDetails', async (req, res) => {
+  const { UId } = req.session;
+  console.log( UId);
+  
+  try {
+    // Fetch the country from the reg table using UId
+    const userRegDetails = await reg.findOne({ where: { UId } });
+
+    if (!userRegDetails) {
+      return res.status(404).json({ error: 'User registration details not found' });
+    }
+
+    const { country } = userRegDetails;
+
+    // Find the meditation time details for the given country
+    const meditationTimeDetails = await meditationTime.findOne({ where: { country } });
+
+    if (!meditationTimeDetails) {
+      return res.status(404).json({ error: 'Meditation time details not found' });
+    }
+
+    return res.status(200).json({message:'meditation time details' , meditationTimeDetails});
+ 
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
