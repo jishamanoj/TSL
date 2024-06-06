@@ -39,7 +39,8 @@ const maintenance = require('../model/maintenance')
 const zoomRecord = require('../model/zoomRecorder')
 const zoom = require('../model/zoom');
 const questions = require('../model/question');
-const dekshina = require('../model/dekshina')
+const dekshina = require('../model/dekshina');
+const feedback =require('../model/feedback');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: "gs://thasmai-star-life.appspot.com"
@@ -4105,6 +4106,109 @@ router.delete('/delete-zoom/:zoomId', async (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
+router.get('/list-feedback', async (req, res) => {
+  try {
+      const page = parseInt(req.query.page) || 1;
+      const pageSize = parseInt(req.query.pageSize) || 10;
+ 
+      const offset = (page - 1) * pageSize;
+ 
+      const feedbacks = await feedback.findAndCountAll({
+          limit: pageSize,
+          offset: offset
+      });
+ 
+      const totalItems = feedbacks.count;
+      const totalPages = Math.ceil(totalItems / pageSize);
+ 
+      const feedbackWithUsernames = await Promise.all(feedbacks.rows.map(async fb => {
+          const user = await reg.findOne({ where: { UId: fb.UId } });
+          const username = user ? `${user.first_name} ${user.last_name}` : 'Unknown User';
+ 
+          return {
+              feedback: fb.feedback,
+              rating: fb.rating,
+              UId: fb.UId,
+              username: username
+          };
+      }));
+ 
+      res.status(200).json({
+          data: feedbackWithUsernames,
+          currentPage: page,
+          totalPages: totalPages,
+          pageSize: pageSize,
+          totalItems: totalItems
+      });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+router.post('/feedback-query', async (req, res) => {
+  try {
+    const queryConditions = req.body.queryConditions;
+    const page = req.body.page || 1; // Default to page 1 if not provided
+    const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
+ 
+    console.log(queryConditions);
+ 
+    if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
+      return res.status(400).json({ message: 'Invalid query conditions provided.' });
+    }
+ 
+    function isNumeric(num) {
+      return !isNaN(num);
+    }
+ 
+    let countSql = "SELECT COUNT(*) AS total FROM thasmai.feedbacks WHERE ";
+    let sql = "SELECT * FROM thasmai.feedbacks WHERE ";
+ 
+    for (let i = 0; i < queryConditions.length; i++) {
+      if (queryConditions[i].operator === "between") {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} "${queryConditions[i].value.split("/")[0]}" AND "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator !== "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} "${queryConditions[i].value.split("/")[0]}" AND "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator !== "null" ? queryConditions[i].logicaloperator : ""} `;
+      } else {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'`} ${queryConditions[i].logicaloperator !== "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'`} ${queryConditions[i].logicaloperator !== "null" ? queryConditions[i].logicaloperator : ""} `;
+      }
+    }
+ 
+    const countResult = await sequelize.query(countSql, { type: sequelize.QueryTypes.SELECT });
+    const totalCount = countResult[0].total;
+ 
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const offset = (page - 1) * pageSize;
+ 
+    sql += ` LIMIT ${pageSize} OFFSET ${offset}`;
+    console.log(sql);
+ 
+    const queryResults = await sequelize.query(sql, { type: sequelize.QueryTypes.SELECT });
+ 
+    const feedbackWithUsernames = await Promise.all(queryResults.map(async fb => {
+      const user = await sequelize.query("SELECT first_name, last_name FROM thasmai.regs WHERE UId = :UId", {
+        replacements: { UId: fb.UId },
+        type: sequelize.QueryTypes.SELECT
+      });
+      const username = user.length > 0 ? `${user[0].first_name} ${user[0].last_name}` : 'Unknown User';
+ 
+      return {
+        ...fb,
+        username: username
+      };
+    }));
+ 
+    res.json({ queryResults: feedbackWithUsernames, totalPages });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
 
 module.exports = router;
 
