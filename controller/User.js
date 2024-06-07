@@ -2786,7 +2786,7 @@ router.get('/playlists', async (req, res) => {
 router.get('/videos-by-playlist', async (req, res) => {
   const playList_heading = req.query.playList_heading;
 
-console.log(playList_heading);
+  console.log(playList_heading);
   if (!playList_heading) {
     return res.status(400).json({ error: 'playList_heading query parameter is required' });
   }
@@ -2801,12 +2801,30 @@ console.log(playList_heading);
       return res.status(404).json({ error: 'No videos found for the provided playList_heading' });
     }
 
-    res.status(200).json({ videos });
+    const response = [];
+    
+    videos.forEach(video => {
+      const headings = video.Video_heading;
+      const links = video.videoLink;
+      
+      // Assuming both headings and links arrays have the same length
+      for (let i = 0; i < headings.length; i++) {
+        response.push({
+          Video_heading: headings[i],
+          videoLink: links[i]
+        });
+      }
+    });
+
+    res.status(200).json(response);
   } catch (error) {
     console.error('Error fetching videos:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
+
  
 // router.get('/meditation-time', async (req, res) => {
 //   const { UId } = req.session;
