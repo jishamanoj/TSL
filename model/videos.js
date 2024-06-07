@@ -1,5 +1,3 @@
-
-
 require('dotenv').config();
 const { database } = require('firebase-admin');
 const { DataTypes, Sequelize } = require('sequelize');
@@ -15,11 +13,11 @@ const Video = sequelize.define('video', {
         
     },
     Video_heading:{
-        type: DataTypes.STRING,
+        type: DataTypes.JSON,
        
     },
     videoLink: { 
-        type: DataTypes.STRING, 
+        type: DataTypes.JSON, 
         
     },
     category: { 

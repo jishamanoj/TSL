@@ -142,6 +142,39 @@ router.get('/register-count', async (req, res) => {
   }
 });
 
+router.get('/incomePiechart' , async(req, res) =>{
+  try{
+    const DonationAmt = await donation.sum('amount' );
+    const maintenanceAmt = await maintenance.sum('amount');
+    const meditationAmt = await meditationFees.sum('amount');
+    const dekshinaAmt = await dekshina.sum('amount');
+    const appointmentAmt = await appointment.sum('payment');
+    const totalAmt = DonationAmt + maintenanceAmt + meditationAmt + dekshinaAmt ;
+    const fee = maintenanceAmt + meditationAmt ;
+    donationpercentage = DonationAmt/totalAmt * 100 ;
+    feePercentage = fee / totalAmt * 100;
+    dekshinaPercentage = dekshinaAmt / totalAmt * 100;
+    appointmentpercentage = appointmentAmt / totalAmt * 100;
+    return res.status(200).json({
+      message:'income percentage',
+      summary:[
+      { field: 'donation',
+        value: donationpercentage},
+      {field:'fee',
+        value: feePercentage},
+     { field:'dekshina',
+      value: dekshinaPercentage} ,
+      { field:'appointment',
+        value: appointmentpercentage}
+    ]
+    });
+
+} catch(error){
+  console.log(error);
+  return res.status(500).json({ error: 'Internal Server Error' });
+}
+});
+
 router.get('/waiting-list', async (req, res) => {
   try {
     const list = await reg.count({
@@ -264,7 +297,6 @@ router.post('/add-event', upload.single('image'), async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 router.get('/events', async (req, res) => {
   try {
@@ -511,6 +543,11 @@ router.delete('/delete-events/:eventId', async (req, res) => {
       if (!event) {
           return res.status(404).json({ error: 'Event not found' });
       }
+       if (event.image) {
+        const imagePath = event.image.replace(`gs://thasmai-star-life.appspot.com/`, '');
+        await storage.file(imagePath).delete();
+      }
+  
       await event.destroy();
 
       res.status(200).json({ message: 'Event deleted successfully' });
@@ -3674,7 +3711,11 @@ router.delete('/delete-blogs/:blogId', async (req, res) => {
  
       if (!event) {
           return res.status(404).json({ error: 'Event not found' });
+      } if (event.image) {
+        const imagePath = event.image.replace(`gs://thasmai-star-life.appspot.com/`, '');
+        await storage.file(imagePath).delete();
       }
+  
       await event.destroy();
  
       res.status(200).json({ message: 'blog deleted successfully' });
@@ -3737,11 +3778,15 @@ router.post('/add-video', upload.single('playList_image'), async (req, res) => {
   const playListImageFile = req.file;
 
   try {
+    // Parse JSON strings to arrays if they are provided
+    const parsedVideoHeading = Video_heading ? JSON.parse(Video_heading) : [];
+    const parsedVideoLink = videoLink ? JSON.parse(videoLink) : [];
+
     // Create a new video record
     const newVideo = await Video.create({
       playList_heading,
-      Video_heading,
-      videoLink,
+      Video_heading: parsedVideoHeading,
+      videoLink: parsedVideoLink,
       category
     });
 
@@ -3761,10 +3806,144 @@ router.post('/add-video', upload.single('playList_image'), async (req, res) => {
       playList_image = `gs://${storage.name}/${playListImagePath}`;
     }
 
-    // Update the video record with the image URL
-    await newVideo.update({ playList_image });
+    // Update the video record with the image URL if an image was uploaded
+    if (playList_image) {
+      await newVideo.update({ playList_image });
+    }
 
     res.status(201).json({ message: 'Video created successfully', video: newVideo });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+ 
+router.put('/update-video/:id', upload.single('playList_image'), async (req, res) => {
+  const { id } = req.params;
+  const { playList_heading, Video_heading, videoLink, category } = req.body;
+  const playListImageFile = req.file;
+ 
+ 
+  try {
+    // Parse JSON strings to arrays
+    const parsedVideoHeading = JSON.parse(Video_heading);
+    const parsedVideoLink = JSON.parse(videoLink);
+ 
+    // Find the existing video record
+    const video = await Video.findByPk(id);
+    if (!video) {
+      return res.status(404).json({ error: 'Video not found' });
+    }
+ 
+    // Update the video fields
+    video.playList_heading = playList_heading;
+    video.Video_heading = parsedVideoHeading;
+    video.videoLink = parsedVideoLink;
+    video.category = category;
+ 
+    let playList_image = video.playList_image;
+    if (playListImageFile) {
+      const playListImagePath = `playlist_images/${video.id}/${playListImageFile.originalname}`;
+ 
+      // Delete the old image from Firebase Storage if it exists
+      if (playList_image) {
+        await storage.file(playList_image.replace(`gs://${storage.name}/`, '')).delete();
+      }
+ 
+      // Upload the new image to Firebase Storage
+      await storage.upload(playListImageFile.path, {
+        destination: playListImagePath,
+        metadata: {
+          contentType: playListImageFile.mimetype
+        }
+      });
+ 
+      // Construct the URL for the uploaded image
+      playList_image = `gs://${storage.name}/${playListImagePath}`;
+      video.playList_image = playList_image;
+    }
+ 
+    // Save the updated video record
+    await video.save();
+ 
+    res.status(200).json({ message: 'Video updated successfully', video });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.get('/get-video', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+ 
+    const totalBlogs = await Video.count();
+    const upcomingEvents = await Video.findAll({
+      offset: offset,
+      limit: limit
+    });
+ 
+    // Calculate total pages
+    const totalPages = Math.ceil(totalBlogs / limit);
+ 
+    // Map through each event and fetch image if available
+    const upcomingEventsFormatted = await Promise.all(upcomingEvents.map(async event => {
+      let playList_image = null;
+      if (event.playList_image) {
+        // If image URL exists, fetch the image URL from Firebase Storage
+        const file = storage.file(event.playList_image.split(storage.name + '/')[1]);
+        const [exists] = await file.exists();
+        if (exists) {
+          playList_image = await file.getSignedUrl({
+            action: 'read',
+            expires: '03-01-2500' // Adjust expiration date as needed
+          });
+          playList_image = playList_image[0];
+        }
+      }
+      // Return formatted event data with image
+      return {
+        id: event.id,
+        playList_heading: event.playList_heading,
+        Video_heading: event.Video_heading,
+        videoLink: event.videoLink,
+        category:event.category,
+        playList_image
+      };
+    }));
+ 
+    return res.status(200).json({
+      videos: upcomingEventsFormatted,
+      totalPages: totalPages,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.delete('/delete-video/:id', async (req, res) => {
+  const { id } = req.params;
+ 
+  try {
+    // Find the video record
+    const video = await Video.findByPk(id);
+    if (!video) {
+      return res.status(404).json({ error: 'Video not found' });
+    }
+ 
+    // Delete the image from Firebase Storage if it exists
+    if (video.playList_image) {
+      const imagePath = video.playList_image.replace(`gs://thasmai-star-life.appspot.com/`, '');
+      await storage.file(imagePath).delete();
+    }
+ 
+    // Delete the video record from the database
+    await video.destroy();
+ 
+    res.status(200).json({ message: 'Video and associated image deleted successfully' });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -3842,8 +4021,7 @@ router.post('/add-meditation-time', upload.fields([
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
- 
- 
+
 router.put('/update-meditation-time/:id', upload.fields([
   { name: 'morning_image', maxCount: 1 },
   { name: 'evening_image', maxCount: 1 },
@@ -4106,7 +4284,6 @@ router.delete('/delete-zoom/:zoomId', async (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 router.get('/list-feedback', async (req, res) => {
   try {

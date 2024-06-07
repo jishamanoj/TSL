@@ -44,6 +44,7 @@ const meditationTime = require('../model/medtitationTime')
 const ZoomRecord = require('../model/zoomRecorder'); 
 const zoom = require('../model/zoom');
 
+
 router.get('/getAllUsers', async (req, res) => {
   try {
     // Fetch all users from the reg table
@@ -604,6 +605,7 @@ router.post('/requestPasswordReset', async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
 }
 });
+
  
 // router.post('/resetPassword', async (req, res) => {
 //     const { email, otp, new_password } = req.body;
@@ -704,7 +706,7 @@ const sessionMiddleware = session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
     },
   });
  
@@ -767,6 +769,7 @@ router.post('/login', async (req, res) => {
     }
   });
  
+
 router.get('/getUserById', async (req, res) => {
   try {
       const { UId } = req.session;
@@ -820,6 +823,7 @@ router.get('/getUserById', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
  
 // router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
 //     const UId = req.session.UId
@@ -880,6 +884,7 @@ router.get('/getUserById', async (req, res) => {
 //     }
 //   });
  
+
 router.get('/flag', async (req, res) => {
   try {
     // Retrieve UId from the session
@@ -2585,67 +2590,12 @@ if (!user) {
   }
 });
 
-router.get('/get-video', async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const offset = (page - 1) * limit;
-
-    const totalBlogs = await Video.count();
-    const upcomingEvents = await Video.findAll({
-      offset: offset,
-      limit: limit
-    });
-
-    // Calculate total pages
-    const totalPages = Math.ceil(totalBlogs / limit);
-
-    // Map through each event and fetch image if available
-    const upcomingEventsFormatted = await Promise.all(upcomingEvents.map(async event => {
-      let playList_image = null;
-      if (event.playList_image) {
-        // If image URL exists, fetch the image URL from Firebase Storage
-        const file = storage.file(event.playList_image.split(storage.name + '/')[1]);
-        const [exists] = await file.exists();
-        if (exists) {
-          playList_image = await file.getSignedUrl({
-            action: 'read',
-            expires: '03-01-2500' // Adjust expiration date as needed
-          });
-          playList_image = playList_image[0];
-        }
-      }
-      // Return formatted event data with image
-      return {
-        id: event.id,
-        playList_heading: event.playList_heading,
-        Video_heading: event.Video_heading,
-        videoLink: event.videoLink,
-        category:event.category,
-        playList_image
-      };
-    }));
-
-    return res.status(200).json({
-      videos: upcomingEventsFormatted,
-      totalPages: totalPages,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
  
 router.get('/transaction_summary', async (req, res) => {
   try {
     const { UId } = req.session;
     if (!UId) {
       return res.status(401).json('UId is required');
-    }
-
-    const user = await Users.findOne({ where: { UId } });
-    if (!user) {
-      return res.status(404).json('User not found');
     }
 
     // Fetching the sum and count of dekshinas.amount
@@ -2687,12 +2637,6 @@ router.get('/transaction_list', async (req, res) => {
     if (!UId) {
       return res.status(401).json('UId is required');
     }
-
-    const user = await Users.findOne({ where: { UId } });
-    if (!user) {
-      return res.status(404).json('User not found');
-    }
-
     const dekshinas = await dekshina.findAll({ where: { UId } });
     const donations = await donation.findAll({ where: { UId } });
     const meditation = await meditationFees.findAll({ where: { UId } });
@@ -2832,8 +2776,9 @@ router.get('/playlists', async (req, res) => {
 
 
 router.get('/videos-by-playlist', async (req, res) => {
-  const { playList_heading } = req.query;
+  const playList_heading = req.query.playList_heading;
 
+console.log(playList_heading);
   if (!playList_heading) {
     return res.status(400).json({ error: 'playList_heading query parameter is required' });
   }
@@ -2950,6 +2895,7 @@ router.get('/meditationTimeDetails', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 router.post('/zoom_Records', async(req,res)=>{
   try{
