@@ -174,6 +174,28 @@ router.get('/incomePiechart' , async(req, res) =>{
   return res.status(500).json({ error: 'Internal Server Error' });
 }
 });
+router.get('/expensePiechart' , async(req, res) =>{
+  try{
+    const coupon = await Distribution.sum('distributed_coupons' );
+    const expense = await ashramexpense.sum('amount');
+    const total = coupon + expense;
+    const couponPercentage = coupon / total * 100;
+    const expensePercentage = expense / total * 100;
+    return res.status(200).json({
+      message:'expense percentage',
+      summary:[
+      { field: 'coupon',
+        value: couponPercentage},
+      {field:'expense',
+        value: expensePercentage}
+    ]
+  });
+
+} catch(error){
+  console.log(error);
+  return res.status(500).json({ error: 'Internal Server Error' });
+}
+});
 
 router.get('/waiting-list', async (req, res) => {
   try {

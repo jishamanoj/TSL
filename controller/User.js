@@ -2566,27 +2566,35 @@ router.get('/listevents', async (req, res) => {
   }
 });
  
-router.get('/rewardList', async(req,res) =>{
-  try{
+router.get('/rewardList', async (req, res) => {
+  try {
     const { UId } = req.session;
-   if (!UId) {
+    if (!UId) {
       return res.status(401).json({ error: 'User not authenticated' });
-  }
-  const user = await distribution.findOne({
-    attributes: ['UId', 'distributed_coupons', 'description', 'distribution_time' ],
-    where: { UId },
-});
-if (!user) {
-  return res.status(402).json({message: 'No rewards recieved '});
-}
+    }
+    
+    const user = await distribution.findAll({
+      attributes: ['UId', 'distributed_coupons', 'description', 'distribution_time'],
+      where: { UId },
+    });
 
-  const rewards =  user.distributed_coupons * 2500;
-//console.log(rewards);
-  return res.status(200).json({user,rewards});
+    if (user.length === 0) {
+      return res.status(402).json({ message: 'No rewards received' });
+    }
 
-  } catch(error){
+    // Calculate the reward for each record
+    const userWithRewards = user.map(record => {
+      return {
+        ...record.dataValues,
+        reward: record.distributed_coupons * 2500
+      };
+    });
+
+    return res.status(200).json(userWithRewards);
+
+  } catch (error) {
     //console.log(error);
-    return res.status(500).json({ error: 'internal server error'})
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
