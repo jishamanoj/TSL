@@ -97,8 +97,18 @@ router.get('/register-count', async (req, res) => {
       let groupBy;
       let attributes;
       let additionalConditions = {};
+      let fullList = [];
 
       if (month) {
+          // Ensure year is provided if month is specified
+          if (!year) {
+              return res.status(400).json({ message: 'Please provide year parameter along with month' });
+          }
+
+          // Get the number of days in the given month
+          const daysInMonth = new Date(year, month, 0).getDate();
+          fullList = Array.from({ length: daysInMonth }, (v, k) => ({ day: k + 1, count: 0 }));
+
           // If month is provided, get the count for each day in that month
           groupBy = [sequelize.fn('DAY', sequelize.col('DOJ'))];
           attributes = [
@@ -106,19 +116,20 @@ router.get('/register-count', async (req, res) => {
               [sequelize.fn('COUNT', '*'), 'count'],
           ];
           additionalConditions = {
-            DOJ: {
-                [Op.between]: [`${year}-${month}-01`, `${year}-${month}-31`],
-            },
-        };
+              DOJ: {
+                  [Op.between]: [`${year}-${month}-01`, `${year}-${month}-${daysInMonth}`],
+              },
+          };
       } else if (year) {
+          // Get the full list of months in a year
+          fullList = Array.from({ length: 12 }, (v, k) => ({ month: k + 1, count: 0 }));
+
           // If year is provided, get the count for each month in that specific year
           groupBy = [sequelize.fn('MONTH', sequelize.col('DOJ'))];
           attributes = [
               [sequelize.fn('MONTH', sequelize.col('DOJ')), 'month'],
               [sequelize.fn('COUNT', '*'), 'count'],
           ];
-
-          // Filter results for the specified year
           additionalConditions = {
               DOJ: {
                   [Op.between]: [`${year}-01-01`, `${year}-12-31`],
@@ -129,13 +140,23 @@ router.get('/register-count', async (req, res) => {
       const registerCounts = await reg.findAll({
           attributes: attributes,
           where: {
-              ...additionalConditions, // Include additional conditions if provided
+              ...additionalConditions,
           },
           group: groupBy,
-          order: groupBy, // Ensure order by the specified time unit
+          order: groupBy,
       });
 
-      res.json(registerCounts);
+      // Merge the database results with the full list to ensure all periods are included
+      const result = fullList.map(item => {
+          const dbItem = registerCounts.find(dbItem => {
+              return month
+                  ? dbItem.dataValues.day === item.day
+                  : dbItem.dataValues.month === item.month;
+          });
+          return dbItem ? dbItem.dataValues : item;
+      });
+
+      res.json(result);
   } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Internal server error' });
@@ -654,6 +675,7 @@ router.post('/events-query', async (req, res) => {
 //     res.status(500).json({ message: 'Internal server error' });
 //   }
 // });
+
 
 router.get('/searchfield', async (req, res) => {
   try {
