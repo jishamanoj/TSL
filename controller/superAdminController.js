@@ -3900,16 +3900,16 @@ router.get('/get-video', async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
- 
+
     const totalBlogs = await Video.count();
     const upcomingEvents = await Video.findAll({
       offset: offset,
       limit: limit
     });
- 
+
     // Calculate total pages
     const totalPages = Math.ceil(totalBlogs / limit);
- 
+
     // Map through each event and fetch image if available
     const upcomingEventsFormatted = await Promise.all(upcomingEvents.map(async event => {
       let playList_image = null;
@@ -3925,17 +3925,23 @@ router.get('/get-video', async (req, res) => {
           playList_image = playList_image[0];
         }
       }
-      // Return formatted event data with image
+
+      // Combine Video_heading and videoLink into an array of objects
+      const videos = event.Video_heading.map((heading, index) => ({
+        video_heading: heading,
+        video_link: event.videoLink[index]
+      }));
+
+      // Return formatted event data with image and combined video data
       return {
         id: event.id,
         playList_heading: event.playList_heading,
-        Video_heading: event.Video_heading,
-        videoLink: event.videoLink,
-        category:event.category,
+        video: videos,
+        category: event.category,
         playList_image
       };
     }));
- 
+
     return res.status(200).json({
       videos: upcomingEventsFormatted,
       totalPages: totalPages,

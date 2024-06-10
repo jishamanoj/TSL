@@ -375,11 +375,18 @@ router.post("/verify_otp", upload.single('profilePic'), async (req, res) => {
   try {
     const { first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP } = req.body;
 
-    console.log("Phone: " + phone);
-    console.log("OTP: " + OTP);
-    const storedOTP = "1111";
-    console.log(first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP, storedOTP);
+   // console.log("Phone: " + phone);
+   // console.log("OTP: " + OTP);
+   // const storedOTP = "1111";
 
+   // console.log(first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP, storedOTP);
+
+   const config = await applicationconfig.findOne({ where: { field: 'OTP' } });
+   const storedOTP = config ? config.value : null;
+
+   if (!storedOTP) {
+     return res.status(500).send("Unable to retrieve OTP from configuration");
+   }
     if (storedOTP == OTP) {
       console.log(".......");
 
@@ -660,8 +667,12 @@ router.post('/verify-userotp', async (req, res) => {
     if (!regUser) {
         return res.status(401).json({ message: "User not found" });
     }
-    const storedOTP = "1234"; // This is just an example, replace it with the actual stored OTP
+    const config = await applicationconfig.findOne({ where: { field: 'app otp' } });
+    const storedOTP = config ? config.value : null;
  
+    if (!storedOTP) {
+      return res.status(500).send("Unable to retrieve OTP from configuration");
+    }
     if (storedOTP === otp) {
       return res.status(200).json({ message: 'OTP verified successfully' });
     } else {
@@ -2822,8 +2833,6 @@ router.get('/videos-by-playlist', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-
 
  
 // router.get('/meditation-time', async (req, res) => {
