@@ -1463,7 +1463,7 @@ router.get('/list-appointment', async (req, res) => {
  
     // Find appointments for the authenticated user
     const appointments = await Appointment.findAll({ where: { UId },
-      attributes: [ 'id','UId','phone','appointmentDate','num_of_people','pickup','from','days','emergencyNumber','appointment_reason','user_name','register_date','appointment_status','externalUser' ] });
+      attributes: [ 'id','UId','phone','appointmentDate','num_of_people','pickup','from','days','emergencyNumber','appointment_reason','user_name','register_date','appointment_status','externalUser','check_out' ] });
  
     // Fetch group members for each appointment
     for (const appointment of appointments) {
