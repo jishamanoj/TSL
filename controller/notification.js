@@ -69,6 +69,7 @@ router.post('/meditation-paymentVerification', async (req, res) => {
         payment_time,
         fee_payment_status:true
       });
+      await sendNotificationToUser(UId, 'Payment Successful', 'Your support is invaluable, and we are excited to accompany you on this transformative journey.If you have any questions or need further assistance, please feel free to contact us..');
       res.status(200).json({success:true})
     } catch (error) {
       res.status(500).json({
@@ -131,6 +132,7 @@ router.post('/maintenance-paymentVerification', async (req, res) => {
         payment_time,
         maintenance_payment_status:true
       });
+      await sendNotificationToUser(UId, 'Payment Successful', 'thank you for your valuable contribution. it helps us maintain the highest standards and continue providing exceptional service.This is a gentle reminder about the upcoming  zoom maintenance fee ..');
       res.status(200).json({success:true})
     } catch (error) {
       res.status(500).json({
@@ -193,7 +195,10 @@ router.post('/dekshina-paymentVerification', async (req, res) => {
         payment_time,
         dekshina_payment_status:true
       });
+      
       res.status(200).json({success:true})
+      await sendNotificationToUser(UId, 'Payment Successful', "This is a gentle reminder to pay your Guru Dakshina. Your contribution honors our Guru's guidance and supports our community.");
+
     } catch (error) {
       res.status(500).json({
         success: false,
@@ -256,6 +261,8 @@ router.post('/donation-paymentVerification', async (req, res) => {
         payment_time,
         donation_payment_status:true
       });
+      await sendNotificationToUser(UId, 'Payment Successful', 'We are deeply grateful for your generous contribution to Thasmai Star Life.Your kindness and support play a crucial role in empowering our mission and making a positive impact..');
+
       res.status(200).json({success:true})
     } catch (error) {
       res.status(500).json({

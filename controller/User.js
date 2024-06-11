@@ -913,7 +913,7 @@ router.get('/flag', async (req, res) => {
 
     // Check if UId exists in the session
     if (!UId) {
-      return res.status(401).json({ error: 'invalid UId' });
+      return res.status(401).json({ error: 'Invalid UId' });
     }
 
     // Find the user by UId
@@ -924,24 +924,28 @@ router.get('/flag', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    // Fetch related data
     const payment = await maintenance.findOne({ where: { UId } });
     const meditation = await meditationFees.findOne({ where: { UId } });
+    const buttonBlock = await Meditation.findOne({ where: { UId } });
 
     // Prepare the response object
     let response = {
       isans: user.isans,
       maintenance_payment_status: payment ? payment.maintenance_payment_status : null,
-      meditation_fee_payment_status: meditation ? meditation.fee_payment_status : null
+      meditation_fee_payment_status: meditation ? meditation.fee_payment_status : null,
+      morning_meditation: buttonBlock ? buttonBlock.morning_meditation : null,
+      evening_meditation: buttonBlock ? buttonBlock.evening_meditation : null,
     };
 
     // Filter out null values
     response = Object.fromEntries(Object.entries(response).filter(([_, v]) => v !== null));
 
     // Return the filtered response
-    return res.status(200).json({ message: response });
+    return res.status(200).json(response);
 
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching flag data:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -1193,108 +1197,108 @@ return res.status(200).json({ message: 'User deleted successfully' });
  
 router.post('/meditation', async (req, res) => {
   try {
-    //const { UId } = req.body;
-      const { UId } = req.session;
-      const { startdatetime, stopdatetime } = req.body;
- 
-      console.log('Received UId:', UId);
-      console.log('Received startdatetime:', startdatetime);
-      console.log('Received stopdatetime:', stopdatetime);
- 
-      // Check if UId exists in the reg table
-      const userExists = await Users.findOne({ where: { UId } });
-      if (!userExists) {
-          return res.status(401).json({ error: 'User not found in reg table' });
+    const { UId } = req.session;
+    const { startdatetime, stopdatetime, morning_meditation, evening_meditation } = req.body;
+
+    console.log("........................", UId, morning_meditation, evening_meditation)
+    console.log('Received UId:', UId);
+    console.log('Received startdatetime:', startdatetime);
+    console.log('Received stopdatetime:', stopdatetime);
+
+    // Check if UId exists in the reg table
+    const userExists = await Users.findOne({ where: { UId } });
+    if (!userExists) {
+      return res.status(404).json({ error: 'User not found in reg table' });
+    }
+
+    const refStartDate = moment(`${startdatetime}`, "YYYY-MM-DD HH:mm:ss", true);
+    const refFutureDate = refStartDate.clone().add(45, "minutes");
+    const refStopDate = moment(`${stopdatetime}`, "YYYY-MM-DD HH:mm:ss", true);
+
+    const difference = refStopDate.diff(refStartDate, 'minutes');
+    let ismeditated;
+
+    if (difference >= 90) {
+      ismeditated = 1;
+    } else {
+      ismeditated = 2;
+    }
+
+    console.log('Difference:', difference);
+    const TimeTracking = await timeTracking.create({
+      UId,
+      med_starttime: refStartDate.format('YYYY-MM-DD HH:mm:ss'),
+      med_stoptime: refStopDate.format('YYYY-MM-DD HH:mm:ss'),
+      timeEstimate: difference,
+      ismeditated
+    });
+    await TimeTracking.save();
+
+    // Check if there is an existing record for the UId
+    const existingMeditationRecord = await Meditation.findOne({ where: { UId } });
+
+    if (existingMeditationRecord) {
+      // Update the existing record
+      existingMeditationRecord.med_starttime = refStartDate.format('YYYY-MM-DD HH:mm:ss');
+      existingMeditationRecord.med_stoptime = refStopDate.format('YYYY-MM-DD HH:mm:ss');
+      existingMeditationRecord.med_endtime = refFutureDate.format('YYYY-MM-DD HH:mm:ss');
+      existingMeditationRecord.morning_meditation = morning_meditation;
+      existingMeditationRecord.evening_meditation = evening_meditation;
+
+      if (difference >= 45) {
+        existingMeditationRecord.session_num += 1;
+        if (existingMeditationRecord.session_num > 2) {
+          existingMeditationRecord.session_num = 1;
+        }
       }
- 
-      const refStartDate = moment(`${startdatetime}`, "YYYY-MM-DD HH:mm:ss", true);
-      const refFutureDate = refStartDate.clone().add(45, "minutes");
-      const refStopDate = moment(`${stopdatetime}`, "YYYY-MM-DD HH:mm:ss", true);
- 
-      console.log('Parsed startdatetime:', refStartDate.format('YYYY-MM-DD HH:mm:ss'));
-      console.log('Parsed stopdatetime:', refStopDate.format('YYYY-MM-DD HH:mm:ss'));
- 
-      const difference = refStopDate.diff(refStartDate, 'minutes');
-      let ismeditated;
- 
-      if (difference >= 90) {
-          ismeditated = 1;
-      } else {
-          ismeditated = 2;
+
+      if (existingMeditationRecord.session_num === 2) {
+        existingMeditationRecord.day += 1;
+        // existingMeditationRecord.session_num = 0;
       }
- 
-      console.log('Difference:', difference);
-      const TimeTracking = await timeTracking.create({
-          UId,
-          med_starttime: refStartDate.format('YYYY-MM-DD HH:mm:ss'),
-          med_stoptime: refStopDate.format('YYYY-MM-DD HH:mm:ss'),
-          timeEstimate: difference,
-          ismeditated
+
+      if (existingMeditationRecord.day === 41) {
+        existingMeditationRecord.cycle += 1;
+        existingMeditationRecord.day = 0;
+      }
+
+      await existingMeditationRecord.save();
+      return res.status(200).json({ message: 'Meditation time updated successfully' });
+    } else {
+      // Create a new record if there is no existing record
+      const meditationRecord = await Meditation.create({
+        UId,
+        med_starttime: refStartDate.format('YYYY-MM-DD HH:mm:ss'),
+        med_stoptime: refStopDate.format('YYYY-MM-DD HH:mm:ss'),
+        med_endtime: refFutureDate.format('YYYY-MM-DD HH:mm:ss'),
+        session_num: 0,
+        day: 0,
+        cycle: 0,
+        morning_meditation,
+        evening_meditation
       });
-      await TimeTracking.save();
- 
-      // Check if there is an existing record for the UId
-      const existingMeditationRecord = await Meditation.findOne({ where: { UId } });
- 
-      if (existingMeditationRecord) {
-          // Update the existing record
-          existingMeditationRecord.med_starttime = refStartDate.format('YYYY-MM-DD HH:mm:ss');
-          existingMeditationRecord.med_stoptime = refStopDate.format('YYYY-MM-DD HH:mm:ss');
-          existingMeditationRecord.med_endtime = refFutureDate.format('YYYY-MM-DD HH:mm:ss');
- 
-          if (difference >= 45) {
-              existingMeditationRecord.session_num += 1;
-              if (existingMeditationRecord.session_num > 2) {
-                  existingMeditationRecord.session_num = 1;
-              }
-          }
- 
-          if (existingMeditationRecord.session_num === 2) {
-              existingMeditationRecord.day += 1;
-              //existingMeditationRecord.session_num = 0;
-          }
- 
-          if (existingMeditationRecord.day === 41) {
-              existingMeditationRecord.cycle += 1;
-              existingMeditationRecord.day = 0;
-          }
- 
-          await existingMeditationRecord.save();
-          return res.status(200).json({ message: 'Meditation time updated successfully' });
-      } else {
-          // Create a new record if there is no existing record
-          const meditationRecord = await Meditation.create({
-              UId,
-              med_starttime: refStartDate.format('YYYY-MM-DD HH:mm:ss'),
-              med_stoptime: refStopDate.format('YYYY-MM-DD HH:mm:ss'),
-              med_endtime: refFutureDate.format('YYYY-MM-DD HH:mm:ss'),
-              session_num: 0,
-              day: 0,
-              cycle: 0,
-          });
- 
-          if (difference >= 45) {
-              meditationRecord.session_num += 1;
-          }
- 
-          if (meditationRecord.session_num === 2) {
-              meditationRecord.day += 1;
-              meditationRecord.session_num = 0;
-          }
- 
-          if (meditationRecord.day === 41) {
-              meditationRecord.cycle += 1;
-              meditationRecord.day = 0;
-          }
- 
-          await meditationRecord.save();
-          return res.status(200).json({ message: 'Meditation time inserted successfully' });
- 
+
+      if (difference >= 45) {
+        meditationRecord.session_num += 1;
       }
- 
+
+      if (meditationRecord.session_num === 2) {
+        meditationRecord.day += 1;
+        meditationRecord.session_num = 0;
+      }
+
+      if (meditationRecord.day === 41) {
+        meditationRecord.cycle += 1;
+        meditationRecord.day = 0;
+      }
+
+      await meditationRecord.save();
+      return res.status(200).json({ message: 'Meditation time inserted successfully' });
+    }
+
   } catch (error) {
-      console.error('Error:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 

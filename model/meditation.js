@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const { DataTypes, Sequelize } = require('sequelize');
 const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
@@ -16,6 +15,8 @@ const meditation = sequelize.define('meditation',{
     med_starttime : { type: DataTypes.STRING},
     med_stoptime : { type: DataTypes.STRING},
     med_endtime : { type: DataTypes.STRING},
+    morning_meditation :{ type : DataTypes.BOOLEAN},
+    evening_meditation : { type: DataTypes.BOOLEAN}
 
    // message : { type: DataTypes.TEXT}
 });

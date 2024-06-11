@@ -1106,7 +1106,7 @@ router.get('/list-meditators', async (req, res) => {
 
     const users = await Users.findAll({
       attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'ban'],
-      order: [['userId', 'ASC']], // Order by UId in ascending order
+      order: [['userId', 'DESC']], // Order by UId in ascending order
       where: {
         UserId: { [Op.gte]: 11 }, // Start from UId 11
       },
@@ -1136,7 +1136,6 @@ router.get('/list-meditators', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
 
 router.get('/view-cart', async (req, res) => {
   try {
@@ -1237,7 +1236,6 @@ router.post('/simulation', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
 
 router.get('/mahadhanam-download', async (req, res) => {
   try {
@@ -1374,7 +1372,6 @@ router.post('/execute-query', async (req, res) => {
   }
 });
 
-
 router.post('/save-token', async (req, res) => {
   try {
     const { UId, token } = req.body; 
@@ -1385,8 +1382,6 @@ router.post('/save-token', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-
 
 
 ///////////////////////////////////////////////////////// configarations///////////////////////////////////////
@@ -3421,6 +3416,10 @@ router.put('/updateOperator/:emp_Id', async (req, res) => {
 
     if (!emp_Id) {
       return res.status(400).json({ message: 'id is required' });
+    }
+    const existingUser = await Admin.findOne({ where: { username } });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Operator already exists'});
     }
 
     const operator = await Admin.findOne({ where: { emp_Id: emp_Id } });
