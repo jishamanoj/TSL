@@ -4496,6 +4496,36 @@ router.get('/videos', async (req, res) => {
   }
 });
 
+router.get('/app-feedback-by-id/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+     const feedbacks = await feedback.findAndCountAll({ where: { id } });
+ 
+    if (!feedbacks) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const feedbackWithUsernames = await Promise.all(feedbacks.rows.map(async fb => {
+      const user = await reg.findOne({ where: { UId: fb.UId } });
+      const username = user ? `${user.first_name} ${user.last_name}` : 'Unknown User';
+
+      return {
+          feedback: fb.feedback,
+          rating: fb.rating,
+          UId: fb.UId,
+          username: username
+      };
+  }));
+    
+    return res.status(200).json({
+      feedbackWithUsernames
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 module.exports = router;
 
 
