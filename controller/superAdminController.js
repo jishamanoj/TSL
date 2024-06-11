@@ -2747,8 +2747,8 @@ router.post('/appointment-query', async (req, res) => {
       return !isNaN(num);
     }
 
-    let countSql = "SELECT COUNT(*) AS total FROM sequel.appointments WHERE ";
-    let sql = "SELECT * FROM sequel.appointments WHERE ";
+    let countSql = "SELECT COUNT(*) AS total FROM thasmai.appointments WHERE ";
+    let sql = "SELECT * FROM thasmai.appointments WHERE ";
 
     for (let i = 0; i < queryConditions.length; i++) {
       if (queryConditions[i].operator === "between") {
