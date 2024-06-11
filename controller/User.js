@@ -512,7 +512,7 @@ router.get('/listName/:UId', async (req, res) => {
 });
  
  
-/////////////////////////////////// USER APP \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+/////////////////////////////////// USER     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
  
  
 // router.post('/requestPasswordReset', async (req, res) => {
@@ -2766,22 +2766,89 @@ router.get('/broadcasts', async (req, res) => {
 // });
 
 
+// router.get('/playlists', async (req, res) => {
+//   try {
+//     // Fetch distinct playList_headings with their respective distinct Video_heading counts
+//     const playLists = await Video.findAll({
+//       attributes: [
+//         [sequelize.fn('DISTINCT', sequelize.col('playList_heading')), 'playList_heading'],
+//         [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('Video_heading'))), 'videoHeadingCount']
+//       ],
+//       group: ['playList_heading']
+//     });
+
+//     // Prepare a response list
+//     const playListList = await Promise.all(playLists.map(async (playList) => {
+//       const video = await Video.findOne({
+//         where: {
+//           playList_heading: playList.get('playList_heading'),
+//           playList_image: {
+//             [Op.ne]: null
+//           }
+//         },
+//         attributes: ['playList_image']
+//       });
+
+//       let playList_image = null;
+
+//       if (video && video.playList_image) {
+//         const file = storage.file(video.playList_image.split(`${storage.name}/`)[1]);
+//         const [exists] = await file.exists();
+//         if (exists) {
+//           const [url] = await file.getSignedUrl({
+//             action: 'read',
+//             expires: '03-01-2500' // Adjust expiration date as needed
+//           });
+//           playList_image = url;
+//         }
+//       }
+
+//       return {
+//         playList_heading: playList.get('playList_heading'),
+//         playList_image,
+//         videoHeadingCount: playList.get('videoHeadingCount')
+//       };
+//     }));
+
+//     res.status(200).json({ playlists: playListList });
+//   } catch (error) {
+//     console.error('Error fetching playlists:', error);
+//     res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
+
 router.get('/playlists', async (req, res) => {
   try {
-    // Fetch distinct playList_headings with their respective distinct Video_heading counts
+    // Fetch distinct playList_headings
     const playLists = await Video.findAll({
       attributes: [
-        [sequelize.fn('DISTINCT', sequelize.col('playList_heading')), 'playList_heading'],
-        [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('Video_heading'))), 'videoHeadingCount']
-      ],
-      group: ['playList_heading']
+        [sequelize.fn('DISTINCT', sequelize.col('playList_heading')), 'playList_heading']
+      ]
     });
 
     // Prepare a response list
     const playListList = await Promise.all(playLists.map(async (playList) => {
+      const playList_heading = playList.get('playList_heading');
+
+      // Fetch all videoLink arrays for the current playList_heading
+      const videos = await Video.findAll({
+        where: { playList_heading },
+        attributes: ['videoLink']
+      });
+
+      // Calculate the total number of links in the videoLink arrays
+      const totalLinks = videos.reduce((acc, video) => {
+        if (Array.isArray(video.videoLink)) {
+          return acc + video.videoLink.length;
+        }
+        return acc;
+      }, 0);
+
+      // Fetch playList_image for the current playList_heading
       const video = await Video.findOne({
         where: {
-          playList_heading: playList.get('playList_heading'),
+          playList_heading: playList_heading,
           playList_image: {
             [Op.ne]: null
           }
@@ -2804,9 +2871,9 @@ router.get('/playlists', async (req, res) => {
       }
 
       return {
-        playList_heading: playList.get('playList_heading'),
+        playList_heading: playList_heading,
         playList_image,
-        videoHeadingCount: playList.get('videoHeadingCount')
+        videoLinkCount: totalLinks
       };
     }));
 
@@ -2816,7 +2883,6 @@ router.get('/playlists', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 router.get('/videos-by-playlist', async (req, res) => {
   const playList_heading = req.query.playList_heading;
