@@ -942,7 +942,7 @@ router.get('/flag', async (req, res) => {
     response = Object.fromEntries(Object.entries(response).filter(([_, v]) => v !== null));
 
     // Return the filtered response
-    return res.status(200).json(response);
+    return res.status(200).json({message:response});
 
   } catch (error) {
     console.error('Error fetching flag data:', error);
