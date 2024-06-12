@@ -909,7 +909,7 @@ router.get('/getUserById', async (req, res) => {
 router.get('/flag', async (req, res) => {
   try {
     // Retrieve UId from the session
-    const UId = req.session.UId;
+    const UId = req.body.UId;
 
     // Check if UId exists in the session
     if (!UId) {
@@ -1197,7 +1197,7 @@ return res.status(200).json({ message: 'User deleted successfully' });
  
 router.post('/meditation', async (req, res) => {
   try {
-    const { UId } = req.session;
+    const { UId } = req.body;
     const { startdatetime, stopdatetime, morning_meditation, evening_meditation } = req.body;
 
     console.log("........................", UId, morning_meditation, evening_meditation)
@@ -1992,7 +1992,7 @@ router.get('/meditation-date', async (req, res) => {
       attributes: ['UId', 'med_starttime', 'timeEstimate', 'ismeditated'],
       where: {
         UId: UId,
-        ismeditated:1
+        ismeditated:2
       },
       limit,
       offset

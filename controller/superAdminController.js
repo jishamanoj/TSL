@@ -726,7 +726,7 @@ router.get('/searchfield', async (req, res) => {
 router.post('/coupon-systemDistribute', async (req, res) => {
   try {
    // console.log("...................enter....................");
-    const { totalCoupons, distributedIds, description } = req.body;
+    const { totalCoupons, distributedIds } = req.body;
 //console.log("------------------------totalCoupons, distributedIds, description.........",totalCoupons, distributedIds, description);
     // Validate input
     if (!totalCoupons || !distributedIds || !Array.isArray(distributedIds)) {
@@ -749,9 +749,6 @@ router.post('/coupon-systemDistribute', async (req, res) => {
       }, // Exclude the first 10 records
     });
 
-   // console.log("........................................................", usersWithCoupons);
-
-    // Check if enough coupons are available for distribution
     if (usersWithCoupons.length < totalCoupons) {
       return res.status(400).json({ message: 'Not enough coupons available to distribute.' });
     }
@@ -795,7 +792,7 @@ router.post('/coupon-systemDistribute', async (req, res) => {
 router.post('/redeem', async (req, res) => {
   try {
     console.log("entered");
-    const { coupons, UIds, description } = req.body;
+    const { coupons, UIds, description,title } = req.body;
     console.log( "coupons, UIds, description.................:", coupons, UIds, description);
     // Validate input
     if (!coupons || !UIds || !Array.isArray(UIds) || UIds.length === 0) {
@@ -830,12 +827,13 @@ router.post('/redeem', async (req, res) => {
         UId: user.UId,
         distributed_coupons: coupons,
         description: description,
+        title: title,
         distribution_time: new Date().toISOString(),
       });
 
       //////////////////////////////////
       const latestDistributionRecord = await Distribution.findOne({
-        attributes: ['firstName', 'secondName', 'UId', 'distributed_coupons', 'description', 'distribution_time'],
+        attributes: ['firstName', 'secondName', 'UId', 'distributed_coupons', 'description', 'distribution_time','title'],
         where: { UId: user.UId },
         order: [['distribution_time', 'DESC']], // Order by distribution_time in descending order to get the latest record
       });
@@ -852,6 +850,7 @@ router.post('/redeem', async (req, res) => {
         UId: latestDistributionRecord.UId,
         distributed_coupons: latestDistributionRecord.distributed_coupons,
         description: latestDistributionRecord.description,
+        title : latestDistributionRecord.title,
         distribution_time: latestDistributionRecord.distribution_time,
         AadarNo: bankDetails.AadarNo,
         IFSCCode: bankDetails.IFSCCode,
@@ -1549,7 +1548,7 @@ router.put('/questions/:id', async (req, res) => {
 
 
 router.get('/list-users', async (req, res) => {
-  const pageSize = 10;
+  const pageSize = parseInt(req.query.pageSize)||10;
   const page = parseInt(req.query.page) || 1;
   const offset = (page - 1) * pageSize;
 
@@ -1735,7 +1734,7 @@ router.get('/search', async (req, res) => {
 });
 
 router.get('/list-donation', async (req, res) => {
-  const pageSize = 10;
+  const pageSize =parseInt(req.query.pageSize) || 10;
   const page = parseInt(req.query.page) || 1;
   const offset = (page - 1) * pageSize;
  
@@ -1940,7 +1939,7 @@ router.get('/donation-search', async (req, res) => {
 });
 
 router.get('/list-fees', async (req, res) => {
-  const pageSize = 10;
+  const pageSize =parseInt(req.query.pageSize) || 10;
   const page = parseInt(req.query.page) || 1;
   const offset = (page - 1) * pageSize;
  
@@ -3417,10 +3416,6 @@ router.put('/updateOperator/:emp_Id', async (req, res) => {
     if (!emp_Id) {
       return res.status(400).json({ message: 'id is required' });
     }
-    const existingUser = await Admin.findOne({ where: { username } });
-    if (existingUser) {
-      return res.status(400).json({ message: 'Operator already exists'});
-    }
 
     const operator = await Admin.findOne({ where: { emp_Id: emp_Id } });
     if (!operator) {
@@ -3541,9 +3536,7 @@ router.post('/search_users', async (req, res) => {
   }
 });
 
-
 //////////////////////////blog//////////////////////////////
-
 
 
 router.post('/add-blog', upload.single('image'), async (req, res) => {
@@ -3799,7 +3792,9 @@ router.post('/blogs-query', async (req, res) => {
     res.status(500).json({ message: 'Internal server error.' });
   }
 });
+
 /////////////////////add play list ///////////////////////
+
 
 router.post('/add-video', upload.single('playList_image'), async (req, res) => {
   const { playList_heading, Video_heading, videoLink, category } = req.body;
@@ -4426,7 +4421,7 @@ router.get('/impNotes' , async(req,res) =>{
     const notes = await globalMessage.findAll({
       where: {
         message: {
-          [Op.startsWith]: 'IMP'
+          [Op.startsWith]: 'Meditation Note : imp:'
         }
       }
     });

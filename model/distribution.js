@@ -27,6 +27,9 @@ const distribution = sequelize.define('distribution', {
     description :{
         type: DataTypes.STRING,
     },
+    title:{
+        type: DataTypes.STRING
+    },
     distribution_time:{
          type:DataTypes.STRING
     }
