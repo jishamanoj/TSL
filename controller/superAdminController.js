@@ -2724,7 +2724,6 @@ router.put('/update-gurujidate', async (req, res) => {
   }
 });
 
-
 router.post('/appointment-query', async (req, res) => {
   try {
     const queryConditions = req.body.queryConditions;
@@ -2803,7 +2802,7 @@ router.get('/profiledetails/:UId', async (req, res) => {``
       return res.status(404).json({ error: 'User not found' });
     }
 
-    let profilePic = null;
+    let profilePic = [];
     if (user.profilePicUrl) {
         // If profilePicUrl exists, fetch the image URL from Firebase Storage
         const file = storage.file(user.profilePicUrl.split(storage.name + '/')[1]);
@@ -2817,14 +2816,15 @@ router.get('/profiledetails/:UId', async (req, res) => {``
             profilePic = profilePic[0];
         }
     }
-
-    const bankDetails = await BankDetails.findOne({ where: { UId } });
+     let bankDetails = [];
+     if(user.bankDetails){
+    await BankDetails.findOne({ where: { UId } })};
     const cycle = await meditation.findOne({ where: { UId }, attributes: ['cycle', 'day', 'session_num'] });
     let meditationData = {};
     if (cycle) {
       meditationData = { ...cycle.dataValues };
     } else {
-      meditationData = null;
+      meditationData = [];
     }
     const meditationlog= await timeTracking.findAll({
       where: { UId },
@@ -4518,6 +4518,18 @@ router.get('/app-feedback-by-id/:id', async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.get('/get-fees-sum', async (req,res) => {
+  try {
+   
+    const totalAmount = await Appointment.sum('payment');
+
+    return res.status(200).json({totalAmount});
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 

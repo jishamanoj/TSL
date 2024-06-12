@@ -3094,4 +3094,57 @@ router.get('/get-zoomclass', async (req, res) => {
 });
 
 
+router.post('/button-block', async (req, res) => {
+  try {
+    const { date } = req.body;
+
+    // Validate input
+    if (!date) {
+      return res.status(400).json({ message: 'Date is required' });
+    }
+
+    // Retrieve UId from the session
+    const UId = req.session.UId;
+
+    // Check if UId exists in the session
+    if (!UId) {
+      return res.status(401).json({ message: 'Invalid UId' });
+    }
+
+    // Parse the provided date and time
+    const providedDate = new Date(date);
+
+    // Extract only the date part (without time)
+    const providedDateOnly = new Date(providedDate);
+    providedDateOnly.setHours(0, 0, 0, 0);
+
+    // Find the entry with the same UId and date in the timeTracking table
+    const existingEntry = await timeTracking.findOne({
+      where: {
+        UId: UId,
+        med_stoptime: {
+          [Op.gte]: providedDateOnly, // Ensure med_starttime is on or after the provided date
+          [Op.lt]: new Date(providedDateOnly.getTime() + 24 * 60 * 60 * 1000) // Ensure med_starttime is before the next day
+        }
+      }
+    });
+
+    if (existingEntry) {
+      // Compare the provided time with the existing med_starttime
+      const medStartTime = new Date(existingEntry.med_starttime);
+
+      if (providedDate <= medStartTime) {
+        return res.status(200).json({ key: true, message: 'Provided date and time are valid', date });
+      } else {
+        return res.status(200).json({ key: false, message: 'Provided time is not less than or equal to the existing med_starttime', date });
+      }
+    } else {
+      return res.status(404).json({ message: 'UId not found or date does not match in timeTracking', UId, date });
+    }
+  } catch (error) {
+    console.error('Error checking date:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
 module.exports = router;
