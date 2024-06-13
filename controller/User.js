@@ -909,7 +909,7 @@ router.get('/getUserById', async (req, res) => {
 router.get('/flag', async (req, res) => {
   try {
     // Retrieve UId from the session
-    const UId = req.body.UId;
+    const UId = req.session.UId;
 
     // Check if UId exists in the session
     if (!UId) {
