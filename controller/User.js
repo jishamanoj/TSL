@@ -381,7 +381,7 @@ console.log("................................",req.body);
 
    // console.log(first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP, storedOTP);
 
-   const config = await applicationconfig.findOne({ where: { field: 'OTP' } });
+   const config = await applicationconfig.findOne({ where: { field: 'storedOTP' } });
    const storedOTP = config ? config.value : null;
 
    if (!storedOTP) {
@@ -668,13 +668,13 @@ router.post('/verify-userotp', async (req, res) => {
     if (!regUser) {
         return res.status(401).json({ message: "User not found" });
     }
-    const config = await applicationconfig.findOne({ where: { field: 'app otp' } });
-    const storedOTP = config ? config.value : null;
+    const config = await applicationconfig.findOne({ where: { field: 'app_otp' } });
+    const app_otp = config ? config.value : null;
  
-    if (!storedOTP) {
+    if (!app_otp) {
       return res.status(500).send("Unable to retrieve OTP from configuration");
     }
-    if (storedOTP === otp) {
+    if (app_otp === otp) {
       return res.status(200).json({ message: 'OTP verified successfully' });
     } else {
       return res.status(400).json({ error: 'Invalid OTP' });
