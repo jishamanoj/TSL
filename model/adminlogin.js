@@ -13,7 +13,8 @@ const admin = sequelize.define('admin', {
     password: { type: DataTypes.STRING},   
     emp_Id : { type : DataTypes.INTEGER},
     location : { type : DataTypes.STRING },
-    dateOfJoining : { type: DataTypes.STRING}
+    dateOfJoining : { type: DataTypes.STRING},
+    balance_amount: { type: DataTypes.STRING}
  },{timestamps:false});
 
 

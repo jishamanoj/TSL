@@ -375,19 +375,14 @@ router.post("/verify_otp", upload.single('profilePic'), async (req, res) => {
   try {
     const { first_name, last_name, email, DOB, gender, country, phone, reference,ref_id, languages, remark, OTP } = req.body;
 console.log("................................",req.body);
-   // console.log("Phone: " + phone);
-   // console.log("OTP: " + OTP);
-   // const storedOTP = "1111";
-
-   // console.log(first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP, storedOTP);
 
    const config = await applicationconfig.findOne({ where: { field: 'storedOTP' } });
    const storedOTP = config ? config.value : null;
-
+console.log(".....................storedOTP........................",storedOTP);
    if (!storedOTP) {
      return res.status(500).send("Unable to retrieve OTP from configuration");
    }
-    if (storedOTP == OTP) {
+    if (storedOTP === OTP) {
       console.log(".......");
 
       const hashedPassword = await bcrypt.hash(phone, 10);

@@ -41,6 +41,7 @@ const zoom = require('../model/zoom');
 const questions = require('../model/question');
 const dekshina = require('../model/dekshina');
 const feedback =require('../model/feedback');
+const operatorFund = require('../model/operatorFund');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: "gs://thasmai-star-life.appspot.com"
@@ -3029,11 +3030,11 @@ router.get('/get-event/:id', async (req, res) => {
 
 
 router.post('/expense', upload.single('invoice'), async (req, res) => {
-  const { Expense_Date, expenseType, amount, description,emp_id } = req.body;
+  const { Expense_Date, expenseType, amount, description, emp_id, name } = req.body;
   const invoiceFile = req.file;
 
   try {
-    if (!Expense_Date || !expenseType || !amount) {
+    if (!Expense_Date || !expenseType || !amount || !emp_id) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -3043,7 +3044,8 @@ router.post('/expense', upload.single('invoice'), async (req, res) => {
       expenseType,
       amount,
       description,
-      emp_id
+      emp_id,
+      name
     });
 
     let invoiceUrl = '';
@@ -3061,6 +3063,14 @@ router.post('/expense', upload.single('invoice'), async (req, res) => {
     }
 
     await newExpense.update({ invoiceUrl });
+
+    const adminRecord = await Admin.findOne({ where: { emp_Id: emp_id } });
+    if (!adminRecord) {
+      return res.status(404).json({ error: 'Admin record not found' });
+    }
+
+    const newBalance = parseFloat(adminRecord.balance_amount) - parseFloat(amount);
+    await adminRecord.update({ balance_amount: newBalance });
 
     res.status(201).json({ message: 'Ashram expense created successfully', expense: newExpense });
   } catch (error) {
@@ -3104,6 +3114,8 @@ router.post('/get-expense', async (req, res) => {
         expenseType: expense.expenseType,
         amount: expense.amount,
         description: expense.description,
+        emp_id:expense.emp_id,
+        name:expense.name,
         invoiceUrl
       };
     }));
@@ -4543,6 +4555,100 @@ router.get('/get-fees-sum', async (req,res) => {
 });
 
 
+router.post('/payOperator', upload.single('image'), async (req,res) => {
+ 
+  const { emp_Id,emp_Name,amount,date} = req.body;
+  const bill_image = req.file;
+try{
+  
+  const newEntry = await operatorFund.create({
+    emp_Id,
+    emp_Name,
+    amount,
+    date
+  });
+  let bill_Image = '';
+  if(bill_image){
+  const billImagePath = `operatorFund/${newEntry.id}/${bill_image.originalname}`;
+
+  await storage.upload(bill_image.path , {
+    destination: billImagePath,
+    metadata:{
+      contentType : bill_image.mimetype
+    }
+  });
+
+  bill_Image =`gs://${storage.name}/${billImagePath}`;
+}
+await newEntry.update({bill_Image});
+
+const adminRecord = await Admin.findOne({ where: { emp_Id: emp_Id } });
+    if (!adminRecord) {
+      return res.status(404).json({ error: 'Admin record not found' });
+    }
+
+    const newBalance = parseFloat(adminRecord.balance_amount) + parseFloat(amount);
+    await adminRecord.update({ balance_amount: newBalance });
+  
+res.status(200).json({message:'data uploaded successfully', payment: newEntry});
+
+} catch(error){
+  console.log(error);
+
+  res.status(500).json({ error: 'Internal Server Error'});
+}
+
+});
+
+router.get('/list-admin',async(req,res) =>{
+  try{
+    const admins = await Admin.findAll({where:{
+      id:{[Op.ne]:1}
+    }});
+    return res.status(200).json(admins)
+  }
+  catch(error){
+    console.log(error)
+    return res.status(500).json({message:'internal server error'})
+  }
+});
+
+router.get('/getFundById', async (req, res) => {
+  try {
+    const { emp_Id } = req.query;
+
+    // Fetch user details by UId from the reg table
+    const user = await operatorFund.findOne({ where: { emp_Id } });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    let bill_Image = [];
+    if (user.bill_Image) {
+      // If profilePicUrl exists, fetch the image URL from Firebase Storage
+      const file = storage.file(user.bill_Image.split(storage.name + '/')[1]);
+      const [exists] = await file.exists();
+      if (exists) {
+        bill_Image = await file.getSignedUrl({
+          action: 'read',
+          expires: '03-01-2500' // Adjust expiration date as needed
+        });
+      }
+    }
+
+    // Send the response with user data including profilePicUrl
+    return res.status(200).json({
+      user: {
+        ...user.toJSON(),
+        bill_Image
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 module.exports = router;
 

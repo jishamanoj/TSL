@@ -21,7 +21,10 @@ const ashramexpense = sequelize.define('ashramexpense', {
     invoiceUrl:{
         type: DataTypes.STRING,
        
-      
+    },
+
+    name:{
+       type: DataTypes.STRING,
     },
     emp_id:{
         type: DataTypes.INTEGER,
