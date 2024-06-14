@@ -1219,7 +1219,7 @@ router.post('/meditation', async (req, res) => {
     const difference = refStopDate.diff(refStartDate, 'minutes');
     let ismeditated;
 
-    if (difference >= 90) {
+    if (difference >= 45) {
       ismeditated = 1;
     } else {
       ismeditated = 2;
@@ -1993,7 +1993,7 @@ router.get('/meditation-date', async (req, res) => {
       attributes: ['UId', 'med_starttime', 'timeEstimate', 'ismeditated'],
       where: {
         UId: UId,
-        ismeditated:2
+        ismeditated:1
       },
       limit,
       offset
