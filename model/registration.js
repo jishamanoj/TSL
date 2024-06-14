@@ -33,7 +33,7 @@ const reg = sequelize.define('reg', {
         allowNull: true
     },
     reference: { type: DataTypes.STRING,defaultValue: '' },
-    ref_id : { type: DataTypes.INTEGER,defaultValue: '' },
+    ref_id : { type: DataTypes.INTEGER,defaultValue: 0 },
     languages: {type:DataTypes.STRING,defaultValue: ''},
     remark: { type: DataTypes.TEXT,defaultValue: '' },
     verify: { type: DataTypes.BOOLEAN, defaultValue: false },
