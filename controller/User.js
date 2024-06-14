@@ -373,8 +373,8 @@ router.get('/displayDataFromRedis/:key', async (req, res) => {
 router.post("/verify_otp", upload.single('profilePic'), async (req, res) => {
   console.log("<........verify OTP user........>");
   try {
-    const { first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP } = req.body;
-
+    const { first_name, last_name, email, DOB, gender, country, phone, reference,ref_id, languages, remark, OTP } = req.body;
+console.log("................................",req.body);
    // console.log("Phone: " + phone);
    // console.log("OTP: " + OTP);
    // const storedOTP = "1111";
@@ -421,6 +421,7 @@ router.post("/verify_otp", upload.single('profilePic'), async (req, res) => {
         phone,
         country,
         reference,
+        ref_id,
         languages,
         remark,
         UId,
@@ -3144,6 +3145,56 @@ router.post('/button-block', async (req, res) => {
   } catch (error) {
     console.error('Error checking date:', error);
     return res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+router.get('/meditation-date', async (req, res) => {
+  try {
+    const { UId } = req.body;
+    console.log(UId);
+    if (!UId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Validate and parse page query parameter
+    
+    const page = req.query.page ? parseInt(req.query.page, 10) : 1;
+    const limit = 25;
+
+    const offset = (page - 1) * limit;
+
+    const totalCount = await timeTracking.count({ where: { UId } });
+    const totalPages = Math.ceil(totalCount / limit);
+    const date = await timeTracking.findAll({
+      attributes:['med_starttime'],
+    where: { UId: UId}});
+    //console.log(date);
+    const FormatData = date.format('YYYY-MM-DD HH:mm:ss');
+    console.log(FormatData);
+    const user = await timeTracking.findAll({
+      attributes: ['UId', 'med_starttime','ismeditated'],
+      where: {
+        UId: UId,
+        ismeditated:1
+      },
+      limit,
+      offset
+    });
+   
+console.log(user);
+    // Format response data and send it
+    const responseData = {
+      totalPages,
+      currentPage: page,
+      totalCount,
+      data: user
+    };
+
+    return res.status(200).json(responseData);
+
+  } catch (error) {
+    console.error('Error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 

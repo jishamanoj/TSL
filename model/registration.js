@@ -33,6 +33,7 @@ const reg = sequelize.define('reg', {
         allowNull: true
     },
     reference: { type: DataTypes.STRING,defaultValue: '' },
+    ref_id : { type: DataTypes.INTEGER,defaultValue: '' },
     languages: {type:DataTypes.STRING,defaultValue: ''},
     remark: { type: DataTypes.TEXT,defaultValue: '' },
     verify: { type: DataTypes.BOOLEAN, defaultValue: false },
@@ -55,7 +56,7 @@ const reg = sequelize.define('reg', {
     
  });
 
-sequelize.sync({alter: false})
+sequelize.sync({alter: true})
     .then((data) => {
        // console.log(data);
         console.log('reg table created');

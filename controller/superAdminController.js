@@ -2793,7 +2793,7 @@ router.post('/appointment-query', async (req, res) => {
   }
 });
 
-router.get('/profiledetails/:UId', async (req, res) => {``
+router.get('/profiledetails/:UId', async (req, res) => {
   try {
     const { UId } = req.params;
 //console.log(UId);
@@ -2816,9 +2816,12 @@ router.get('/profiledetails/:UId', async (req, res) => {``
             profilePic = profilePic[0];
         }
     }
-     let bankDetails = [];
-     if(user.bankDetails){
-    await BankDetails.findOne({ where: { UId } })};
+    
+    let bankDetails = [];
+    const foundBankDetails = await BankDetails.findOne({ where: { UId } });
+    if (foundBankDetails) {
+      bankDetails = foundBankDetails;
+    }
     const cycle = await meditation.findOne({ where: { UId }, attributes: ['cycle', 'day', 'session_num'] });
     let meditationData = {};
     if (cycle) {
@@ -3986,6 +3989,11 @@ router.post('/add-meditation-time', upload.fields([
   { name: 'general_image', maxCount: 1 }
 ]), async (req, res) => {
   const { country, general_video, morning_time_from, morning_time_to, evening_time_from, evening_time_to, morning_video, evening_video } = req.body;
+ 
+  const existingCountry = await meditationTime.findOne({ where: { country } });
+  if (existingCountry) {
+    return res.status(400).json({ message: "Country already exists" });
+  }
   const morningImageFile = req.files['morning_image'] ? req.files['morning_image'][0] : null;
   const eveningImageFile = req.files['evening_image'] ? req.files['evening_image'][0] : null;
   const generalImageFile = req.files['general_image'] ? req.files['general_image'][0] : null;
@@ -4318,29 +4326,30 @@ router.get('/list-feedback', async (req, res) => {
   try {
       const page = parseInt(req.query.page) || 1;
       const pageSize = parseInt(req.query.pageSize) || 10;
- 
+
       const offset = (page - 1) * pageSize;
- 
+
       const feedbacks = await feedback.findAndCountAll({
           limit: pageSize,
           offset: offset
       });
- 
+
       const totalItems = feedbacks.count;
       const totalPages = Math.ceil(totalItems / pageSize);
- 
+
       const feedbackWithUsernames = await Promise.all(feedbacks.rows.map(async fb => {
           const user = await reg.findOne({ where: { UId: fb.UId } });
           const username = user ? `${user.first_name} ${user.last_name}` : 'Unknown User';
- 
+
           return {
+              id:fb.id,
               feedback: fb.feedback,
               rating: fb.rating,
               UId: fb.UId,
               username: username
           };
       }));
- 
+
       res.status(200).json({
           data: feedbackWithUsernames,
           currentPage: page,
