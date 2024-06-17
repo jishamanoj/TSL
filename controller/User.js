@@ -466,7 +466,6 @@ function calculateExpirationDate() {
     return d;
 }
  
- 
 router.get('/listName/:UId', async (req, res) => {
   try {
     const { UId } = req.params;
@@ -506,8 +505,7 @@ router.get('/listName/:UId', async (req, res) => {
     res.status(500).json({ error: 'An error occurred' });
   }
 });
- 
- 
+
 /////////////////////////////////// USER     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
  
  
@@ -841,7 +839,6 @@ router.get('/getUserById', async (req, res) => {
   }
 });
 
- 
 // router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
 //     const UId = req.session.UId
   
@@ -900,7 +897,6 @@ router.get('/getUserById', async (req, res) => {
 //       return res.status(500).json({ error: 'Internal Server Error' });
 //     }
 //   });
- 
 
 router.get('/flag', async (req, res) => {
   try {

@@ -4600,6 +4600,46 @@ res.status(200).json({message:'data uploaded successfully', payment: newEntry});
 
 });
 
+router.get('/getFundById', async (req, res) => {
+  try {
+    const { emp_Id } = req.query;
+
+    // Fetch user details by UId from the reg table
+    const users = await operatorFund.findAll({ where: { emp_Id } });
+
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const usersWithBillImages = await Promise.all(users.map(async user => {
+      let bill_Image = [];
+      if (user.bill_Image) {
+        // If bill_Image exists, fetch the image URL from Firebase Storage
+        const file = storage.file(user.bill_Image.split(storage.name + '/')[1]);
+        const [exists] = await file.exists();
+        if (exists) {
+          bill_Image = await file.getSignedUrl({
+            action: 'read',
+            expires: '03-01-2500' // Adjust expiration date as needed
+          });
+        }
+      }
+      return {
+        ...user.toJSON(),
+        bill_Image
+      };
+    }));
+
+    // Send the response with user data including bill_Image
+    return res.status(200).json({
+      users: usersWithBillImages
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 router.get('/list-admin',async(req,res) =>{
   try{
     const admins = await Admin.findAll({where:{
