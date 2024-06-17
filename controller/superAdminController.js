@@ -4651,6 +4651,32 @@ router.get('/list-admin',async(req,res) =>{
   }
 });
 
+router.get('/get-balance', async (req, res) => {
+  try {
+      const { emp_Id } = req.query;
+
+
+      if (!emp_Id) {
+          return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      const user = await Admin.findOne({
+          attributes: ['balance_amount'],
+          where: { emp_Id },
+      });
+
+      if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+      }
+
+      return res.status(200).json(user);
+  } catch (error) {
+      console.error('Error:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
 
 
 module.exports = router;
