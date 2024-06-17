@@ -283,9 +283,6 @@ router.get('/meditation', async (req, res) => {
               UserId: {
                   [Op.notIn]: firstTenUserIds,
               },
-              coupons: {
-                  [Op.ne]: 0,
-              },
           },
       });
 
@@ -4558,6 +4555,7 @@ router.get('/get-fees-sum', async (req,res) => {
 router.post('/payOperator', upload.single('image'), async (req,res) => {
  
   const { emp_Id,emp_Name,amount,date} = req.body;
+  console.log("amount", amount);
   const bill_image = req.file;
 try{
   

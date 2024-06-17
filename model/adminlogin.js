@@ -14,7 +14,9 @@ const admin = sequelize.define('admin', {
     emp_Id : { type : DataTypes.INTEGER},
     location : { type : DataTypes.STRING },
     dateOfJoining : { type: DataTypes.STRING},
-    balance_amount: { type: DataTypes.STRING}
+    balance_amount: { type: DataTypes.INTEGER,
+        defaultValue: 0,
+    }
  },{timestamps:false});
 
 
