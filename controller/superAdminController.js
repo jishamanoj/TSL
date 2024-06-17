@@ -4653,42 +4653,7 @@ router.get('/list-admin',async(req,res) =>{
   }
 });
 
-router.get('/getFundById', async (req, res) => {
-  try {
-    const { emp_Id } = req.query;
 
-    // Fetch user details by UId from the reg table
-    const user = await operatorFund.findOne({ where: { emp_Id } });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    let bill_Image = [];
-    if (user.bill_Image) {
-      // If profilePicUrl exists, fetch the image URL from Firebase Storage
-      const file = storage.file(user.bill_Image.split(storage.name + '/')[1]);
-      const [exists] = await file.exists();
-      if (exists) {
-        bill_Image = await file.getSignedUrl({
-          action: 'read',
-          expires: '03-01-2500' // Adjust expiration date as needed
-        });
-      }
-    }
-
-    // Send the response with user data including profilePicUrl
-    return res.status(200).json({
-      user: {
-        ...user.toJSON(),
-        bill_Image
-      }
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
 
 module.exports = router;
 
