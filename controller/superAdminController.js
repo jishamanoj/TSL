@@ -236,7 +236,7 @@ router.get('/waiting-list', async (req, res) => {
 
 router.get('/meditation', async (req, res) => {
   try {
-    const list = await meditation.count({});
+    const list = await Users.count({});
 
     res.json({list});
   } catch (err) {
