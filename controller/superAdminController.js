@@ -234,9 +234,9 @@ router.get('/waiting-list', async (req, res) => {
   }
 });
 
-router.get('/meditation', async (req, res) => {
+router.get('/beneficiaries', async (req, res) => {
   try {
-    const list = await Users.count({});
+    const list = await meditation.count({});
 
     res.json({list});
   } catch (err) {
@@ -268,7 +268,7 @@ router.get('/this-month', async (req, res) => {
   }
 });
 
-router.get('/beneficiaries', async (req, res) => {
+router.get('/meditation', async (req, res) => {
   try {
       
       const firstTenUserIds = (await Users.findAll({
