@@ -196,6 +196,7 @@ router.get('/incomePiechart' , async(req, res) =>{
   return res.status(500).json({ error: 'Internal Server Error' });
 }
 });
+
 router.get('/expensePiechart' , async(req, res) =>{
   try{
     const coupon = await Distribution.sum('distributed_coupons' );

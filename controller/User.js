@@ -1189,7 +1189,7 @@ return res.status(200).json({ message: 'User deleted successfully' });
  
 router.post('/meditation', async (req, res) => {
   try {
-    const { UId } = req.body;
+    const { UId } = req.session;
     const { startdatetime, stopdatetime, morning_meditation, evening_meditation } = req.body;
 
     console.log("........................", UId, morning_meditation, evening_meditation)
