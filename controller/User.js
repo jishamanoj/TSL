@@ -43,7 +43,7 @@ const donation = require('../model/donation');
 const meditationTime = require('../model/medtitationTime')
 const ZoomRecord = require('../model/zoomRecorder'); 
 const zoom = require('../model/zoom');
-
+const blogs = require('../model/blogs');
 
 router.get('/getAllUsers', async (req, res) => {
   try {
@@ -3188,5 +3188,48 @@ console.log(user);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+router.get('/listblogs', async (req, res) => {
+  try {
+     
+    const upcomingEvents = await blogs.findAll({
+      order: [['id', 'DESC']],
+    });
+
+
+    // Map through each event and fetch image if available
+    const upcomingEventsFormatted = await Promise.all(upcomingEvents.map(async event => {
+      let image = null;
+      if (event.image) {
+        // If image URL exists, fetch the image URL from Firebase Storage
+        const file = storage.file(event.image.split(storage.name + '/')[1]);
+        const [exists] = await file.exists();
+        if (exists) {
+          image = await file.getSignedUrl({
+            action: 'read',
+            expires: '03-01-2500' // Adjust expiration date as needed
+          });
+          image = image[0];
+        }
+      }
+      // Return formatted event data with image
+      return {
+        id: event.id,
+        blog_name: event.blog_name,
+        blog_description: event.blog_description,
+        date: event.date,
+        image
+      };
+    }));
+
+    return res.status(200).json({
+      blogs: upcomingEventsFormatted,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 
 module.exports = router;

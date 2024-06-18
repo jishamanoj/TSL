@@ -356,6 +356,7 @@ router.get('/events', async (req, res) => {
 
     // Fetch events with pagination
     const allEvents = await events.findAll({
+      order: [['id', 'DESC']],
       limit: pageSize,
       offset: offset
     });
@@ -2510,6 +2511,7 @@ router.get('/list-all-appointment', async (req, res) => {
 
     // Fetch appointments with pagination
     const appointmentData = await Appointment.findAll({
+      order: [['id', 'DESC']],
       limit: pageSize,
       offset: offset
     });
@@ -3601,6 +3603,7 @@ router.get('/listblogs', async (req, res) => {
 
     // Fetch blogs with pagination
     const upcomingEvents = await blogs.findAll({
+      order: [['id', 'DESC']],
       offset: offset,
       limit: limit
     });
