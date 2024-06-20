@@ -979,8 +979,8 @@ router.post('/meditation-data', async (req, res) => {
     }
   });
 
-router.get('/reference/:UId', async (req, res) => {
-  const UId = req.params.UId;
+router.get('/reference', async (req, res) => {
+  const UId = req.session.UId;
  
   try {
       const user = await reg.findOne({
@@ -1187,6 +1187,7 @@ return res.status(200).json({ message: 'User deleted successfully' });
 //     }
 // });
  
+
 router.post('/meditation', async (req, res) => {
   try {
     const { UId } = req.session;
