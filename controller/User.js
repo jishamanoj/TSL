@@ -5,7 +5,6 @@ const router = express.Router();
 const { Op } = require("sequelize");
 const axios = require('axios');
 const Country =require('../model/country');
-const session = require('express-session');
 const Redis = require('ioredis');
 const redis = new Redis();
 const questions =require("../model/question");
@@ -705,17 +704,12 @@ router.post('/resetPassword', async (req, res) => {
       return res.status(500).send(err.message || "An error occurred during password reset");
   }
 });
- 
-const sessionMiddleware = session({
-    secret: '8be00e304a7ab94f27b5e5172cc0f3b2c575e87d',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
-    },
-  });
- 
-  router.use(sessionMiddleware);
+//  const debug = require('debug')('express:session');
+//  router.use((req, res, next) => {
+//   debug('Session:', req.session);
+//   next();
+// });
+
  
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
@@ -732,7 +726,7 @@ router.post('/login', async (req, res) => {
       const validUser = await reg.findOne({ where: {email}  })
  
         if(!validUser){
-          res.status(401).json({message:"Sorry ! your are not registered" });
+          return res.status(401).json({message:"Sorry ! your are not registered" });
         }
  
         const user = await reg.findOne({
@@ -945,6 +939,7 @@ router.get('/flag', async (req, res) => {
 router.post('/meditation-data', async (req, res) => {
     try {
       const UId = req.session.UId;
+      console.log(".......................",req.session);
       const ans = req.body.ans;
       const isans = req.body.isans;
  
@@ -3132,7 +3127,7 @@ router.post('/button-block', async (req, res) => {
         return res.status(200).json({ key: false, message: 'Provided time is not less than or equal to the existing med_starttime', date });
       }
     } else {
-      return res.status(404).json({ message: 'UId not found or date does not match in timeTracking', UId, date });
+      return res.status(404).json({ key: false, message: 'UId not found or date does not match in timeTracking', UId, date });
     }
   } catch (error) {
     console.error('Error checking date:', error);
