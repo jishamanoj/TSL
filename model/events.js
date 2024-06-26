@@ -4,11 +4,15 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
     dialect: process.env.DB_DIALECT,
     host: process.env.DB_HOST,
     logging: false,
+    define: {
+        charset: 'utf8mb4',
+        collate: 'utf8mb4_unicode_ci',
+    },
 
 });
 const events = sequelize.define('events', {
     event_name: { type: DataTypes.STRING},
-    event_description: { type: DataTypes.STRING},
+    event_description: { type: DataTypes.TEXT},
     priority: { type: DataTypes.STRING},
     place: { type: DataTypes.STRING},
     date: {type: DataTypes.STRING},

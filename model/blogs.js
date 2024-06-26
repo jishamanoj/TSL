@@ -4,11 +4,15 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
     dialect: process.env.DB_DIALECT,
     host: process.env.DB_HOST,
     logging: false,
+    define: {
+        charset: 'utf8mb4',
+        collate: 'utf8mb4_unicode_ci',
+    },
 
 });
 const blogs = sequelize.define('blogs', {
     blog_name: { type: DataTypes.STRING},
-    blog_description: { type: DataTypes.STRING},
+    blog_description: { type: DataTypes.TEXT},
     date: {type: DataTypes.STRING},
     image: {
         type:DataTypes.STRING

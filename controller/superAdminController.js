@@ -383,6 +383,7 @@ router.get('/events', async (req, res) => {
   }
 });
 
+
 // rout`er.post('/events-query', async (req, res) => {
 //   try {
 //     const queryConditions = req.body.queryConditions;
@@ -432,6 +433,7 @@ router.get('/events', async (req, res) => {
 //     res.status(500).json({ message: 'Internal server error.' });
 //   }
 // });
+
 
 
 router.post('/events-query', async (req, res) => {
