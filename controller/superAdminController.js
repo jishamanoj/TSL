@@ -1006,6 +1006,7 @@ router.post('/coupons-cart', async (req, res) => {
   }
 });
 
+
 router.post('/revoke-coupons', async (req, res) => {
   try {
     const { UIds } = req.body;
@@ -4496,6 +4497,7 @@ router.post('/feedback-query', async (req, res) => {
 router.get('/impNotes' , async(req,res) =>{
   try{
     const notes = await globalMessage.findAll({
+      order: [['id', 'DESC']],
       where: {
         message: {
           [Op.startsWith]: 'Meditation Note : imp:'

@@ -237,10 +237,10 @@ return response.json({status:"success",refs:refs})
 // ban the user
 router.post('/closeuser', async (req, res) => {
   try {
-      const { id } = req.body;
+      const { UserId } = req.body;
 
       // Find user by primary key
-      let closeUser = await Users.findByPk(id);
+      let closeUser = await Users.findByPk(UserId);
 
       // Check if user exists
       if (!closeUser) {

@@ -322,19 +322,22 @@ async function sendNotificationToUser(UId, title, message) {
  
 const notificationCronJob = cron.schedule('0 0 * * *', async () => {
   try {
-    const currentDate = moment();
- 
+    const currentDate = moment().format('YYYY-MM-DD');
+
     const appointments = await Appointment.findAll({
       where: {
         appointmentDate: {
-          [Op.lte]: moment(currentDate).add(3, 'days').format('DD/MM/YYYY')
+          [Op.between]: [
+            currentDate,
+            moment(currentDate).add(3, 'days').format('YYYY-MM-DD')
+          ]
         }
       }
     });
- 
+
     appointments.forEach(async (appointment) => {
       const UId = appointment.UId;
-      const title = 'Reminder:Upcoming Appointment';
+      const title = 'Reminder: Upcoming Appointment';
       const message = `You have an appointment scheduled for ${appointment.appointmentDate}. Please be on time.`;
       await sendNotificationToUser(UId, title, message);
     });
@@ -342,9 +345,8 @@ const notificationCronJob = cron.schedule('0 0 * * *', async () => {
     console.error('Error in cron job:', error);
   }
 });
- 
+
 notificationCronJob.start();
- 
  
 router.get('/list-users', async(req,res)=>{
  
