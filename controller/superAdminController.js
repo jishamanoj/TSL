@@ -1107,7 +1107,7 @@ router.get('/list-meditators', async (req, res) => {
     const offset = (page - 1) * limit;
 
     const users = await Users.findAll({
-      attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'ban'],
+      attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'ban','UserId'],
       order: [['userId', 'DESC']], // Order by UId in ascending order
       where: {
         UserId: { [Op.gte]: 11 }, // Start from UId 11
@@ -2847,7 +2847,6 @@ router.post('/appointment-query', async (req, res) => {
   }
 });
 
-
 router.get('/profiledetails/:UId', async (req, res) => {
   try {
     const { UId } = req.params;
@@ -3311,7 +3310,6 @@ router.post('/expense-query', async (req, res) => {
     res.status(500).json({ message: 'Internal server error.' });
   }
 });
-
 
 router.post('/filter', async (req, res) => {
   try {
@@ -4432,7 +4430,6 @@ router.get('/list-feedback', async (req, res) => {
   }
 });
 
-
 router.post('/feedback-query', async (req, res) => {
   try {
     const queryConditions = req.body.queryConditions;
@@ -4492,7 +4489,6 @@ router.post('/feedback-query', async (req, res) => {
     res.status(500).json({ message: 'Internal server error.' });
   }
 });
-
 
 router.get('/impNotes' , async(req,res) =>{
   try{
@@ -4611,7 +4607,6 @@ router.get('/get-fees-sum', async (req,res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
 
 router.post('/payOperator', upload.single('image'), async (req,res) => {
  
