@@ -202,9 +202,9 @@ router.get('/findall',async(request,response)=>{
 
 router.post('/findrefs',async (request,response)=>{
   try{
-const {id} = request.body;
+const {UserId} = request.body;
     
-const participant = await Users.findByPk(id);
+const participant = await Users.findByPk(UserId);
 
 
     const referers = await sequelize.query(`CALL GetReferrerTreeWithCorrection('${id}')`);

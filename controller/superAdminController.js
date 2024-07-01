@@ -1159,6 +1159,22 @@ router.get('/view-cart', async (req, res) => {
 });
 
 
+router.get('/total-coupons', async (req, res) => {
+  try {
+    const users = await Users.findAll({
+      attributes: ['coupons']
+    });
+
+    const totalCoupons = users.reduce((acc, user) => {
+      return acc + (user.coupons || 0);
+    }, 0);
+
+    res.status(200).json({ totalCoupons });
+  } catch (error) {
+    console.error('Error fetching total coupons:', error);
+    res.status(500).json({ error: 'Error fetching total coupons', details: error.message });
+  }
+});
 
 ////////////////////////////////////////mahadhanam///////////////////////////////////////
 
