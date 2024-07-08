@@ -4748,7 +4748,23 @@ router.get('/get-balance', async (req, res) => {
   }
 });
 
-
+router.delete('/global-Delete/:id' , async (req, res) =>{
+  try{
+    
+    const  id  = req.params.id;
+    console.log(id);
+    const message = await globalMessage.findOne({ where: { id }});
+    if(!message){
+      return res.status(404).json('message not found ');
+    }
+    await message.destroy();
+    return res.status(200).json('message deleted successfully');
+  }
+  catch(error){
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 
 module.exports = router;

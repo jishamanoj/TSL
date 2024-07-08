@@ -3228,5 +3228,59 @@ router.get('/listblogs', async (req, res) => {
   }
 });
 
+router.post('/global' , async(req,res)=>{
+  try{
+    const UId = req.session.UId;
+    const { message, messageTime,isAdminMessage,messageDate} = req.body;
+
+    if(!UId){
+      return res.status(401).json('UId is required');
+    }
+
+    const regUser = await reg.findOne({ where: { UId, maintanance_fee: true } });
+
+    // Check if the user exists in the User table
+    const user = await Users.findOne({ where: { UId } });
+
+    // Check if either condition is met
+    if (!regUser && !user) {
+        return res.status(404).json({ error: 'User not found or maintenance fee not paid' });
+    }
+    const newMessage = await globalMessage.create({
+      UId,
+      message,
+      messageTime,
+      isAdminMessage,
+      messageDate,
+      messagetype : 'global'
+  });
+  return res.status(200).json({ message: 'Message created successfully' });
+} catch (error) {
+    console.error('Error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+}
+});
+
+router.delete('/deleteMsg/:id' , async (req, res) =>{
+  try{
+    
+    const  id  = req.params.id;
+    console.log(id);
+    const message = await globalMessage.findOne({
+       where: { 
+        id ,
+      isAdminMessage: false
+    }});
+    if(!message){
+      return res.status(404).json('user not authenticated ');
+    }
+    await message.destroy();
+    return res.status(200).json('message deleted successfully');
+  }
+  catch(error){
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 module.exports = router;
