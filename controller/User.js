@@ -2335,7 +2335,7 @@ router.get('/privateMessage/:page' , async(req, res) =>{
     const { UId } = req.session;
    // const UId = req.query.UId;
     const page = parseInt(req.params.page) || 1;
-    const limit = 10;
+    const limit = 100;
     if(!UId) {
       return res.status(401).json('User not Authenticated');
     }
@@ -2372,7 +2372,7 @@ router.get('/globalMessage/:page', async (req, res) => {
     }
     else{
     const page = parseInt(req.params.page) || 1;
-    const limit = 10;
+    const limit = 100;
  
     const totalCount = await globalMessage.count();
  
@@ -2414,7 +2414,7 @@ router.get('/gurujimessage/:page', async (req, res) => {
   try {
     
     const page = parseInt(req.params.page) || 1;
-    const limit = 10;
+    const limit = 100;
     
     const offset = (page - 1) * limit;
 

@@ -2606,7 +2606,18 @@ router.get('/list-appointment/:id', async (req, res) => {
     if (!appointment) {
       return res.status(404).json({ error: 'Appointment not found' });
     }
-
+    let image = null;
+    if (appointment.image) {
+      // If profilePicUrl exists, fetch the image URL from Firebase Storage
+      const file = storage.file(appointment.image.split(storage.name + '/')[1]);
+      const [exists] = await file.exists();
+      if (exists) {
+        image = await file.getSignedUrl({
+          action: 'read',
+          expires: '03-01-2500' // Adjust expiration date as needed
+        });
+      }
+    }
     // Find group members for the appointment
     const groupMembers = await GroupMembers.findAll({ where: { appointmentId: appointment.id } });
 
@@ -2614,7 +2625,10 @@ router.get('/list-appointment/:id', async (req, res) => {
     appointment.dataValues.groupMembers = groupMembers;
 
     // Respond with the appointment
-    return res.status(200).json({ message: 'Fetching appointment', appointment });
+    return res.status(200).json({ message: 'Fetching appointment', appointment:{
+      ...appointment.toJSON(),
+      image
+    } });
   } catch (error) {
    // console.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
@@ -4766,6 +4780,42 @@ router.delete('/global-Delete/:id' , async (req, res) =>{
   }
 });
 
+router.get('/appointmentFeedback', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1; // Changed to query parameters
+    const limit = 10;
+
+    const totalCount = await Appointment.count({
+      where: {
+        feedback: {
+          [Op.ne]: null
+        }
+      }
+    });
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    const appointmentFeedback = await Appointment.findAll({
+      where: {
+        feedback: {
+          [Op.ne]: null
+        }
+      },
+      order: [['id', 'DESC']],
+      limit: limit,
+      offset: (page - 1) * limit
+    });
+
+    return res.status(200).json({
+      feedback: appointmentFeedback,
+      totalCount: totalCount,
+      totalPages: totalPages
+    });
+  } catch (error) {
+    console.error('Error fetching appointment feedback:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 module.exports = router;
 
