@@ -2606,13 +2606,13 @@ router.get('/list-appointment/:id', async (req, res) => {
     if (!appointment) {
       return res.status(404).json({ error: 'Appointment not found' });
     }
-    let image = null;
-    if (appointment.image) {
+    let imageUrl = null;
+    if (appointment.imageUrl) {
       // If profilePicUrl exists, fetch the image URL from Firebase Storage
-      const file = storage.file(appointment.image.split(storage.name + '/')[1]);
+      const file = storage.file(appointment.imageUrl.split(storage.name + '/')[1]);
       const [exists] = await file.exists();
       if (exists) {
-        image = await file.getSignedUrl({
+        imageUrl = await file.getSignedUrl({
           action: 'read',
           expires: '03-01-2500' // Adjust expiration date as needed
         });
@@ -2627,7 +2627,7 @@ router.get('/list-appointment/:id', async (req, res) => {
     // Respond with the appointment
     return res.status(200).json({ message: 'Fetching appointment', appointment:{
       ...appointment.toJSON(),
-      image
+      imageUrl
     } });
   } catch (error) {
    // console.error(error);
@@ -3112,56 +3112,57 @@ router.get('/get-event/:id', async (req, res) => {
 //////////////////expense/////////////////////////////////
 
 
-router.post('/expense', upload.single('invoice'), async (req, res) => {
+router.post('/expense', upload.array('invoice', 20), async (req, res) => {
   const { Expense_Date, expenseType, amount, description, emp_id, name } = req.body;
-  const invoiceFile = req.file;
+  const invoiceFiles = req.files;
 
   try {
-    if (!Expense_Date || !expenseType || !amount || !emp_id) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
+      if (!Expense_Date || !expenseType || !amount || !emp_id) {
+          return res.status(400).json({ error: 'Missing required fields' });
+      }
 
-    // Create a new ashram expense
-    const newExpense = await ashramexpense.create({
-      Expense_Date,
-      expenseType,
-      amount,
-      description,
-      emp_id,
-      name
-    });
-
-    let invoiceUrl = '';
-    if (invoiceFile) {
-      const invoicePath = `invoices/${newExpense.id}/${invoiceFile.originalname}`;
-
-      await storage.upload(invoiceFile.path, {
-        destination: invoicePath,
-        metadata: {
-          contentType: invoiceFile.mimetype
-        }
+      // Create a new ashram expense
+      const newExpense = await ashramexpense.create({
+          Expense_Date,
+          expenseType,
+          amount,
+          description,
+          emp_id,
+          name
       });
 
-      invoiceUrl = `gs://${storage.name}/${invoicePath}`;
-    }
+      let invoiceUrl = [];
+      if (invoiceFiles && invoiceFiles.length > 0) {
+          for (const file of invoiceFiles) {
+              const invoicePath = `invoices/${newExpense.id}/${file.originalname}`;
 
-    await newExpense.update({ invoiceUrl });
+              await storage.upload(file.path, {
+                  destination: invoicePath,
+                  metadata: {
+                      contentType: file.mimetype
+                  }
+              });
 
-    const adminRecord = await Admin.findOne({ where: { emp_Id: emp_id } });
-    if (!adminRecord) {
-      return res.status(404).json({ error: 'Admin record not found' });
-    }
+              invoiceUrl.push(`gs://${storage.name}/${invoicePath}`);
+          }
+      }
 
-    const newBalance = parseFloat(adminRecord.balance_amount) - parseFloat(amount);
-    await adminRecord.update({ balance_amount: newBalance });
+      await newExpense.update({ invoiceUrl: JSON.stringify(invoiceUrl) });
 
-    res.status(201).json({ message: 'Ashram expense created successfully', expense: newExpense });
+      const adminRecord = await Admin.findOne({ where: { emp_Id: emp_id } });
+      if (!adminRecord) {
+          return res.status(404).json({ error: 'Admin record not found' });
+      }
+
+      const newBalance = parseFloat(adminRecord.balance_amount) - parseFloat(amount);
+      await adminRecord.update({ balance_amount: newBalance });
+
+      res.status(201).json({ message: 'Ashram expense created successfully', expense: newExpense });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 router.post('/get-expense', async (req, res) => {
   try {
     
@@ -3214,30 +3215,36 @@ router.get('/get-expensebyid/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Fetch user details by UId from the reg table
-    const user = await ashramexpense.findOne({ where: { id } });
+    // Fetch expense details by id from the ashramexpense table
+    const expense = await ashramexpense.findOne({ where: { id } });
 
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+    if (!expense) {
+      return res.status(404).json({ error: 'Expense not found' });
     }
 
-    let invoiceUrl = null;
-    if (user.invoiceUrl) {
-      // If profilePicUrl exists, fetch the image URL from Firebase Storage
-      const file = storage.file(user.invoiceUrl.split(storage.name + '/')[1]);
-      const [exists] = await file.exists();
-      if (exists) {
-        invoiceUrl = await file.getSignedUrl({
-          action: 'read',
-          expires: '03-01-2500' // Adjust expiration date as needed
-        });
+    let invoiceUrl = [];
+    if (expense.invoiceUrl) {
+      // If invoiceUrls exist, fetch the image URLs from Firebase Storage
+      const urls = JSON.parse(expense.invoiceUrl);
+      for (const url of urls) {
+        const file = storage.file(url.split(storage.name + '/')[1]);
+        const [exists] = await file.exists();
+        if (exists) {
+          const signedUrl = await file.getSignedUrl({
+            action: 'read',
+            expires: '03-01-2500' 
+          });
+          invoiceUrl.push(signedUrl[0]);
+        } else {
+          invoiceUrl.push(null);
+        }
       }
     }
 
-    // Send the response with user data including profilePicUrl
+    // Send the response with expense data including invoiceUrls
     return res.status(200).json({
-      user: {
-        ...user.toJSON(),
+      expense: {
+        ...expense.toJSON(),
         invoiceUrl
       }
     });
