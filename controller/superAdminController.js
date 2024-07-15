@@ -4655,7 +4655,7 @@ router.get('/appointmentFeedback', async (req, res) => {
 
 router.get('/check-payment-flag',async(req,res) =>{
   try{
-    const UId = req.body.UId;
+    const UId = req.query.UId;
 
     const user = await meditationFees.findOne({
                    where:{UId},
