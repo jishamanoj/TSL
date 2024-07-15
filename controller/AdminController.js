@@ -12,6 +12,8 @@ const {Users,sequelize} = require('../model/validUsers');
 const appointment =require('../model/appointment');
 const bcrypt = require('bcrypt');
 const Admin = require("../model/adminlogin");
+const meditation = require('../model/meditation');
+const meditationFees = require('../model/meditationFees');
 
 
 
@@ -321,5 +323,33 @@ router.get('/search', async (req, res) => {
       }
   });
   
+  router.post('/meditation-flag', async (req, res) => {
+    const { UId } = req.body;
+  
+    try {
+      // Check if user exists
+      const existingUser = await Users.findOne({ where: { UId } });
+  
+      if (!existingUser) {
+        return res.status(401).json({ error: "User not exist in the User table" });
+      }
+  
+      // Create a new record in the meditationFees table
+      const newFeeRecord = await meditationFees.create({
+        UId, // Assuming you want to store the UId in the meditationFees table
+        fee_payment_status: true
+      });
+  
+      // Respond with the new record or a success message
+      res.status(200).json({
+        message: "Meditation fee status updated successfully",
+        newFeeRecord
+      });
+  
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
 
   module.exports = router;

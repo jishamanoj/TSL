@@ -108,56 +108,7 @@ router.get('/countrieslist', async (req, res) => {
       res.status(500).send({ message: 'An error occurred while fetching countries' });
     }
   });
- 
-// router.post('/registerUser', async (req, res) => {
-//     const { email, phone } = req.body;
- 
-//     try {
-//         const existingUser = await reg.findOne({
-//             where: {
-//                 [Op.or]: [
-//                     { email: email },
-//                     { phone: phone }
-//                 ]
-//             }
-//         });
- 
-//         if (existingUser) {
- 
-//             if (existingUser.email === email) {
-//                 return res.status(400).json({ message: "Email already exists" , status:'false',flag :'email'});
-//             } else {
-//                 return res.status(400).json({ message: "Phone number already exists",status:'false',flag :'phone' });
-//             }
-//         } else {
-//             // User does not exist, generate a new OTP
-//             const otp = generateOTP();
-//             console.log(otp);
- 
-//             // Save the OTP in Redis with a key that includes the user's phone number
-//             const redisKey = `otp:${phone}`;
-//             await redis.setex(redisKey, 600, otp);
- 
-//             // Send OTP to the user via SMS
-//             const otpRequest = {
-//                 method: 'get',
-//                 url: `https://www.fast2sms.com/dev/bulkV2?authorization=aKVbUigWHc8CBXFA9rRQ17YjD4xhz5ovJGd6Ite3k0mnSNuZPMolFREdzJGqw8YVAD7HU1OatPTS6uiK&variables_values=${otp}&route=otp&numbers=${phone}`,
-//                 headers: {
-//                     Accept: 'application/json'
-//                 }
-//             };
- 
-//             await axios(otpRequest);
- 
-//             return res.status(200).json({ message: "OTP sent successfully" });
-//         }
-//     } catch (error) {
-//         console.error("Error registering user:", error);
-//         return res.status(500).json({ message: "Internal Server Error" });
-//     }
-// });
- 
- 
+
 router.post('/registerUser', async (req, res) => {
     const { email, phone } = req.body;
  
@@ -212,163 +163,7 @@ router.get('/displayDataFromRedis/:key', async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
- 
-// router.post("/verify_otp", async (req, res) => {
-//     console.log("<........verify OTP user........>");
- 
-//     const { first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP } = req.body;
-//     console.log(first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP)
- 
-//     console.log("Phone: " + phone);
-//     console.log("OTP: " + OTP);
- 
-//     try {
-//         // Retrieve the stored OTP from Redis
-//         const redisKey = `otp:${phone}`;
-//         const storedOTP = await redis.get(redisKey);
- 
-//         if (!storedOTP) {
-//             return res.status(401).send("OTP not found in Redis");
-//         }
- 
-//         // Verify the OTP
-//         if (storedOTP === OTP) {
-//             const hashedPassword = await bcrypt.hash(phone, 10);
-//             const maxUserId = await reg.max('userId');
-//             const userId = maxUserId + 1;
-//             // Update the user record
-//          //   const user = await reg.findOne({ where: { phone } });
- 
-//             // if (!user) {
-//             //     return res.status(404).send("User not found");
-//             // }
- 
-//             // Update user data
-//             const user = await reg.create({
-//             first_name,
-//             last_name,
-//             email,
-//             DOB,
-//             gender,
-//             phone,
-//             country,
-//             reference,
-//             languages,
-//             remark,
-//             userId,
-//             DOJ : new Date(),
-//             expiredDate : calculateExpirationDate(),
-//             password : hashedPassword, // Store the hashed password
-//             verify : 'true'
-//         });
-//             // Save the updated user data
-//             await user.save();
- 
-//             // Create a record in the BankDetails table
-//             await BankDetails.create({
-//                 AadarNo: 0,
-//                 IFSCCode: "",
-//                 branchName: "",
-//                 accountName: "",
-//                 accountNo: 0,
-//                 regId: user.id // Assuming regId is the foreign key in BankDetails
-//             });
- 
-//             // Delete the OTP from Redis after successful verification
-//             await redis.del(redisKey);
- 
-//             const responseData = {
-//                 message: "Success",
-//                 data: {
-//                     id: user.id,
-//                     first_name: user.first_name,
-//                     last_name: user.last_name,
-//                     DOJ: user.DOJ,
-//                     expiredDate: user.expiredDate,
-//                     userId: user.userId
-//                 }
-//             };
- 
-//             return res.status(200).json(responseData);
-//         } else {
-//             // Respond with an error message if OTP is invalid
-//             return res.status(400).send("Invalid OTP");
-//         }
-//     } catch (err) {
-//         console.error("<........error........>", err);
-//         return res.status(500).send(err.message || "An error occurred during OTP verification");
-//     }
-// });
- 
-// router.post("/verify_otp", async (req, res) => {
-//     console.log("<........verify OTP user........>");
-//     try {
-//     const { first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP } = req.body;
-//     //console.log(first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP)
- 
-//     console.log("Phone: " + phone);
-//     console.log("OTP: " + OTP);
-//     const storedOTP = "1111"
-//     console.log(first_name, last_name, email, DOB, gender, country, phone, reference, languages, remark, OTP,storedOTP)
- 
-//     if(storedOTP == OTP){
-//         console.log(".......");
-//         const hashedPassword = await bcrypt.hash(phone, 10);
-//             const maxUserId = await reg.max('userId');
-//             const userId = maxUserId + 1;
-//             const user = await reg.create({
-//                 first_name,
-//                 last_name,
-//                 email,
-//                 DOB,
-//                 gender,
-//                 phone,
-//                 country,
-//                 reference,
-//                 languages,
-//                 remark,
-//                 userId,
-//                 DOJ : new Date(),
-//                 expiredDate : calculateExpirationDate(),
-//                 password : hashedPassword, // Store the hashed password
-//                 verify : 'true'
-//             });
-//                 // Save the updated user data
-//                 await user.save();
- 
-//                 // Create a record in the BankDetails table
-//                 await BankDetails.create({
-//                     AadarNo: 0,
-//                     IFSCCode: "",
-//                     branchName: "",
-//                     accountName: "",
-//                     accountNo: 0,
-//                     regId: user.id // Assuming regId is the foreign key in BankDetails
-//                 });
-//                 const responseData = {
-//                     message: "Success",
-//                     data: {
-//                         id: user.id,
-//                         first_name: user.first_name,
-//                         last_name: user.last_name,
-//                         DOJ: user.DOJ,
-//                         expiredDate: user.expiredDate,
-//                         userId: user.userId
-//                     }
-//                 };
- 
-//                 return res.status(200).json(responseData);
-//             } else {
-//                 // Respond with an error message if OTP is invalid
-//                 return res.status(400).send("Invalid OTP");
-//             }
-//         } catch (err) {
-//             console.error("<........error........>", err);
-//             return res.status(500).send(err.message || "An error occurred during OTP verification");
-//         }
-//     });
- 
- 
+
 router.post("/verify_otp", upload.single('profilePic'), async (req, res) => {
   console.log("<........verify OTP user........>");
   try {
@@ -606,52 +401,7 @@ router.post('/requestPasswordReset', async (req, res) => {
 }
 });
 
- 
-// router.post('/resetPassword', async (req, res) => {
-//     const { email, otp, new_password } = req.body;
- 
-//     try {
-//         // Find the user with the provided email in the 'reg' schema
-//         const regUser = await reg.findOne({ where: { email: email } });
- 
-//         if (!regUser) {
-//             return res.status(404).json({ message: "User not found" });
-//         }
- 
-//         // Retrieve the stored OTP from Redis
-//         const redisKey = `reqotp:${regUser.phone}`;
-//         const storedOTP = await redis.get(redisKey);
- 
-//         if (!storedOTP) {
-//             return res.status(401).json({message:"Otp has expired" });``
-//         }
- 
-//         if (storedOTP === otp) {
-//             const hashedPassword = await bcrypt.hash(new_password, 10);
- 
-//             // Update password and set classAttended to true in the 'reg' table
-//             await reg.update({
-//                 password: hashedPassword,
-//                 classAttended: true,
-//             }, {
-//                 where: { email: regUser.email },
-//             });
- 
-//             // Delete the OTP from Redis after successful verification
-//             await redis.del(redisKey);
- 
-//             return res.status(200).json({ message: "Password reset successfully" });
-//         } else {
-//             // Respond with an error message if OTP is invalid
-//             return res.status(400).send("Invalid OTP");
-//         }
-//     } catch (err) {
-//         console.error("Error resetting password:", err);
-//         return res.status(500).send(err.message || "An error occurred during password reset");
-//     }
-// });
- 
- 
+
 router.post('/verify-userotp', async (req, res) => {
   try {
     const { otp,email } = req.body;
@@ -704,13 +454,7 @@ router.post('/resetPassword', async (req, res) => {
       return res.status(500).send(err.message || "An error occurred during password reset");
   }
 });
-//  const debug = require('debug')('express:session');
-//  router.use((req, res, next) => {
-//   debug('Session:', req.session);
-//   next();
-// });
 
- 
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
  
@@ -832,66 +576,6 @@ router.get('/getUserById', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-// router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
-//     const UId = req.session.UId
-  
-//     const profilePicFile = req.file;
- 
-//     try {
-//       // Check if the user is authenticated
-//       if (!UId) {
-//         return res.status(401).json({ error: 'Unauthorized' });
-//       }
- 
-//       // Find the user by UId
-//       const user = await reg.findOne({ where: { UId } });
- 
-//       // Update user details
-//       if (user) {
-//         // Update all fields provided in the request, excluding the profilePic field
-//         delete userData.profilePic; // Remove profilePic from userData
-//        // await user.update(userData);
- 
-//         // Fetch current profile picture URL
-//         let currentProfilePicUrl = user.profilePicUrl;
- 
-//         // Store or update profile picture in Firebase Storage
-//         let profilePicUrl = currentProfilePicUrl; // Default to current URL
-//         if (profilePicFile) {
-//           const profilePicPath = `profile_pictures/${UId}/${profilePicFile.originalname}`;
- 
-//           // Upload new profile picture to Firebase Storage
-//           await storage.upload(profilePicFile.path, {
-//             destination: profilePicPath,
-//             metadata: {
-//               contentType: profilePicFile.mimetype
-//             }
-//           });
- 
-//           // Get the URL of the uploaded profile picture
-//           profilePicUrl = `gs://${storage.name}/${profilePicPath}`;
- 
-//           // Delete the current profile picture from Firebase Storage
-//           if (currentProfilePicUrl) {
-//             const currentProfilePicPath = currentProfilePicUrl.split(storage.name + '/')[1];
-//             await storage.file(currentProfilePicPath).delete();
-//           }
-//         }
- 
-//         // Update user's profilePicUrl in reg table
-//         await user.update({ profilePicUrl });
- 
-//         return res.status(200).json({ message: 'User details updated successfully' });
-//       } else {
-//         return res.status(404).json({ error: 'User not found' });
-//       }
-//     } catch (error) {
-//       console.error(error);
-//       return res.status(500).json({ error: 'Internal Server Error' });
-//     }
-//   });
-
 
 router.get('/flag', async (req, res) => {
   try {
@@ -1078,111 +762,6 @@ return res.status(200).json({ message: 'User deleted successfully' });
         return res.status(500).json({ message: 'Internal Server Error' });
     }
 });
- 
-// router.post('/meditation', async (req, res) => {
-//     try {
-//       const { userId } = req.session;
-//         const {startdatetime, stopdatetime } = req.body;
- 
-//         console.log('Received userId:', userId);
-//         console.log('Received startdatetime:', startdatetime);
-//         console.log('Received stopdatetime:', stopdatetime);
- 
-//         // Check if userId exists in the reg table
-//         const userExists = await Users.findOne({ where: { UId : userId } });
-//         if (!userExists) {
-//             return res.status(404).json({ error: 'User not found in reg table' });
-//         }
- 
-//         const refStartDate = moment(`${startdatetime}`, "YYYY-MM-DD HH:mm:ss", true);
-//         const refFutureDate = refStartDate.clone().add(45, "minutes");
-//         const refStopDate = moment(`${stopdatetime}`, "YYYY-MM-DD HH:mm:ss", true);
- 
-//         console.log('Parsed startdatetime:', refStartDate.format('YYYY-MM-DD HH:mm:ss'));
-//         console.log('Parsed stopdatetime:', refStopDate.format('YYYY-MM-DD HH:mm:ss'));
- 
-//         const difference = refStopDate.diff(refStartDate, 'minutes');
-//         if(difference>=90){
-//           ismeditated = 1
-//         }
-//         else{
-//           ismeditated = 2
-//         }
- 
-//         console.log('Difference:', difference);
-//         const TimeTracking = await timeTracking.create({
-//             userId,
-//             med_starttime: refStartDate.format('YYYY-MM-DD HH:mm:ss'),
-//             med_stoptime:refStopDate.format('YYYY-MM-DD HH:mm:ss'),
-//             timeEstimate:difference,
-//             ismeditated
-//         });
-//         await TimeTracking.save();
- 
-//         // Check if there is an existing record for the userId
-//         const existingMeditationRecord = await Meditation.findOne({ where: { userId } });
- 
-//         if (existingMeditationRecord) {
-//             // Update the existing record
-//             existingMeditationRecord.med_starttime = refStartDate.format('YYYY-MM-DD HH:mm:ss');
-//             existingMeditationRecord.med_stoptime = refStopDate.format('YYYY-MM-DD HH:mm:ss');
-//             existingMeditationRecord.med_endtime = refFutureDate.format('YYYY-MM-DD HH:mm:ss');
- 
-//             if (difference >= 45) {
-//                 existingMeditationRecord.session_num += 1 ;
-//                 if(existingMeditationRecord.session_num > 2) {
-//                     existingMeditationRecord.session_num = 1; 
-//             }}
- 
-//             if (existingMeditationRecord.session_num === 2) {
-//                 existingMeditationRecord.day += 1;
-//                 //existingMeditationRecord.session_num = 0;
-//             }
- 
-//             if (existingMeditationRecord.day === 15) {
-//                 existingMeditationRecord.cycle += 1;
-//                 existingMeditationRecord.day = 0;
-//             }
- 
-//             await existingMeditationRecord.save();
-//             return res.status(200).json({ message: 'Meditation time updated successfully' });
-//         } else {
-//             // Create a new record if there is no existing record
-//             const meditationRecord = await Meditation.create({
-//                 userId,
-//                 med_starttime: refStartDate.format('YYYY-MM-DD HH:mm:ss'),
-//                 med_stoptime: refStopDate.format('YYYY-MM-DD HH:mm:ss'),
-//                 med_endtime: refFutureDate.format('YYYY-MM-DD HH:mm:ss'),
-//                 session_num: 0,
-//                 day: 0,
-//                 cycle: 0,
-//             });
- 
-//             if (difference >= 45) {
-//                 meditationRecord.session_num += 1;
-//             }
- 
-//             if (meditationRecord.session_num === 2) {
-//                 meditationRecord.day += 1;
-//                 meditationRecord.session_num = 0;
-//             }
- 
-//             if (meditationRecord.day === 41) {
-//                 meditationRecord.cycle += 1;
-//                 meditationRecord.day = 0;
-//             }
- 
-//             await meditationRecord.save();
-//             return res.status(200).json({ message: 'Meditation time inserted successfully' });
- 
-//         }
- 
-//     } catch (error) {
-//         console.error('Error:', error);
-//         return res.status(500).json({ error: 'Internal Server Error' });
-//     }
-// });
- 
 
 router.post('/meditation', async (req, res) => {
   try {
@@ -1291,37 +870,6 @@ router.post('/meditation', async (req, res) => {
   }
 });
 
-// router.post('/messages', async (req, res) => {
-//   try {
-//       const { UId } = req.session;
-//       const { message, messageTime, } = req.body;
- 
-//       // Check if the user exists
-//       const existingUser = await Users.findOne({ where: { UId } });
-//       if (!existingUser) {
-//           return res.status(404).json({ error: 'User not found' });
-//       }
- 
-//       // Create a new message record
-//       const newMessage = await Messages.create({
-//           UId,
-//           message,
-//           messageTime,
-//           message_priority,
-//           isAdminMessage
-//       });
- 
-//       // Save the new message record
-//       await newMessage.save();
- 
-//       return res.status(200).json({ message: 'Message created successfully' });
-//   } catch (error) {
-//       console.error('Error:', error);
-//       return res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
- 
- 
 router.get('/guruji-date', async (req, res) => {
   try {
     const  id  = 11;
@@ -1342,24 +890,6 @@ router.get('/guruji-date', async (req, res) => {
   }
 });
 
-// router.get('/rulesAndConditions', async (req, res) => {
-//   try {
-//     const id = 10;
-//     const config = await ApplicationConfig.findByPk(id);
-//     if (config) {
-//       console.log('Config value:', config.value); // Log the config value
-//       const values = JSON.parse(config.value);
-//       return res.status(200).json({ message: 'Application config retrieved successfully', values });
-//     } else {
-//       return res.status(404).json({ error: 'Application config not found' });
-//     }
-//   } catch (error) {
-//     console.error('Error retrieving application config:', error);
-//     return res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
- 
- 
  router.post("/appointment", async (req, res) => {
   try {
    const UId = req.session.UId;
@@ -1886,32 +1416,7 @@ router.post('/send-email', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
- 
-//   router.get('/user-details', async (req, res) => {
-//     try {
-//         const { UId } = req.session;
-// //const UId = req.body.UId;
-// console.log('UId:', UId);
-//         if (!UId) {
-//             return res.status(401).json({ error: 'User not authenticated' });
-//         }
- 
-//         const user = await reg.findOne({
-//             attributes: ['first_name', 'last_name', 'UId', 'DOJ', 'expiredDate'],
-//             where: { UId },
-//         });
- 
-//         if (!user) {
-//             return res.status(404).json({ error: 'User not found' });
-//         }
- 
-//         return res.status(200).json(user);
-//     } catch (error) {
-//         console.error('Error:', error);
-//         return res.status(500).json({ error: 'Internal Server Error' });
-//     }
-// });
- 
+
 router.get('/meditation-detail', async (req, res) => {
   try {
        const { UId } = req.session;
@@ -2203,60 +1708,7 @@ router.put('/maintances-fee', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
- 
-// router.post('/messages', async (req, res) => {
-//   try {
-//       const { UId } = req.session;
-//       const { message, messageTime,isAdminMessage, messagetype } = req.body;
- 
-//       // Check if the user exists in the reg table and maintanance_fee is true
-//       const regUser = await reg.findOne({ where: { UId, maintanance_fee: true } });
- 
-//       // Check if the user exists in the User table
-//       const user = await Users.findOne({ where: { UId } });
- 
-//       // Check if either condition is met
-//       if (!regUser && !user) {
-//           return res.status(404).json({ error: 'User not found or maintenance fee not paid' });
-//       }
- 
-//       // Create a new message record
-//       const newMessage = await globalMessage.create({
-//           UId,
-//           message,
-//           messageTime,
-//           isAdminMessage,
-//           messagetype
-//       });
-//       const msg = await privateMsg.create({
-//         UId,
-//         message,
-//         messageTime,
-//         isAdminMessage,
-//         messagetype
-//       });
- 
-//       // Check the message type and save accordingly
-//       if (messagetype === 'private') {
-//         // Assuming privatemsg is the model for private messages
-//         const privatemsg = await privateMsg.create({
-//           UId,
-//           message,
-//           messageTime,
-//           isAdminMessage,
-//           messagetype
-//         });
- 
-//         await privatemsg.save();
-//       } 
-//       return res.status(200).json({ message: 'Message created successfully' });
-//   } catch (error) {
-//       console.error('Error:', error);
-//       return res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
- 
- 
+
 router.post('/messages', async (req, res) => {
   try {
       const UId = req.session.UId
@@ -2709,108 +2161,6 @@ router.get('/broadcasts', async (req, res) => {
   }
 });
 
-
-// router.get('/playlists', async (req, res) => {
-//   try {
-//     // Fetch distinct playList_headings
-//     const playLists = await Video.findAll({
-//       attributes: [
-//         [sequelize.fn('DISTINCT', sequelize.col('playList_heading')), 'playList_heading']
-//       ],
-//     });
-
-//     // Prepare a response list
-//     const playListList = await Promise.all(playLists.map(async (playList) => {
-//       const video = await Video.findOne({
-//         where: {
-//           playList_heading: playList.get('playList_heading'),
-//           playList_image: {
-//             [Op.ne]: null
-//           }
-//         },
-//         attributes: ['playList_image']
-//       });
-
-//       let playList_image = null;
-
-//       if (video && video.playList_image) {
-//         const file = storage.file(video.playList_image.split(`${storage.name}/`)[1]);
-//         const [exists] = await file.exists();
-//         if (exists) {
-//           const [url] = await file.getSignedUrl({
-//             action: 'read',
-//             expires: '03-01-2500' // Adjust expiration date as needed
-//           });
-//           playList_image = url;
-//         }
-//       }
-
-//       return {
-//         playList_heading: playList.get('playList_heading'),
-//         playList_image
-//       };
-//     }));
-
-//     res.status(200).json({ playlists: playListList });
-//   } catch (error) {
-//     console.error('Error fetching playlists:', error);
-//     res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
-
-
-// router.get('/playlists', async (req, res) => {
-//   try {
-//     // Fetch distinct playList_headings with their respective distinct Video_heading counts
-//     const playLists = await Video.findAll({
-//       attributes: [
-//         [sequelize.fn('DISTINCT', sequelize.col('playList_heading')), 'playList_heading'],
-//         [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('Video_heading'))), 'videoHeadingCount']
-//       ],
-//       group: ['playList_heading']
-//     });
-
-//     // Prepare a response list
-//     const playListList = await Promise.all(playLists.map(async (playList) => {
-//       const video = await Video.findOne({
-//         where: {
-//           playList_heading: playList.get('playList_heading'),
-//           playList_image: {
-//             [Op.ne]: null
-//           }
-//         },
-//         attributes: ['playList_image']
-//       });
-
-//       let playList_image = null;
-
-//       if (video && video.playList_image) {
-//         const file = storage.file(video.playList_image.split(`${storage.name}/`)[1]);
-//         const [exists] = await file.exists();
-//         if (exists) {
-//           const [url] = await file.getSignedUrl({
-//             action: 'read',
-//             expires: '03-01-2500' // Adjust expiration date as needed
-//           });
-//           playList_image = url;
-//         }
-//       }
-
-//       return {
-//         playList_heading: playList.get('playList_heading'),
-//         playList_image,
-//         videoHeadingCount: playList.get('videoHeadingCount')
-//       };
-//     }));
-
-//     res.status(200).json({ playlists: playListList });
-//   } catch (error) {
-//     console.error('Error fetching playlists:', error);
-//     res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
-
-
 router.get('/playlists', async (req, res) => {
   try {
     // Fetch distinct playList_headings
@@ -2916,26 +2266,6 @@ router.get('/videos-by-playlist', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
- 
-// router.get('/meditation-time', async (req, res) => {
-//   const { UId } = req.session;
-
-//   try {
-//     // Find the meditation time details for the given country
-//     const meditationTimeDetails = await meditationTime.findOne({ where: { country } });
-
-//     if (meditationTimeDetails) {
-//       res.status(200).json(meditationTimeDetails);
-//     } else {
-//       res.status(404).json({ error: 'No meditation time details found for the specified country' });
-//     }
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
-
 
 router.get('/meditation-time', async (req, res) => {
   const { UId} = req.session;

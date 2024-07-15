@@ -383,59 +383,6 @@ router.get('/events', async (req, res) => {
   }
 });
 
-
-// rout`er.post('/events-query', async (req, res) => {
-//   try {
-//     const queryConditions = req.body.queryConditions;
-//     const page = req.body.page || 1; // Default to page 1 if not provided
-//     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
-
-//     console.log(queryConditions);
-
-//     if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
-//       return res.status(400).json({ message: 'Invalid query conditions provided.' });
-//     }
-
-//     function isNumeric(num) {
-//       return !isNaN(num);
-//     }
-
-//     let sql = "SELECT * FROM sequel.events WHERE ";
-//     for (let i = 0; i < queryConditions.length; i++) {
-//       if(queryConditions[i].operator === "between"){
-
-//       sql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
-        
-//       }
-//       else{
-//       sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
-//       }
-//     }
-
-//     // Apply pagination
-//     const offset = (page - 1) * pageSize;
-//      sql += `LIMIT ${pageSize} OFFSET ${offset}`;
-
-//     console.log(sql);
-
-//     const [queryResults, metadata] = await sequelize.query(sql);
-
-    
-//    const totalCount = queryResults.length;
-
- 
-//     const totalPages = Math.ceil(totalCount / pageSize);
-    
-//     // Assuming sequelize returns an array of rows in the first element of the results array
-//     res.json({ queryResults ,totalPages});
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: 'Internal server error.' });
-//   }
-// });
-
-
-
 router.post('/events-query', async (req, res) => {
   try {
     const queryConditions = req.body.queryConditions;
@@ -482,7 +429,6 @@ router.post('/events-query', async (req, res) => {
     res.status(500).json({ message: 'Internal server error.' });
   }
 });
-
 
 router.get('/get-event/:id', async (req, res) => {
   try {
@@ -578,7 +524,6 @@ router.put('/update-event/:id', upload.single('image'), async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 router.delete('/delete-events/:eventId', async (req, res) => {
   try {
@@ -1006,7 +951,6 @@ router.post('/coupons-cart', async (req, res) => {
   }
 });
 
-
 router.post('/revoke-coupons', async (req, res) => {
   try {
     const { UIds } = req.body;
@@ -1157,7 +1101,6 @@ router.get('/view-cart', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
 
 router.get('/total-coupons', async (req, res) => {
   try {
@@ -2512,8 +2455,6 @@ router.get('/ashram-search', async (req, res) => {
 ////////////////////////////appointments/////////////////////////////////
 
 
-
-
 router.get('/list-all-appointment', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1; // Parse page number from query string, default to page 1 if not provided
@@ -2757,76 +2698,6 @@ router.put('/update-gurujidate', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-// router.post('/appointment-query', async (req, res) => {
-//   try {
-//     const queryConditions = req.body.queryConditions;
-//     const page = req.body.page || 1; // Default to page 1 if not provided
-//     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
-
-//     console.log(queryConditions);
-
-//     if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
-//       return res.status(400).json({ message: 'Invalid query conditions provided.' });
-//     }
-
-//     function isNumeric(num) {
-//       return !isNaN(num);
-//     }
-
-//     let countSql = "SELECT COUNT(*) AS total FROM thasmai.appointments WHERE ";
-//     let sql = "SELECT * FROM thasmai.appointments WHERE ";
-
-//     for (let i = 0; i < queryConditions.length; i++) {
-//       if (queryConditions[i].operator === "between") {
-//         countSql += `${queryConditions[i].field} ${queryConditions[i].operator} "${queryConditions[i].value.split("/")[0]}" AND "${queryConditions[i].value.split("-")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
-//         sql += `${queryConditions[i].field} ${queryConditions[i].operator} "${queryConditions[i].value.split("/")[0]}" AND "${queryConditions[i].value.split("-")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
-//       } else {
-//         countSql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'`} ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
-//         sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'`} ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
-//       }
-//     }
-
-//     const countResult = await sequelize.query(countSql, { type: sequelize.QueryTypes.SELECT });
-//     const totalCount = countResult[0].total;
-
-//     const totalPages = Math.ceil(totalCount / pageSize);
-//     const offset = (page - 1) * pageSize;
-
-//     sql += `LIMIT ${pageSize} OFFSET ${offset}`;
-//     console.log(sql);
-
-//     const results = await sequelize.query(sql, { type: sequelize.QueryTypes.SELECT });
-//     console.log(results);
-
-//     if (!results || results.length === 0) {
-//       return res.status(404).json({ message: 'No appointments found' });
-//     }
-
-//     const UIds = results.map(appointment => appointment.UId);
-
-//     const userData = await Users.findAll({
-//       where: { UId: { [Op.in]: UIds } },
-//       attributes: ['UId', 'coupons'],
-//     });
-
-//     const userCouponMap = new Map(userData.map(user => [user.UId, user.coupons]));
-
-//     const mergedResults = results.map(appointment => {
-//       const userCoupons = userCouponMap.get(appointment.UId) || 0;
-//       return {
-//         ...appointment,
-//         userCoupons,
-//       };
-//     });
-
-//     res.json({ results: mergedResults, totalPages });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// });
-
 
 router.post('/appointment-query', async (req, res) => {
   try {
@@ -3163,6 +3034,7 @@ router.post('/expense', upload.array('invoice', 20), async (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 router.post('/get-expense', async (req, res) => {
   try {
     
@@ -3174,8 +3046,10 @@ router.post('/get-expense', async (req, res) => {
     const totalpages = Math.ceil(count/pageSize)
 
     const expenses = await ashramexpense.findAll({
+      order: [['id', 'DESC']],
       offset: offset,
-      limit: pageSize
+      limit: pageSize,
+    
     });
 
   
@@ -3253,51 +3127,6 @@ router.get('/get-expensebyid/:id', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-// router.post('/expense-query', async (req, res) => {
-//   try {
-//     const queryConditions = req.body.queryConditions;
-//     const page = req.body.page || 1; // Default to page 1 if not provided
-//     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
-
-//     console.log(queryConditions);
-
-//     if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
-//       return res.status(400).json({ message: 'Invalid query conditions provided.' });
-//     }
-
-//     function isNumeric(num) {
-//       return !isNaN(num);
-//     }
-
-//     let sql = "SELECT * FROM sequel.ashramexpenses WHERE ";
-//     for (let i = 0; i < queryConditions.length; i++) {
-//       if(queryConditions[i].operator === "between"){
-
-//       sql += `${queryConditions[i].field} ${queryConditions[i].operator}  "${queryConditions[i].value.split("/")[0]}" and "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
-        
-//       }
-//       else{
-//       sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
-//       }
-//     }
-
-//     // Apply pagination
-//     const offset = (page - 1) * pageSize;
-//     // sql += `LIMIT ${pageSize} OFFSET ${offset}`;
-
-//     console.log(sql);
-
-//     const results = await sequelize.query(sql);
-//     console.log(results[0]);
-    
-//     // Assuming sequelize returns an array of rows in the first element of the results array
-//     res.json({ results: results[0] });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: 'Internal server error.' });
-//   }
-// });
 
 router.post('/expense-query', async (req, res) => {
   try {
@@ -4821,6 +4650,28 @@ router.get('/appointmentFeedback', async (req, res) => {
   } catch (error) {
     console.error('Error fetching appointment feedback:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.get('/check-payment-flag',async(req,res) =>{
+  try{
+    const UId = req.body.UId;
+
+    const user = await meditationFees.findOne({
+                   where:{UId},
+                   attributes: ['fee_payment_status'],
+                   order:[['id','DESC']]
+                  });
+      
+     if(!user){
+      res.status(404).json({message:"user has not done a payment yet"});
+     }
+     return res.status(200).json(user);
+
+  }
+  catch(error){
+    console.log(error);
+    res.status(500).json({message:"server error",error});
   }
 });
 
