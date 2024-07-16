@@ -4675,6 +4675,24 @@ router.get('/check-payment-flag',async(req,res) =>{
   }
 });
 
+router.get('/waitingListDetails', async (req, res) => {
+  try{
+    const userRecords = await Users.findAll();
+    const userUIds = userRecords.map(record => record.UId);
+
+    const list = await reg.findAll({
+      where: {
+        UId: {
+          [Op.notIn]: userUIds
+        }
+      }
+    });
+    return  res.status(200).json({'waitingListDetails':list});
+  } catch (error) {
+    return res.status(500).json('Internal Server Error');
+}
+});
+
 module.exports = router;
 
 
