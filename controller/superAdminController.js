@@ -4843,7 +4843,7 @@ router.get('/paymentDetails', async (req, res) => {
         UId: {
           [Op.notIn]: userUIds
         },
-        classAttended : false
+        classAttended : true
       },
       offset,
       limit
