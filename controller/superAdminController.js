@@ -4758,6 +4758,77 @@ router.get('/beneficiariesDetails', async (req, res) => {
 });
 
 
+// router.get('/paymentDetails', async (req, res) => {
+//   try {
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 10;
+//     const offset = (page - 1) * limit;
+ 
+//     const userRecords = await Users.findAll();
+//     const userUIds = userRecords.map(userRecords => userRecords.UId);
+ 
+//     const { count, rows: list } = await reg.findAndCountAll({
+//       where: {
+//         UId: {
+//           [Op.notIn]: userUIds
+//         }
+//       },
+//       offset,
+//       limit
+//     });
+ 
+//     return res.status(200).json({
+//       totalItems: count,
+//       totalPages: Math.ceil(count / limit),
+//       currentPage: page,
+//       waitingListDetails: list
+//     });
+//   } catch (error) {
+//     console.error('Error:', error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
+
+// router.get('/paymentDetails', async (req, res) => {
+//   try {
+//     const page = parseInt(req.query.page, 10) || 1;
+//     const limit = parseInt(req.query.limit, 10) || 10;
+//     const offset = (page - 1) * limit;
+
+//     // Fetch all UIds from the Users table
+//     const userRecords = await Users.findAll({
+//       attributes: ['UId']
+//     });
+//     const userUIds = userRecords.map(user => user.UId);
+
+//     // Fetch paginated records from reg table where UId is not in Users table
+//     const { count, rows: list } = await reg.findAndCountAll({
+//       where: {
+//         UId: {
+//           [Op.notIn]: userUIds
+//         }
+//       },
+//       offset,
+//       limit
+//     });
+
+//     if (!list.length) {
+//       return res.status(404).json({ message: 'No records found' });
+//     }
+
+//     return res.status(200).json({
+//       totalItems: count,
+//       totalPages: Math.ceil(count / limit),
+//       currentPage: page,
+//       waitingListDetails: list
+//     });
+//   } catch (error) {
+//     console.error('Error:', error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
 router.get('/paymentDetails', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -4771,7 +4842,8 @@ router.get('/paymentDetails', async (req, res) => {
       where: {
         UId: {
           [Op.notIn]: userUIds
-        }
+        },
+        classAttended : true
       },
       offset,
       limit
@@ -4788,6 +4860,36 @@ router.get('/paymentDetails', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+router.get('/searchUser', async (req, res) => {
+  try {
+    const field = req.query.field; // Retrieve the field from query parameters
+    const value = req.query.value; // Retrieve the value from query parameters
+
+    if (!field || !value) {
+      return res.status(400).json({ message: 'Please provide both field and value parameters' });
+    }
+      
+    const lowerCaseValue = value.toLowerCase();
+
+    // You can now use the field and value to search the database and fetch details
+    const userDetails = await reg.findAll({
+      where: {
+        [field]: lowerCaseValue,
+      },
+    });
+
+    if (!userDetails) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({ message: 'Success', data: userDetails });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 module.exports = router;
 
 
