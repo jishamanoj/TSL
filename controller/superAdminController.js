@@ -4676,24 +4676,120 @@ router.get('/check-payment-flag',async(req,res) =>{
 });
 
 router.get('/waitingListDetails', async (req, res) => {
-  try{
-    const userRecords = await Users.findAll();
-    const userUIds = userRecords.map(record => record.UId);
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+ 
+    const { count, rows: waitingList } = await reg.findAndCountAll({
+      where: {
+        classAttended: false
+      },
+      offset,
+      limit
+    });
+ 
+    return res.status(200).json({
+      totalItems: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+      waitingListDetails: waitingList
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
-    const list = await reg.findAll({
+router.get('/thisMonthDetails', async (req, res) => {
+  try {
+      const currentDate = new Date();
+      const startDateOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const endDateOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+ 
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const offset = (page - 1) * limit;
+ 
+      const { count, rows: users } = await reg.findAndCountAll({
+          where: {
+              DOJ: {
+                  [Op.between]: [startDateOfMonth.toISOString().slice(0, 10), endDateOfMonth.toISOString().slice(0, 10)]
+              }
+          },
+          offset,
+          limit
+      });
+ 
+      res.json({
+          totalItems: count,
+          totalPages: Math.ceil(count / limit),
+          currentPage: page,
+          users
+      });
+  } catch (error) {
+      console.error('Error:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+router.get('/beneficiariesDetails', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+ 
+    const { count, rows: beneficiaries } = await Distribution.findAndCountAll({
+      offset,
+      limit
+    });
+ 
+    return res.status(200).json({
+      totalItems: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+      beneficiariesDetails: beneficiaries
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+router.get('/paymentDetails', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+ 
+    const userRecords = await Users.findAll();
+    const userUIds = userRecords.map(userRecords => userRecords.UId);
+ 
+    const { count, rows: list } = await reg.findAndCountAll({
       where: {
         UId: {
           [Op.notIn]: userUIds
         }
-      }
+      },
+      offset,
+      limit
     });
-    return  res.status(200).json({'waitingListDetails':list});
+ 
+    return res.status(200).json({
+      totalItems: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+      waitingListDetails: list
+    });
   } catch (error) {
-    return res.status(500).json('Internal Server Error');
-}
+    console.error('Error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
-
 module.exports = router;
 
 
 
+    

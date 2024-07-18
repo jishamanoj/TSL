@@ -2613,4 +2613,34 @@ router.delete('/deleteMsg/:id' , async (req, res) =>{
   }
 });
 
+router.delete('/delete-user', async (req, res) => {
+  const { UId } = req.session;
+  if (!UId) {
+    return res.status(401).json({ message: 'UId is required' });
+  }
+
+  try {
+    const user = await reg.findOne({ where: { UId } });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const validUser = await Users.findOne({ where: { UId } });
+    if (!validUser) {
+      return res.status(404).json({ message: 'User not found in Users table' });
+    }
+
+    // Update the user's ban status before deleting
+    validUser.ban = true;
+    await validUser.save();
+
+    await user.destroy();
+
+    return res.status(200).json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Error deleting user' });
+  }
+});
+
 module.exports = router;
