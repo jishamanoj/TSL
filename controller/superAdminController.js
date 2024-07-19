@@ -4734,28 +4734,28 @@ router.get('/thisMonthDetails', async (req, res) => {
 });
 
 
-router.get('/beneficiariesDetails', async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const offset = (page - 1) * limit;
+// router.get('/beneficiariesDetails', async (req, res) => {
+//   try {
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 10;
+//     const offset = (page - 1) * limit;
  
-    const { count, rows: beneficiaries } = await Distribution.findAndCountAll({
-      offset,
-      limit
-    });
+//     const { count, rows: beneficiaries } = await Distribution.findAndCountAll({
+//       offset,
+//       limit
+//     });
  
-    return res.status(200).json({
-      totalItems: count,
-      totalPages: Math.ceil(count / limit),
-      currentPage: page,
-      beneficiariesDetails: beneficiaries
-    });
-  } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+//     return res.status(200).json({
+//       totalItems: count,
+//       totalPages: Math.ceil(count / limit),
+//       currentPage: page,
+//       beneficiariesDetails: beneficiaries
+//     });
+//   } catch (error) {
+//     console.error('Error:', error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
 
 
 // router.get('/paymentDetails', async (req, res) => {
@@ -4828,6 +4828,46 @@ router.get('/beneficiariesDetails', async (req, res) => {
 //     return res.status(500).json({ error: 'Internal Server Error' });
 //   }
 // });
+
+
+router.get('/beneficiariesDetails', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const offset = (page - 1) * limit;
+
+    // Fetching distinct UIds and the sum of distributed_coupon
+    const { count, rows: beneficiaries } = await Distribution.findAndCountAll({
+      attributes: [
+        'UId',
+        'firstName',
+        'secondName',
+        [sequelize.fn('SUM', sequelize.col('distributed_coupons')), 'totalDistributedCoupon']
+      ],
+      group: ['UId', 'firstName', 'secondName'],
+      offset,
+      limit
+    });
+
+    // Total count of distinct UIds
+    const totalDistinctUIds = await Distribution.count({
+      distinct: true,
+      col: 'UId'
+    });
+
+    return res.status(200).json({
+      totalItems: totalDistinctUIds,
+      totalPages: Math.ceil(totalDistinctUIds / limit),
+      currentPage: page,
+      beneficiariesDetails: beneficiaries
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
 
 router.get('/paymentDetails', async (req, res) => {
   try {
