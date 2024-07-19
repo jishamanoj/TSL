@@ -4863,8 +4863,11 @@ router.get('/paymentDetails', async (req, res) => {
 
 router.get('/searchUser', async (req, res) => {
   try {
-    const field = req.query.field; // Retrieve the field from query parameters
-    const value = req.query.value; // Retrieve the value from query parameters
+    const field = req.query.field;
+    const value = req.query.value; 
+    const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
+    const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page if not provided
+    const offset = (page - 1) * limit;
 
     if (!field || !value) {
       return res.status(400).json({ message: 'Please provide both field and value parameters' });
@@ -4872,18 +4875,32 @@ router.get('/searchUser', async (req, res) => {
       
     const lowerCaseValue = value.toLowerCase();
 
-    // You can now use the field and value to search the database and fetch details
-    const userDetails = await reg.findAll({
+    // Fetch users avoiding the first 10 UserIds
+    const { count, rows: userDetails } = await reg.findAndCountAll({
       where: {
         [field]: lowerCaseValue,
+        UserId: { [Op.gte]: 11 }, 
       },
+      limit,
+      offset,
     });
 
-    if (!userDetails) {
+    if (userDetails.length === 0) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({ message: 'Success', data: userDetails });
+    const totalPages = Math.ceil(count / limit);
+
+    res.json({
+      message: 'Success',
+      data: userDetails,
+      pagination: {
+        totalItems: count,
+        totalPages,
+        currentPage: page,
+        itemsPerPage: limit,
+      },
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
