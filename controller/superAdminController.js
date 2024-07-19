@@ -4919,7 +4919,7 @@ router.get('/searchUser', async (req, res) => {
     const { count, rows: userDetails } = await reg.findAndCountAll({
       where: {
         [field]: lowerCaseValue,
-        UserId: { [Op.gte]: 11 }, 
+       
       },
       limit,
       offset,
