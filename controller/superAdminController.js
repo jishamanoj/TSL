@@ -237,7 +237,10 @@ router.get('/waiting-list', async (req, res) => {
 
 router.get('/beneficiaries', async (req, res) => {
   try {
-    const list = await Distribution.count({});
+    const list = await Distribution.count({
+      distinct: true,
+      col: 'UId'
+    });
 
     res.json({list});
   } catch (err) {
@@ -245,6 +248,8 @@ router.get('/beneficiaries', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
 
 router.get('/this-month', async (req, res) => {
   try {
@@ -674,7 +679,7 @@ router.post('/coupon-systemDistribute', async (req, res) => {
   try {
    // console.log("...................enter....................");
     const { totalCoupons, distributedIds } = req.body;
-//console.log("------------------------totalCoupons, distributedIds, description.........",totalCoupons, distributedIds, description);
+//console.log("------------------------totalCoupons, distributedIds, description.........",totalCoupons, distributedIds);
     // Validate input
     if (!totalCoupons || !distributedIds || !Array.isArray(distributedIds)) {
       return res.status(400).json({ message: 'Invalid input. Please provide totalCoupons and an array of distributedIds.' });
@@ -4685,6 +4690,7 @@ router.get('/waitingListDetails', async (req, res) => {
       where: {
         classAttended: false
       },
+      order: [['UId', 'DESC']],
       offset,
       limit
     });
@@ -4717,6 +4723,7 @@ router.get('/thisMonthDetails', async (req, res) => {
                   [Op.between]: [startDateOfMonth.toISOString().slice(0, 10), endDateOfMonth.toISOString().slice(0, 10)]
               }
           },
+          order: [['UId', 'DESC']],
           offset,
           limit
       });
@@ -4845,6 +4852,7 @@ router.get('/beneficiariesDetails', async (req, res) => {
         [sequelize.fn('SUM', sequelize.col('distributed_coupons')), 'totalDistributedCoupon']
       ],
       group: ['UId', 'firstName', 'secondName'],
+      order: [['UId', 'DESC']],
       offset,
       limit
     });
@@ -4885,6 +4893,7 @@ router.get('/paymentDetails', async (req, res) => {
         },
         classAttended : true
       },
+      order: [['UId', 'DESC']],
       offset,
       limit
     });

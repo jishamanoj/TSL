@@ -16,7 +16,8 @@ const meditationFees = require('../model/meditationFees');
 const dekshina = require('../model/dekshina');
 const donation = require('../model/donation');
 const maintenance = require('../model/maintenance');
- 
+const { Sequelize} = require('sequelize')
+
 const instance = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY,
   key_secret: process.env.RAZORPAY_API_SECRET,
@@ -479,5 +480,40 @@ router.get('/get-notificationbyid/:id', async (req, res) => {
   }
 });
  
+
+async function updateMaintenanceStatus() {
+  try {
+      const currentDate = new Date();
+      const uniqueUIds = await maintenance.findAll({
+          attributes: [
+              [Sequelize.fn('DISTINCT', Sequelize.col('UId')), 'UId'],
+          ],
+      });
+
+      for (let record of uniqueUIds) {
+          const { UId } = record.dataValues;
+      
+          const latestPayment = await maintenance.findOne({
+              where: { UId },
+              order: [['id', 'DESC']],
+          });
+
+          if (latestPayment) {
+              const paymentDate = new Date(latestPayment.payment_date);
+              const daysSincePayment = (currentDate - paymentDate) / (1000 * 60 * 60 * 24);
+
+              if (daysSincePayment > 30 && latestPayment.maintenance_payment_status === true) {
+                  await latestPayment.update({ maintenance_payment_status: false });
+                  console.log(`Updated maintenance_payment_status for UId: ${UId}`);
+              }
+          }
+      }
+  } catch (error) {
+      console.error('Error updating maintenance payment status:', error);
+  }
+}
+
+
+cron.schedule('0 0 * * *', updateMaintenanceStatus);
  
 module.exports = router;

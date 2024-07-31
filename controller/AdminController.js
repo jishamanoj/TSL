@@ -324,7 +324,7 @@ router.get('/search', async (req, res) => {
   });
   
   router.post('/meditation-flag', async (req, res) => {
-    const { UId } = req.body;
+    const { UId,amount,payment_date,payment_time} = req.body;
   
     try {
       // Check if user exists
@@ -336,7 +336,10 @@ router.get('/search', async (req, res) => {
   
       // Create a new record in the meditationFees table
       const newFeeRecord = await meditationFees.create({
-        UId, // Assuming you want to store the UId in the meditationFees table
+        UId,
+        amount,
+        payment_date,
+        payment_time, // Assuming you want to store the UId in the meditationFees table
         fee_payment_status: true
       });
   

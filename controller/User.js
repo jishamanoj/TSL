@@ -488,6 +488,11 @@ router.post('/login', async (req, res) => {
       if (!isPasswordValid) {
         return res.status(401).json({ message: 'Incorrect password !' });
       }
+      const bannedUser = await Users.findOne({ where: { UId: user.UId, ban: true } });
+      if (bannedUser) {
+        return res.status(403).json({ message: 'Your account is banned. Please contact support.' });
+      }
+  
  
       // Create session and store user ID
       req.session.UId = user.UId;
@@ -2632,6 +2637,7 @@ router.delete('/delete-user', async (req, res) => {
 
     // Update the user's ban status before deleting
     validUser.ban = true;
+    validUser.user_status = 'DELETED';
     await validUser.save();
 
     await user.destroy();
