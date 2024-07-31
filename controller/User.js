@@ -475,11 +475,14 @@ router.post('/login', async (req, res) => {
         }
  
         const user = await reg.findOne({
-            where: {
-                email: email,
-                classAttended: true,
-                user_Status : 'ACTIVE' // Check if classAttended is true
-            },
+          where: {
+            email: email,
+            classAttended: true,
+            [Op.or]: [
+              { user_Status: 'ACTIVE' },
+              { user_Status: null }
+            ]
+          },
         });
       if (!user) {
         return res.status(404).json({ message: 'Invalid email !' });
