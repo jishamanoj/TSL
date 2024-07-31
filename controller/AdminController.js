@@ -236,30 +236,62 @@ return response.json({status:"success",refs:refs})
     }
 
 })
-// ban the user
+// // ban the user
+// router.post('/closeuser', async (req, res) => {
+//   try {
+//       const { UserId } = req.body;
+
+//       // Find user by primary key
+//       let closeUser = await Users.findByPk(UserId);
+
+//       // Check if user exists
+//       if (!closeUser) {
+//           return res.status(404).json({ status: "error", message: "User not found" });
+//       }
+
+//       // Update user's 'ban' property
+//       closeUser.ban = true;
+
+//       // Save changes to the database
+//       await closeUser.save();
+
+//       return res.json({ status: "success", data: "User updated successfully" });
+//   } catch (err) {
+//       // Handle errors
+//       console.error(err);
+//       return res.status(500).json({ status: "error", message: "Internal server error" });
+//   }
+// });
+
 router.post('/closeuser', async (req, res) => {
   try {
-      const { UserId } = req.body;
+    const { UId } = req.body;
 
-      // Find user by primary key
-      let closeUser = await Users.findByPk(UserId);
+    // Find user by primary key
+    const closeUser = await Users.findOne({ where: { UId } });
 
-      // Check if user exists
-      if (!closeUser) {
-          return res.status(404).json({ status: "error", message: "User not found" });
-      }
+    // Check if user exists
+    if (!closeUser) {
+      return res.status(404).json({ status: "error", message: "User not found" });
+    }
 
-      // Update user's 'ban' property
-      closeUser.ban = true;
+    // Update user's 'ban' property and status
+    closeUser.ban = true;
+    closeUser.user_Status = 'BANNED';
 
-      // Save changes to the database
-      await closeUser.save();
+    // Save changes to the database
+    await closeUser.save();
+    const user = await reg.findOne({ where: { UId } });
+    if(user) {
+      user.user_Status = 'BANNED'
+      await user.save();
+    }
 
-      return res.json({ status: "success", data: "User updated successfully" });
+    return res.json({ status: "success", data: "User updated successfully" });
   } catch (err) {
-      // Handle errors
-      console.error(err);
-      return res.status(500).json({ status: "error", message: "Internal server error" });
+    // Handle errors
+    console.error(err);
+    return res.status(500).json({ status: "error", message: "Internal server error" });
   }
 });
 

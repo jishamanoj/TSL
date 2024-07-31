@@ -168,23 +168,23 @@ router.post("/verify_otp", upload.single('profilePic'), async (req, res) => {
   console.log("<........verify OTP user........>");
   try {
     const { first_name, last_name, email, DOB, gender, country, phone, reference,ref_id, languages, remark, OTP } = req.body;
-console.log("................................",req.body);
+//console.log("................................",req.body);
 
    const config = await applicationconfig.findOne({ where: { field: 'storedOTP' } });
    const storedOTP = config ? config.value : null;
-console.log(".....................storedOTP........................",storedOTP);
+//console.log(".....................storedOTP........................",storedOTP);
    if (!storedOTP) {
      return res.status(500).send("Unable to retrieve OTP from configuration");
    }
     if (storedOTP === OTP) {
-      console.log(".......");
+     // console.log(".......");
 
       const hashedPassword = await bcrypt.hash(phone, 10);
       const maxUserId = await reg.max('UId');
       const UId = maxUserId + 1;
       const currentDate = new Date().toJSON().split('T')[0]; // Get the current date in "YYYY-MM-DD" format
 
-      console.log("..................currentDate.",currentDate)
+     // console.log("..................currentDate.",currentDate)
       let profilePicUrl = ''; 
 
       if (req.file) {
@@ -218,6 +218,7 @@ console.log(".....................storedOTP........................",storedOTP);
         expiredDate: calculateExpirationDate(),
         password: hashedPassword,
         verify: 'true',
+        user_Status:'ACTIVE',
         profilePicUrl: profilePicUrl 
       });
 
@@ -2629,6 +2630,8 @@ router.delete('/delete-user', async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+    user.user_Status = 'DELETED';
+    await user.save();
 
     const validUser = await Users.findOne({ where: { UId } });
     if (!validUser) {
@@ -2637,10 +2640,10 @@ router.delete('/delete-user', async (req, res) => {
 
     // Update the user's ban status before deleting
     validUser.ban = true;
-    validUser.user_status = 'DELETED';
+    validUser.user_Status = 'DELETED';
     await validUser.save();
 
-    await user.destroy();
+   //await user.destroy();
 
     return res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {

@@ -53,7 +53,7 @@ const reg = sequelize.define('reg', {
     other: { type: DataTypes.STRING},
     profilePicUrl: { type: DataTypes.STRING },
     maintanance_fee: { type: DataTypes.BOOLEAN, defaultValue:false},
-    
+    user_Status: { type: DataTypes.STRING},
  });
 
 sequelize.sync({alter: false})
