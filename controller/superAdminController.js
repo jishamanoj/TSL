@@ -1056,7 +1056,7 @@ router.get('/list-meditators', async (req, res) => {
     const offset = (page - 1) * limit;
 
     const users = await Users.findAll({
-      attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'ban','UserId'],
+      attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'ban','UserId','user_Status'],
       order: [['userId', 'DESC']], // Order by UId in ascending order
       where: {
         UserId: { [Op.gte]: 11 }, // Start from UId 11

@@ -477,7 +477,8 @@ router.post('/login', async (req, res) => {
         const user = await reg.findOne({
             where: {
                 email: email,
-                classAttended: true, // Check if classAttended is true
+                classAttended: true,
+                user_Status : 'ACTIVE' // Check if classAttended is true
             },
         });
       if (!user) {
@@ -489,10 +490,10 @@ router.post('/login', async (req, res) => {
       if (!isPasswordValid) {
         return res.status(401).json({ message: 'Incorrect password !' });
       }
-      const bannedUser = await Users.findOne({ where: { UId: user.UId, ban: true } });
-      if (bannedUser) {
-        return res.status(403).json({ message: 'Your account is banned. Please contact support.' });
-      }
+      // const bannedUser = await Users.findOne({ where: { UId: user.UId, ban: true } });
+      // if (bannedUser) {
+      //   return res.status(403).json({ message: 'Your account is banned. Please contact support.' });
+      // }
   
  
       // Create session and store user ID
