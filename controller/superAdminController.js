@@ -693,7 +693,7 @@ router.post('/coupon-systemDistribute', async (req, res) => {
     // Fetch user IDs and corresponding coupon numbers in descending order
     const usersWithCoupons = await Users.findAll({
       attributes: ['UserId', 'coupons'],
-      order: [['coupons', 'DESC']], // Order by UserId in descending order
+      order: [['coupons', 'DESC']], 
       limit: totalCoupons,
       where: {
         UserId: { [Op.gt]: 11 },
@@ -722,13 +722,13 @@ router.post('/coupon-systemDistribute', async (req, res) => {
     const couponsPerUser = totalCoupons / distributedIds.length;
 
     // Update Users table with couponsPerUser for each distributed user
-    await Promise.all(distributedIds.map(async (UserId) => {
-      const user = await Users.findByPk(UserId);
+    await Promise.all(distributedIds.map(async (UId) => {
+      const user = await Users.findOne({where:{UId}});
       if (user) {
         // Update coupons in the Users table by adding couponsPerUser
         await Users.update(
           { coupons: sequelize.literal(`coupons + ${couponsPerUser}`) },
-          { where: { UserId: UserId } }
+          { where: { UId: UId } }
         );
               }
     }));
@@ -4953,6 +4953,37 @@ router.get('/searchUser', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.put('/update-user-status', async (req, res) => {
+  try {
+    // Update user_Status from null to 'ACTIVE'
+    const [affectedRows] = await reg.update(
+      { user_Status: 'ACTIVE' },
+      {
+        where: {
+          user_Status: null,
+        },
+      }
+    );
+    const [affectedRow] = await Users.update(
+      { user_Status: 'ACTIVE' },
+      {
+        where: {
+          user_Status: null,
+        },
+      }
+    );
+
+    if (affectedRows > 0) {
+      res.status(200).json({ message: 'User statuses updated successfully' });
+    } else {
+      res.status(404).json({ message: 'No users found with user_Status null' });
+    }
+  } catch (error) {
+    console.error('Error updating user statuses:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 

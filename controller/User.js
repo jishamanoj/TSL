@@ -606,7 +606,10 @@ router.get('/flag', async (req, res) => {
     }
 
     // Fetch related data
-    const payment = await maintenance.findOne({ where: { UId } });
+    const payment = await maintenance.findOne({
+      where: { UId },
+      order: [['payment_date', 'DESC']], // Ensure the latest payment record is fetched
+    });
     const meditation = await meditationFees.findOne({ where: { UId } });
     const buttonBlock = await Meditation.findOne({ where: { UId } });
 
@@ -2088,7 +2091,6 @@ router.get('/rewardList', async (req, res) => {
   }
 });
 
- 
 router.get('/transaction_summary', async (req, res) => {
   try {
     const { UId } = req.session;
