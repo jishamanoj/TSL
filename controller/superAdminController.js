@@ -915,17 +915,17 @@ router.get('/download', async (req, res) => {
 router.post('/coupons-cart', async (req, res) => {
   try {
     const { UIds, couponsToDistribute } = req.body;
-    console.log("UIds, couponsToDistribute",UIds, couponsToDistribute);
+   // console.log("UIds, couponsToDistribute",UIds, couponsToDistribute);
 
     const users = await Users.findAll({ where: { UId: UIds } });
 
     if (!users || users.length === 0) {
-      return res.status(404).json({ error: 'Users not found' });
+      return res.status(404).json({ message: 'Users not found' });
     }
 
     const insufficientCouponUsers = users.filter(user => user.coupons < couponsToDistribute);
     if (insufficientCouponUsers.length > 0) {
-      return res.status(400).json({ error: 'Not enough coupons to distribute for some users' });
+      return res.status(400).json({ message: 'Not enough coupons to distribute for some users' });
     }
 
     let totalCouponsDistributed = 0;
@@ -952,7 +952,7 @@ router.post('/coupons-cart', async (req, res) => {
     return res.status(200).json({ message: 'Coupons added to cart successfully',totalCouponsInDistributionTable: totalCouponsInDistributionTable });
   } catch (error) {
     console.log('Error distributing coupons:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
@@ -964,7 +964,7 @@ router.post('/revoke-coupons', async (req, res) => {
     const couponDistributionRecords = await coupondistribution.findAll({ where: { UId: UIds } });
 
     if (!couponDistributionRecords || couponDistributionRecords.length === 0) {
-      return res.status(404).json({ error: 'Coupon distribution records not found' });
+      return res.status(404).json({ message: 'Coupon distribution records not found' });
     }
 
     // Update Users table to return coupons
@@ -986,7 +986,7 @@ router.post('/revoke-coupons', async (req, res) => {
     return res.status(200).json({ message: 'Coupons revoked successfully' });
   } catch (error) {
     console.error('Error revoking coupons:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
@@ -997,19 +997,19 @@ router.post('/distributetousers', async (req, res) => {
     const users = await Users.findAll({ where: { UId: UIds } });
 
     if (!users || users.length === 0) {
-      return res.status(404).json({ error: 'Users not found' });
+      return res.status(404).json({ message: 'Users not found' });
     }
 
     const totalCouponsToDistribute = await coupondistribution.sum('coupons_to_distribute');
 
     if (totalCouponsToDistribute === null || totalCouponsToDistribute === 0) {
-      return res.status(400).json({ error: 'No coupons to distribute' });
+      return res.status(400).json({ message: 'No coupons to distribute' });
     }
 
     const couponsPerUser = totalCouponsToDistribute / UIds.length;
 
     if (!Number.isInteger(couponsPerUser)) {
-      return res.status(400).json({ error: 'Cannot equally distribute coupons among the specified users' });
+      return res.status(400).json({ message: 'Cannot equally distribute coupons among the specified users' });
     }
 
     await sequelize.transaction(async (t) => {
@@ -1024,7 +1024,7 @@ router.post('/distributetousers', async (req, res) => {
     return res.status(200).json({ message: 'Coupons distributed equally successfully' });
   } catch (error) {
     console.error('Error distributing coupons equally:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
@@ -1103,7 +1103,7 @@ router.get('/view-cart', async (req, res) => {
     return res.status(200).json({ distributionRecords, totalCouponsToDistribute });
   } catch (error) {
     console.error('Error fetching distribution records:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
@@ -1120,7 +1120,7 @@ router.get('/total-coupons', async (req, res) => {
     res.status(200).json({ totalCoupons });
   } catch (error) {
     console.error('Error fetching total coupons:', error);
-    res.status(500).json({ error: 'Error fetching total coupons', details: error.message });
+    res.status(500).json({ message: 'Error fetching total coupons', details: error.message });
   }
 });
 
@@ -4874,8 +4874,6 @@ router.get('/beneficiariesDetails', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-
 
 router.get('/paymentDetails', async (req, res) => {
   try {
