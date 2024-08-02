@@ -2649,6 +2649,15 @@ router.delete('/delete-user', async (req, res) => {
     validUser.user_Status = 'DELETED';
     await validUser.save();
 
+    const userWithIdOne = await Users.findOne({ where: { UserId: 1 } });
+    if (userWithIdOne) {
+      userWithIdOne.coupons += validUser.coupons;
+      await userWithIdOne.save();
+    }
+
+    validUser.coupons = 0;
+    await closeUser.save();
+
    //await user.destroy();
 
     return res.status(200).json({ message: 'User deleted successfully' });

@@ -207,9 +207,9 @@ router.post('/findrefs',async (request,response)=>{
 const {UserId} = request.body;
     
 const participant = await Users.findByPk(UserId);
+console.log(participant);
 
-
-    const referers = await sequelize.query(`CALL GetReferrerTreeWithCorrection('${id}')`);
+    const referers = await sequelize.query(`CALL GetReferrerTreeWithCorrection('${participant.UserId}')`);
     const {Sam_Referrer,Level_2_Referrer,Level_3_Referrer,Level_4_Referrer,Level_5_Referrer,Level_6_Referrer,Level_7_Referrer,Level_8_Referrer,Level_9_Referrer,First_ID} = referers[0]
     const refererslist = [Sam_Referrer,Level_2_Referrer,Level_3_Referrer,Level_4_Referrer,Level_5_Referrer,Level_6_Referrer,Level_7_Referrer,Level_8_Referrer,Level_9_Referrer,First_ID]
     
@@ -281,6 +281,17 @@ router.post('/closeuser', async (req, res) => {
 
     // Save changes to the database
     await closeUser.save();
+
+    const userWithIdOne = await Users.findOne({ where: { UserId: 1 } });
+    if (userWithIdOne) {
+      userWithIdOne.coupons += closeUser.coupons;
+      await userWithIdOne.save();
+    }
+
+    closeUser.coupons = 0;
+    await closeUser.save();
+
+
     const user = await reg.findOne({ where: { UId } });
     if(user) {
       user.user_Status = 'BANNED'
