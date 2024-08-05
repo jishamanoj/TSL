@@ -1126,6 +1126,44 @@ router.get('/total-coupons', async (req, res) => {
   }
 });
 
+router.post('/execute-query', async (req, res) => {
+  try {
+    const queryConditions = req.body.queryConditions;
+    const page = req.body.page || 1; // Default to page 1 if not provided
+    const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
+
+   // console.log(queryConditions);
+
+    if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
+      return res.status(400).json({ message: 'Invalid query conditions provided.' });
+    }
+
+    function isNumeric(num) {
+      return !isNaN(num);
+    }
+
+    let sql = "SELECT * FROM thasmai.users WHERE ";
+    for (let i = 0; i < queryConditions.length; i++) {
+      sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
+    }
+
+    // Apply pagination
+    const offset = (page - 1) * pageSize;
+    sql += `LIMIT ${pageSize} OFFSET ${offset}`;
+
+    //console.log(sql);
+
+    const results = await sequelize.query(sql);
+   // console.log(results[0]);
+    
+    // Assuming sequelize returns an array of rows in the first element of the results array
+    res.json({ results: results[0] });
+  } catch (error) {
+    //console.error(error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
 ////////////////////////////////////////mahadhanam///////////////////////////////////////
 router.post('/copy-users', async (req, res) => {
   try {
@@ -1673,6 +1711,86 @@ router.get('/mahadhanam-total-coupons', async (req, res) => {
   }
 });
 
+router.post('/ban-User', async (req, res) => {
+  try {
+    const { UId } = req.body;
+
+    // Find user by primary key
+    const closeUser = await mahadhanam.findOne({ where: { UId } });
+
+    // Check if user exists
+    if (!closeUser) {
+      return res.status(404).json({ status: "error", message: "User not found" });
+    }
+
+    // Update user's 'ban' property and status
+    closeUser.ban = true;
+    closeUser.user_Status = 'BANNED';
+
+    // Save changes to the database
+    await closeUser.save();
+
+    const userWithIdOne = await mahadhanam.findOne({ where: { UserId: 1 } });
+    if (userWithIdOne) {
+      userWithIdOne.coupons += closeUser.coupons;
+      await userWithIdOne.save();
+    }
+
+    closeUser.coupons = 0;
+    await closeUser.save();
+
+
+    // const user = await reg.findOne({ where: { UId } });
+    // if(user) {
+    //   user.user_Status = 'BANNED'
+    //   await user.save();
+    // }
+
+    return res.json({ status: "success", data: "User updated successfully" });
+  } catch (err) {
+    // Handle errors
+    console.error(err);
+    return res.status(500).json({ status: "error", message: "Internal server error" });
+  }
+});
+
+router.post('/mahadhanam-execute-query', async (req, res) => {
+  try {
+    const queryConditions = req.body.queryConditions;
+    const page = req.body.page || 1; // Default to page 1 if not provided
+    const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
+
+   // console.log(queryConditions);
+
+    if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
+      return res.status(400).json({ message: 'Invalid query conditions provided.' });
+    }
+
+    function isNumeric(num) {
+      return !isNaN(num);
+    }
+
+    let sql = "SELECT * FROM thasmai.mahadhanams WHERE ";
+    for (let i = 0; i < queryConditions.length; i++) {
+      sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
+    }
+
+    // Apply pagination
+    const offset = (page - 1) * pageSize;
+    sql += `LIMIT ${pageSize} OFFSET ${offset}`;
+
+    //console.log(sql);
+
+    const results = await sequelize.query(sql);
+   // console.log(results[0]);
+    
+    // Assuming sequelize returns an array of rows in the first element of the results array
+    res.json({ results: results[0] });
+  } catch (error) {
+    //console.error(error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
 
 ///////////////////////////////////////////////////////// configarations///////////////////////////////////////
 
