@@ -1165,6 +1165,8 @@ router.post('/execute-query', async (req, res) => {
 });
 
 ////////////////////////////////////////mahadhanam///////////////////////////////////////
+
+
 router.post('/copy-users', async (req, res) => {
   try {
     // Fetch all users
@@ -1172,7 +1174,7 @@ router.post('/copy-users', async (req, res) => {
 
     // Map User data to Mahadhanam data
     const mahadhanamData = users.map(user => ({
-      userId: user.userId,
+      UserId: user.UserId,
       firstName: user.firstName,
       secondName: user.secondName,
       DOB: user.DOB,
@@ -1181,17 +1183,17 @@ router.post('/copy-users', async (req, res) => {
       DOJ: user.DOJ,
       state: user.state,
       district: user.district,
-      referrerId: user.referrerId,
-      level: user.level,
-      nodeNumber: user.nodeNumber,
-      reservedId: user.reservedId,
+      ReferrerID: user.ReferrerID,
+      Level: user.Level,
+      node_number: user.node_number,
+      reserved_id: user.reserved_id,
       coupons: user.coupons,
       points: user.points,
       distribute: user.distribute,
-      distributedPoints: user.distributedPoints,
+      distributed_points: user.distributed_points,
       ban: user.ban,
-      uId: user.uId,
-      userStatus: user.userStatus,
+      UId: user.UId,
+      user_Status: user.user_Status,
     }));
 
     // Start a transaction
