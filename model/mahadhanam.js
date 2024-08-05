@@ -8,7 +8,12 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
 
 });
 const mahadhanam = sequelize.define('mahadhanam', {
-    firstName: {
+    UserId: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      firstName: {
         type: DataTypes.STRING(40),
         allowNull: false,
       },
@@ -16,20 +21,78 @@ const mahadhanam = sequelize.define('mahadhanam', {
         type: DataTypes.STRING(40),
         allowNull: true,
       },
-      UId:{
-        type: DataTypes.INTEGER,
-    } ,
-    distributed_coupons:{
+      DOB: {
+        type: DataTypes.STRING(40),
+        allowNull: true,
+      },
+      phone: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+      },
+      email: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+      },
+      DOJ:{
+        type: DataTypes.STRING(50),
+        allowNull: true,
+      },
+      state: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+      },
+      district: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+      },
+      ReferrerID: {
         type: DataTypes.INTEGER,
         allowNull: true,
-      defaultValue: 0,
-    },
-    description :{
+      },
+      Level: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
+      },
+      node_number: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
+      },
+      reserved_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
+      },
+      coupons: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
+      },
+      points: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
+      },
+      distribute: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      distributed_points: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+      },
+      ban: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      UId:{
+          type: DataTypes.INTEGER,
+      },
+      user_Status:{
         type: DataTypes.STRING,
-    },
-    distribution_time:{
-         type:DataTypes.STRING
-    }
+        
+      }
 },
  {
     timestamps: false,

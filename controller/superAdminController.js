@@ -42,6 +42,8 @@ const questions = require('../model/question');
 const dekshina = require('../model/dekshina');
 const feedback =require('../model/feedback');
 const operatorFund = require('../model/operatorFund');
+const mahadhanamDistribution = require('../model/mahadhanamDistribution');
+const mahadhanamCouponDistribution =require('../model/mahadhanamCouponDistribution');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: "gs://thasmai-star-life.appspot.com"
@@ -1125,12 +1127,174 @@ router.get('/total-coupons', async (req, res) => {
 });
 
 ////////////////////////////////////////mahadhanam///////////////////////////////////////
-
-
-router.post('/simulation', async (req, res) => {
+router.post('/copy-users', async (req, res) => {
   try {
-    const { coupons, UIds, description } = req.body;
+    // Fetch all users
+    const users = await Users.findAll();
 
+    // Map User data to Mahadhanam data
+    const mahadhanamData = users.map(user => ({
+      userId: user.userId,
+      firstName: user.firstName,
+      secondName: user.secondName,
+      DOB: user.DOB,
+      phone: user.phone,
+      email: user.email,
+      DOJ: user.DOJ,
+      state: user.state,
+      district: user.district,
+      referrerId: user.referrerId,
+      level: user.level,
+      nodeNumber: user.nodeNumber,
+      reservedId: user.reservedId,
+      coupons: user.coupons,
+      points: user.points,
+      distribute: user.distribute,
+      distributedPoints: user.distributedPoints,
+      ban: user.ban,
+      uId: user.uId,
+      userStatus: user.userStatus,
+    }));
+
+    // Start a transaction
+    await sequelize.transaction(async (transaction) => {
+      // Truncate Mahadhanam table
+      await mahadhanam.destroy({
+        where: {},
+        truncate: true,
+        transaction,
+      });
+
+      // Insert data into Mahadhanam
+      await mahadhanam.bulkCreate(mahadhanamData, { transaction });
+    });
+
+    res.status(200).json({ message: 'Data copied successfully!' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error copying data', error });
+  }
+});
+
+
+
+router.get('/mahadhanam-searchfield', async (req, res) => {
+  try {
+    const field = req.query.field;
+    const value = req.query.value; 
+    const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
+    const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page if not provided
+    const offset = (page - 1) * limit;
+
+    if (!field || !value) {
+      return res.status(400).json({ message: 'Please provide both field and value parameters' });
+    }
+      
+    const lowerCaseValue = value.toLowerCase();
+
+    // Fetch users avoiding the first 10 UserIds
+    const { count, rows: userDetails } = await mahadhanam.findAndCountAll({
+      where: {
+        [field]: lowerCaseValue,
+        UserId: { [Op.gte]: 11 }, 
+      },
+      limit,
+      offset,
+    });
+
+    if (userDetails.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const totalPages = Math.ceil(count / limit);
+
+    res.json({
+      message: 'Success',
+      data: userDetails,
+      pagination: {
+        totalItems: count,
+        totalPages,
+        currentPage: page,
+        itemsPerPage: limit,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.post('/mahadhanam-coupon-systemDistribute', async (req, res) => {
+  try {
+   // console.log("...................enter....................");
+    const { totalCoupons, distributedIds } = req.body;
+//console.log("------------------------totalCoupons, distributedIds, description.........",totalCoupons, distributedIds);
+    // Validate input
+    if (!totalCoupons || !distributedIds || !Array.isArray(distributedIds)) {
+      return res.status(400).json({ message: 'Invalid input. Please provide totalCoupons and an array of distributedIds.' });
+    }
+
+    // Check if totalCoupons is a positive integer
+    if (!Number.isInteger(totalCoupons) || totalCoupons <= 0) {
+      return res.status(400).json({ message: 'Invalid input. totalCoupons should be a positive integer.' });
+    }
+
+    // Fetch user IDs and corresponding coupon numbers in descending order
+    const usersWithCoupons = await mahadhanam.findAll({
+      attributes: ['UserId', 'coupons'],
+      order: [['coupons', 'DESC']], 
+      limit: totalCoupons,
+      where: {
+        UserId: { [Op.gt]: 11 },
+        coupons: { [Op.gt]: 0 }, // Start from UserId 11
+      }, // Exclude the first 10 records
+    });
+
+    if (usersWithCoupons.length < totalCoupons) {
+      return res.status(400).json({ message: 'Not enough coupons available to distribute.' });
+    }
+
+    // Build the where condition to ensure coupons is greater than or equal to 1
+    const whereCondition = {
+      UserId: usersWithCoupons
+        .filter((user) => user.coupons > 0) // Filter out users with 0 coupons
+        .map((user) => user.UserId),
+      coupons: { [Op.gte]: 1 }, // Ensure coupons is greater than or equal to 1
+    };
+    //console.log("whereCondition........................................................................", whereCondition);
+
+    const updatedCoupons = await mahadhanam.update(
+      { coupons: sequelize.literal('coupons - 1') },
+      { where: whereCondition }
+    );
+
+    const couponsPerUser = totalCoupons / distributedIds.length;
+
+    // Update Users table with couponsPerUser for each distributed user
+    await Promise.all(distributedIds.map(async (UId) => {
+      const user = await mahadhanam.findOne({where:{UId}});
+      if (user) {
+        // Update coupons in the Users table by adding couponsPerUser
+        await mahadhanam.update(
+          { coupons: sequelize.literal(`coupons + ${couponsPerUser}`) },
+          { where: { UId: UId } }
+        );
+              }
+    }));
+
+    // Send response after all updates are complete
+    res.json({ message: 'Coupons distributed successfully', updatedCoupons });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.post('/mahadhanam-redeem', async (req, res) => {
+  try {
+    console.log("entered");
+    const { coupons, UIds, description,title } = req.body;
+    console.log( "coupons, UIds, description.................:", coupons, UIds, description);
     // Validate input
     if (!coupons || !UIds || !Array.isArray(UIds) || UIds.length === 0) {
       return res.status(400).json({ message: 'Invalid input. Please provide coupons and a non-empty array of UIds.' });
@@ -1141,10 +1305,11 @@ router.post('/simulation', async (req, res) => {
       return res.status(400).json({ message: 'Invalid input. Coupons should be a positive integer.' });
     }
 
-    // Fetch users to update from the Users table based on UIds
-    const usersToUpdate = await Users.findAll({
+    // Fetch users with specified UIds and valid coupons
+    const usersToUpdate = await mahadhanam.findAll({
       where: {
         UId: UIds,
+        coupons: { [Op.gte]: coupons },
       },
     });
 
@@ -1153,38 +1318,40 @@ router.post('/simulation', async (req, res) => {
       return res.status(400).json({ message: 'Not enough coupons available for all specified users.' });
     }
 
-    // Use Promise.all to asynchronously update multiple users and fetch related information
-    const updatedUsers = await Promise.all(usersToUpdate.map(async (user) => {
-      // Update the 'mahadhanam' table with distribution details
-      await mahadhanam.create({
+    // Update coupons for each user
+    const updatedUsers =await Promise.all(usersToUpdate.map(async (user) => {
+      const updatedCoupons = user.coupons - coupons;
+      await mahadhanam.update({ coupons: updatedCoupons }, { where: { UId: user.UId } });
+      await mahadhanamDistribution.create({
         firstName: user.firstName,
         secondName: user.secondName,
         UId: user.UId,
         distributed_coupons: coupons,
         description: description,
+        title: title,
         distribution_time: new Date().toISOString(),
       });
 
-      // Find the latest distribution record for the user from the 'Distribution' table
-      const latestDistributionRecord = await mahadhanam.findOne({
-        attributes: ['firstName', 'secondName', 'UId', 'distributed_coupons', 'description', 'distribution_time'],
+      //////////////////////////////////
+      const latestDistributionRecord = await mahadhanamDistribution.findOne({
+        attributes: ['firstName', 'secondName', 'UId', 'distributed_coupons', 'description', 'distribution_time','title'],
         where: { UId: user.UId },
         order: [['distribution_time', 'DESC']], // Order by distribution_time in descending order to get the latest record
       });
 
-      // Find bank details for the user from the 'BankDetails' table
+      // Fetch the corresponding bank details for the user
       const bankDetails = await BankDetails.findOne({
         attributes: ['AadarNo', 'IFSCCode', 'branchName', 'accountName', 'accountNo'],
         where: { UId: user.UId },
       });
 
-      // Return an object containing updated user details, distribution details, and bank details
       return {
         firstName: latestDistributionRecord.firstName,
         secondName: latestDistributionRecord.secondName,
         UId: latestDistributionRecord.UId,
         distributed_coupons: latestDistributionRecord.distributed_coupons,
         description: latestDistributionRecord.description,
+        title : latestDistributionRecord.title,
         distribution_time: latestDistributionRecord.distribution_time,
         AadarNo: bankDetails.AadarNo,
         IFSCCode: bankDetails.IFSCCode,
@@ -1194,18 +1361,19 @@ router.post('/simulation', async (req, res) => {
       };
     }));
 
-    // Send a JSON response with a success message and updated user details
-    res.json({ message: 'Coupons reduced successfully for specified users.', distributionDetails: updatedUsers });
-  } catch (error) {
-    // Handle errors by logging and sending a 500 Internal Server Error response
+    res.json({ message: 'Coupons reduced successfully for specified users.',distributionDetails: updatedUsers});
+    } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
+//const ExcelJS = require('exceljs');
+
 router.get('/mahadhanam-download', async (req, res) => {
   try {
     const UIds = req.query.UIds;
+    console.log("UIds: " + UIds)
  
     if (!Array.isArray(UIds) || UIds.length === 0) {
       return res.status(400).json({ message: 'Invalid input. Please provide a non-empty array of UIds.' });
@@ -1213,7 +1381,7 @@ router.get('/mahadhanam-download', async (req, res) => {
 
     // Fetch the distribution details for each user
     const userDistributionDetails = await Promise.all(UIds.map(async (UId) => {
-      const latestDistributionRecord = await mahadhanam.findOne({
+      const latestDistributionRecord = await mahadhanamDistribution.findOne({
         attributes: ['firstName', 'secondName', 'UId', 'distributed_coupons', 'description', 'distribution_time'],
         where: { UId },
         order: [['distribution_time', 'DESC']],
@@ -1293,59 +1461,215 @@ router.get('/mahadhanam-download', async (req, res) => {
   }
 });
 
-router.post('/execute-query', async (req, res) => {
+router.post('/mahadhanam-coupons-cart', async (req, res) => {
   try {
-    const queryConditions = req.body.queryConditions;
-    const page = req.body.page || 1; // Default to page 1 if not provided
-    const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
+    const { UIds, couponsToDistribute } = req.body;
+   // console.log("UIds, couponsToDistribute",UIds, couponsToDistribute);
 
-    if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
-      return res.status(400).json({ message: 'Invalid query conditions provided.' });
+    const users = await mahadhanam.findAll({ where: { UId: UIds } });
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({ message: 'Users not found' });
     }
 
-    function isNumeric(num) {
-      return !isNaN(num);
+    const insufficientCouponUsers = users.filter(user => user.coupons < couponsToDistribute);
+    if (insufficientCouponUsers.length > 0) {
+      return res.status(400).json({ message: 'Not enough coupons to distribute for some users' });
     }
 
-    let baseCondition = "UserId >= 11";
-    let countSql = `SELECT COUNT(*) AS total FROM thasmai.Users WHERE ${baseCondition} AND `;
-    let sql = `SELECT * FROM thasmai.Users WHERE ${baseCondition} AND `;
+    let totalCouponsDistributed = 0;
 
-    for (let i = 0; i < queryConditions.length; i++) {
-      if (queryConditions[i].operator === "between") {
-        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} "${queryConditions[i].value.split("/")[0]}" AND "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
-        sql += `${queryConditions[i].field} ${queryConditions[i].operator} "${queryConditions[i].value.split("/")[0]}" AND "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
-      } else {
-        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'`} ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
-        sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'`} ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+    await sequelize.transaction(async (t) => {
+      for (const user of users) {
+        user.coupons -= couponsToDistribute;
+        await user.save();
+
+        const distributionRecord = await mahadhanamCouponDistribution.create({
+          firstName: user.firstName,
+          secondName: user.secondName,
+          UId: user.UId,
+          coupons_to_distribute: couponsToDistribute,
+          distribution_time: new Date().toISOString(),
+        }, { transaction: t });
+        
       }
-    }
+    });
 
-    const countResult = await sequelize.query(countSql, { type: sequelize.QueryTypes.SELECT });
-    const totalCount = countResult[0].total;
+    const totalCouponsInDistributionTable = await mahadhanamCouponDistribution.sum('coupons_to_distribute');
 
-    const totalPages = Math.ceil(totalCount / pageSize);
-    const offset = (page - 1) * pageSize;
 
-    sql += `LIMIT ${pageSize} OFFSET ${offset}`;
-
-    const [queryResults, metadata] = await sequelize.query(sql);
-
-    res.json({ queryResults, totalPages });
+    return res.status(200).json({ message: 'Coupons added to cart successfully',totalCouponsInDistributionTable: totalCouponsInDistributionTable });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error.' });
+    console.log('Error distributing coupons:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
-router.post('/save-token', async (req, res) => {
+router.post('/mahadhanam-revoke-coupons', async (req, res) => {
   try {
-    const { UId, token } = req.body; 
-    const newNotification = await notification.create({ UId, token });
-    res.status(201).json({ message: 'Notification saved successfully', notification: newNotification });
+    const { UIds } = req.body;
+
+    // Retrieve coupon distribution details
+    const couponDistributionRecords = await mahadhanamCouponDistribution.findAll({ where: { UId: UIds } });
+
+    if (!couponDistributionRecords || couponDistributionRecords.length === 0) {
+      return res.status(404).json({ message: 'Coupon distribution records not found' });
+    }
+
+    // Update Users table to return coupons
+    await sequelize.transaction(async (t) => {
+      for (const record of couponDistributionRecords) {
+        const user = await mahadhanam.findOne({ where: { UId: record.UId } });
+
+        if (user) {
+          // Add the distributed coupons back to the user's account
+          user.coupons += record.coupons_to_distribute;
+          await user.save();
+
+          // Delete the record from Coupondistribution table
+          await mahadhanamCouponDistribution.destroy({ where: { id: record.id }, transaction: t });
+        }
+      }
+    });
+
+    return res.status(200).json({ message: 'Coupons revoked successfully' });
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error revoking coupons:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+router.post('/mahadhanam-distributetousers', async (req, res) => {
+  try {
+    const { UIds } = req.body;
+
+    const users = await mahadhanam.findAll({ where: { UId: UIds } });
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({ message: 'Users not found' });
+    }
+
+    const totalCouponsToDistribute = await mahadhanamCouponDistribution.sum('coupons_to_distribute');
+
+    if (totalCouponsToDistribute === null || totalCouponsToDistribute === 0) {
+      return res.status(400).json({ message: 'No coupons to distribute' });
+    }
+
+    const couponsPerUser = totalCouponsToDistribute / UIds.length;
+
+    if (!Number.isInteger(couponsPerUser)) {
+      return res.status(400).json({ message: 'Cannot equally distribute coupons among the specified users' });
+    }
+
+    await sequelize.transaction(async (t) => {
+      for (const user of users) {
+        user.coupons += couponsPerUser;
+        await user.save();
+      }
+
+      await mahadhanamCouponDistribution.destroy({ where: {}, transaction: t });
+    });
+
+    return res.status(200).json({ message: 'Coupons distributed equally successfully' });
+  } catch (error) {
+    console.error('Error distributing coupons equally:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+router.get('/mahadhanam-TSL', async (req, res) => {
+  try {
+    const users = await mahadhanam.findAll({
+      attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'ban'],
+      order: [['UserId', 'ASC']], // Order by UId in ascending order
+           where: {
+       UId: { [Op.lt]: 11 }, // Start from UId 11
+      },
+    });
+
+    const totalCoupons = users.reduce((sum, user) => sum + user.coupons, 0);
+
+    res.json({ users, totalCoupons });
+
+   // res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.get('/mahadhanam-list-meditators', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1; 
+    const limit = parseInt(req.query.limit) || 10; 
+    const offset = (page - 1) * limit;
+
+    const users = await mahadhanam.findAll({
+      attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'ban','UserId','user_Status'],
+      order: [['userId', 'DESC']], // Order by UId in ascending order
+      where: {
+        UserId: { [Op.gte]: 11 }, // Start from UId 11
+      },
+      limit: limit,
+      offset: offset,
+    });
+
+    const totalCoupons = users.reduce((sum, user) => sum + user.coupons, 0);
+
+    // Get total count of users for pagination
+    const totalUsers = await mahadhanam.count({
+      where: {
+        UserId   : { [Op.gte]: 11 },
+      },
+    });
+
+    res.json({
+      users,
+      totalCoupons,
+      currentPage: page,
+      totalPages: Math.ceil(totalUsers / limit),
+      totalUsers,
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.get('/mahadhanam-view-cart', async (req, res) => {
+  try {
+    // Fetch all distribution records from the coupondistribution table
+    const distributionRecords = await mahadhanamCouponDistribution.findAll();
+
+    // Calculate total coupons to distribute
+    let totalCouponsToDistribute = 0;
+    distributionRecords.forEach(record => {
+      totalCouponsToDistribute += record.coupons_to_distribute;
+    });
+
+    // Send the response with the distribution records and total coupons to distribute
+    return res.status(200).json({ distributionRecords, totalCouponsToDistribute });
+  } catch (error) {
+    console.error('Error fetching distribution records:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+router.get('/mahadhanam-total-coupons', async (req, res) => {
+  try {
+    const users = await mahadhanam.findAll({
+      attributes: ['coupons']
+    });
+
+    const totalCoupons = users.reduce((acc, user) => {
+      return acc + (user.coupons || 0);
+    }, 0);
+
+    res.status(200).json({ totalCoupons });
+  } catch (error) {
+    console.error('Error fetching total coupons:', error);
+    res.status(500).json({ message: 'Error fetching total coupons', details: error.message });
   }
 });
 

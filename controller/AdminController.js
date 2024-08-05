@@ -65,6 +65,7 @@ const userReg = await reg.findOne({
           if(user.ban === false){
           if (user.coupons === 0) {
               user.points += 250;
+              
               // user.distributed_points+=250;
               await user.save();
 

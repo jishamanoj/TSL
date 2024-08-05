@@ -365,7 +365,6 @@ router.get('/rulesAndConditions', async (req, res) => {
   }
 });
  
- 
 router.post('/requestPasswordReset', async (req, res) => {
     const { email } = req.body;
  
