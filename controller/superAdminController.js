@@ -1132,8 +1132,6 @@ router.post('/execute-query', async (req, res) => {
     const page = req.body.page || 1; // Default to page 1 if not provided
     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
 
-   // console.log(queryConditions);
-
     if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
       return res.status(400).json({ message: 'Invalid query conditions provided.' });
     }
@@ -1142,24 +1140,33 @@ router.post('/execute-query', async (req, res) => {
       return !isNaN(num);
     }
 
-    let sql = "SELECT * FROM thasmai.users WHERE ";
+    let baseCondition = "UserId >= 11";
+    let countSql = `SELECT COUNT(*) AS total FROM thasmai.users WHERE ${baseCondition} AND `;
+    let sql = `SELECT * FROM thasmai.users WHERE ${baseCondition} AND `;
+
     for (let i = 0; i < queryConditions.length; i++) {
-      sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
+      if (queryConditions[i].operator === "between") {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} "${queryConditions[i].value.split("/")[0]}" AND "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} "${queryConditions[i].value.split("/")[0]}" AND "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      } else {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'`} ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'`} ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      }
     }
 
-    // Apply pagination
+    const countResult = await sequelize.query(countSql, { type: sequelize.QueryTypes.SELECT });
+    const totalCount = countResult[0].total;
+
+    const totalPages = Math.ceil(totalCount / pageSize);
     const offset = (page - 1) * pageSize;
+
     sql += `LIMIT ${pageSize} OFFSET ${offset}`;
 
-    //console.log(sql);
+    const [queryResults, metadata] = await sequelize.query(sql);
 
-    const results = await sequelize.query(sql);
-   // console.log(results[0]);
-    
-    // Assuming sequelize returns an array of rows in the first element of the results array
-    res.json({ results: results[0] });
+    res.json({ queryResults, totalPages });
   } catch (error) {
-    //console.error(error);
+    console.error(error);
     res.status(500).json({ message: 'Internal server error.' });
   }
 });
@@ -1167,56 +1174,7 @@ router.post('/execute-query', async (req, res) => {
 ////////////////////////////////////////mahadhanam///////////////////////////////////////
 
 
-// router.post('/copy-users', async (req, res) => {
-//   try {
-//     // Fetch all users
-//     const users = await Users.findAll();
-//     console.log(user.UserId);
-//     // Map User data to Mahadhanam data
-//     const mahadhanamData = users.map(user => ({
-//       console.log(user.UserId),
-//       UserId: user.UserId,
-//       firstName: user.firstName,
-//       secondName: user.secondName,
-//       DOB: user.DOB,
-//       phone: user.phone,
-//       email: user.email,
-//       DOJ: user.DOJ,
-//       state: user.state,
-//       district: user.district,
-//       ReferrerID: user.ReferrerID,
-//       Level: user.Level,
-//       node_number: user.node_number,
-//       reserved_id: user.reserved_id,
-//       coupons: user.coupons,
-//       points: user.points,
-//       distribute: user.distribute,
-//       distributed_points: user.distributed_points,
-//       ban: user.ban,
-//       UId: user.UId,
-//       user_Status: user.user_Status,
-//     }));
 
-   
-//     // Start a transaction
-//     await sequelize.transaction(async (transaction) => {
-//       // Truncate Mahadhanam table
-//       await mahadhanam.destroy({
-//         where: {},
-//         truncate: true,
-//         transaction,
-//       });
-
-//       // Insert data into Mahadhanam
-//       await mahadhanam.bulkCreate(mahadhanamData, { transaction });
-//     });
-
-//     res.status(200).json({ message: 'Data copied successfully!' });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: 'Error copying data', error });
-//   }
-// });
 
 router.post('/copy-users', async (req, res) => {
   try {
@@ -1810,13 +1768,11 @@ router.post('/ban-User', async (req, res) => {
   }
 });
 
-router.post('/mahadhanam-execute-query', async (req, res) => {
+router.post('/execute-query', async (req, res) => {
   try {
     const queryConditions = req.body.queryConditions;
     const page = req.body.page || 1; // Default to page 1 if not provided
     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
-
-   // console.log(queryConditions);
 
     if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
       return res.status(400).json({ message: 'Invalid query conditions provided.' });
@@ -1826,24 +1782,33 @@ router.post('/mahadhanam-execute-query', async (req, res) => {
       return !isNaN(num);
     }
 
-    let sql = "SELECT * FROM thasmai.mahadhanams WHERE ";
+    let baseCondition = "UserId >= 11";
+    let countSql = `SELECT COUNT(*) AS total FROM thasmai.mahadhanams WHERE ${baseCondition} AND `;
+    let sql = `SELECT * FROM thasmai.mahadhanams WHERE ${baseCondition} AND `;
+
     for (let i = 0; i < queryConditions.length; i++) {
-      sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'` } ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : "" } `;
+      if (queryConditions[i].operator === "between") {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} "${queryConditions[i].value.split("/")[0]}" AND "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} "${queryConditions[i].value.split("/")[0]}" AND "${queryConditions[i].value.split("/")[1]}" ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      } else {
+        countSql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'`} ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+        sql += `${queryConditions[i].field} ${queryConditions[i].operator} ${isNumeric(queryConditions[i].value) ? queryConditions[i].value : `'${queryConditions[i].value}'`} ${queryConditions[i].logicaloperator != "null" ? queryConditions[i].logicaloperator : ""} `;
+      }
     }
 
-    // Apply pagination
+    const countResult = await sequelize.query(countSql, { type: sequelize.QueryTypes.SELECT });
+    const totalCount = countResult[0].total;
+
+    const totalPages = Math.ceil(totalCount / pageSize);
     const offset = (page - 1) * pageSize;
+
     sql += `LIMIT ${pageSize} OFFSET ${offset}`;
 
-    //console.log(sql);
+    const [queryResults, metadata] = await sequelize.query(sql);
 
-    const results = await sequelize.query(sql);
-   // console.log(results[0]);
-    
-    // Assuming sequelize returns an array of rows in the first element of the results array
-    res.json({ results: results[0] });
+    res.json({ queryResults, totalPages });
   } catch (error) {
-    //console.error(error);
+    console.error(error);
     res.status(500).json({ message: 'Internal server error.' });
   }
 });
