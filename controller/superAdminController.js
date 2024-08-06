@@ -1141,8 +1141,8 @@ router.post('/execute-query', async (req, res) => {
     }
 
     let baseCondition = "UserId >= 11";
-    let countSql = `SELECT COUNT(*) AS total FROM thasmai.users WHERE ${baseCondition} AND `;
-    let sql = `SELECT * FROM thasmai.users WHERE ${baseCondition} AND `;
+    let countSql = `SELECT COUNT(*) AS total FROM thasmai.Users WHERE ${baseCondition} AND `;
+    let sql = `SELECT * FROM thasmai.Users WHERE ${baseCondition} AND `;
 
     for (let i = 0; i < queryConditions.length; i++) {
       if (queryConditions[i].operator === "between") {
