@@ -1768,7 +1768,7 @@ router.post('/ban-User', async (req, res) => {
   }
 });
 
-router.post('/execute-query', async (req, res) => {
+router.post('/mahadhanam-execute-query', async (req, res) => {
   try {
     const queryConditions = req.body.queryConditions;
     const page = req.body.page || 1; // Default to page 1 if not provided
