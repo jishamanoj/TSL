@@ -1167,34 +1167,88 @@ router.post('/execute-query', async (req, res) => {
 ////////////////////////////////////////mahadhanam///////////////////////////////////////
 
 
+// router.post('/copy-users', async (req, res) => {
+//   try {
+//     // Fetch all users
+//     const users = await Users.findAll();
+//     console.log(user.UserId);
+//     // Map User data to Mahadhanam data
+//     const mahadhanamData = users.map(user => ({
+//       console.log(user.UserId),
+//       UserId: user.UserId,
+//       firstName: user.firstName,
+//       secondName: user.secondName,
+//       DOB: user.DOB,
+//       phone: user.phone,
+//       email: user.email,
+//       DOJ: user.DOJ,
+//       state: user.state,
+//       district: user.district,
+//       ReferrerID: user.ReferrerID,
+//       Level: user.Level,
+//       node_number: user.node_number,
+//       reserved_id: user.reserved_id,
+//       coupons: user.coupons,
+//       points: user.points,
+//       distribute: user.distribute,
+//       distributed_points: user.distributed_points,
+//       ban: user.ban,
+//       UId: user.UId,
+//       user_Status: user.user_Status,
+//     }));
+
+   
+//     // Start a transaction
+//     await sequelize.transaction(async (transaction) => {
+//       // Truncate Mahadhanam table
+//       await mahadhanam.destroy({
+//         where: {},
+//         truncate: true,
+//         transaction,
+//       });
+
+//       // Insert data into Mahadhanam
+//       await mahadhanam.bulkCreate(mahadhanamData, { transaction });
+//     });
+
+//     res.status(200).json({ message: 'Data copied successfully!' });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: 'Error copying data', error });
+//   }
+// });
+
 router.post('/copy-users', async (req, res) => {
   try {
     // Fetch all users
     const users = await Users.findAll();
-
+    
     // Map User data to Mahadhanam data
-    const mahadhanamData = users.map(user => ({
-      UserId: user.UserId,
-      firstName: user.firstName,
-      secondName: user.secondName,
-      DOB: user.DOB,
-      phone: user.phone,
-      email: user.email,
-      DOJ: user.DOJ,
-      state: user.state,
-      district: user.district,
-      ReferrerID: user.ReferrerID,
-      Level: user.Level,
-      node_number: user.node_number,
-      reserved_id: user.reserved_id,
-      coupons: user.coupons,
-      points: user.points,
-      distribute: user.distribute,
-      distributed_points: user.distributed_points,
-      ban: user.ban,
-      UId: user.UId,
-      user_Status: user.user_Status,
-    }));
+    const mahadhanamData = users.map(user => {
+      console.log(user.UserId);  // Logging each user's UserId
+      return {
+        UserId: user.UserId,
+        firstName: user.firstName,
+        secondName: user.secondName,
+        DOB: user.DOB,
+        phone: user.phone,
+        email: user.email,
+        DOJ: user.DOJ,
+        state: user.state,
+        district: user.district,
+        ReferrerID: user.ReferrerID,
+        Level: user.Level,
+        node_number: user.node_number,
+        reserved_id: user.reserved_id,
+        coupons: user.coupons,
+        points: user.points,
+        distribute: user.distribute,
+        distributed_points: user.distributed_points,
+        ban: user.ban,
+        UId: user.UId,
+        user_Status: user.user_Status,
+      };
+    });
 
     // Start a transaction
     await sequelize.transaction(async (transaction) => {
