@@ -109,36 +109,148 @@ router.get('/countrieslist', async (req, res) => {
     }
   });
 
+const { v4: uuidv4 } = require('uuid');
+
 router.post('/registerUser', async (req, res) => {
-    const { email, phone } = req.body;
- 
-    try {
-        const existingUser = await reg.findOne({
-            where: {
-                [Op.or]: [
-                    { email: email },
-                    { phone: phone }
-                ]
-            }
-        });
- 
-        if (existingUser) {
- 
-            if (existingUser.email === email) {
-                return res.status(400).json({ message: "Email already exists" , status:'false',flag :'email'});
-            } else {
-                return res.status(400).json({ message: "Phone number already exists",status:'false',flag :'phone' });
-            }
-        } 
-        else{
-            return res.status(200).json({ message: "OTP sent successfully" });
+  console.log("..................enter...................");
+  const { email, phone, country } = req.body;
+//console.log(email, phone, country);
+  try {
+    const existingUser = await reg.findOne({
+      where: {
+        [Op.or]: [{ email }, { phone }],
+      },
+    });
+
+    if (existingUser) {
+      if (existingUser.email === email) {
+        if(existingUser.user_Status == 'ACTIVE'){
+        return res.status(400).json({ message: "Email already exists", status: 'false', flag: 'email' });
         }
-    } catch (error) {
-        console.error("Error registering user:", error);
-        return res.status(500).json({ message: "Internal Server Error" });
+        else{
+          sendOTP(email,phone,country,res)
+        }
+
+      } 
+      
+      if(existingUser.phone === phone)  {
+        if(existingUser.user_Status == 'ACTIVE')
+          {
+        return res.status(400).json({ message: "Phone number already exists", status: 'false', flag: 'phone' });
+      }
+      else{
+        console.log("...................")
+        sendOTP(email,phone,country,res)
+      }
     }
+  }
+  else{
+    sendOTP(email,phone,country,res)
+  }
+   
+  } catch (error) {
+    // Log error details for debugging
+    console.error("Error registering user:", error.message);
+    return res.status(500).json({ message: "Internal Server Error", status: 'false' });
+  }
 });
- 
+
+async function sendOTP(email,phone,country,res) {
+  try{
+  if (country === 'India') {
+    // Send OTP via the external service
+    const otpRequest = {
+      method: 'post',
+      url: `https://control.msg91.com/api/v5/otp?otp_expiry=1&template_id=66cdab06d6fc0538413b7392&mobile=91${phone}&authkey=${process.env.MSG91_AUTH_KEY}&realTimeResponse=`,
+      headers: {
+        Accept: 'application/json',
+      },
+    };
+
+    // Await OTP response
+    const otpResponse = await axios(otpRequest);
+
+    // Check if the OTP was sent successfully based on the response from the API
+    if (otpResponse.data.type === 'success') {
+      return res.status(200).json({ message: "OTP sent successfully", status: 'true' });
+    } else {
+      // Log the reason if OTP was not successful (msg91 provides a response message)
+      console.error('OTP sending failed:', otpResponse.data);
+      return res.status(400).json({ message: "Failed to send OTP", status: 'false', details: otpResponse.data.message });
+    }
+  } else {
+    // For other countries, generate a random OTP
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    const redisKey = `otp:${phone}`;
+    await redis.setex(redisKey, 600, otp); // Store OTP in Redis with an expiry time of 10 minutes
+
+    // Setup Nodemailer to send the OTP email
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'thasmaistarlife@gmail.com', // Use environment variables for sensitive data
+        pass: 'ndkj dxdq kxca zplg', // Securely manage this via environment variables
+      },
+    });
+
+    // Email options
+    const mailOptions = {
+      from: 'thasmaistarlife@gmail.com',
+      to: email, // User's email address
+      subject: 'Thasmai Star Life: OTP for Registration',
+      html: `
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+            .email-container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+            .header { text-align: center; padding: 20px; background-color: #2c3e50; border-radius: 8px 8px 0 0; color: #ffffff; }
+            .header h1 { margin: 0; font-size: 24px; }
+            .content { padding: 20px; text-align: center; }
+            .content h2 { color: #333333; font-size: 20px; margin-bottom: 10px; }
+            .content p { color: #666666; font-size: 16px; margin-bottom: 20px; }
+            .otp { display: inline-block; background-color: #27ae60; color: white !important; font-size: 24px; padding: 10px 20px; border-radius: 5px; text-decoration: none; margin-bottom: 20px; }
+            .footer { text-align: center; padding: 20px; color: #999999; font-size: 14px; }
+        </style>
+      </head>
+      <body>
+        <div class="email-container">
+            <div class="header">
+                <h1>Thasmai Starlife Registration</h1>
+            </div>
+            <div class="content">
+                <h2>Your OTP for Registration</h2>
+                <p>Thank you for registering with Thasmai Starlife. Please use the following OTP to confirm your registration:</p>
+                <p class="otp">${otp}</p>
+                <p>If you did not request this OTP, please ignore this email.</p>
+            </div>
+            <div class="footer">
+                <p>&copy; 2024 Thasmai Starlife. All rights reserved.</p>
+            </div>
+        </div>
+      </body>
+      `,
+    };
+
+    // Send the email
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+        return res.status(500).json({ message: 'Failed to send email', status: 'false' });
+      } else {
+        console.log('Email sent:', info.response);
+        return res.status(200).json({ message: 'OTP sent successfully via email', status: 'true', redisKey });
+      }
+    });
+  }
+}
+catch (error) {
+  console.log(error);
+  return res.status(500).json({ message:"something failed"});
+}
+}
+
 function generateOTP() {
     // Generate a random 4-digit OTP
     return Math.floor(1000 + Math.random() * 9000).toString();
@@ -164,97 +276,148 @@ router.get('/displayDataFromRedis/:key', async (req, res) => {
     }
 });
 
+
 router.post("/verify_otp", upload.single('profilePic'), async (req, res) => {
   console.log("<........verify OTP user........>");
+  
   try {
-    const { first_name, last_name, email, DOB, gender, country, phone, reference,ref_id, languages, remark, OTP } = req.body;
-//console.log("................................",req.body);
+    const { first_name, last_name, email, DOB, gender, country, phone, reference, ref_id, languages, remark, OTP } = req.body;
 
-   const config = await applicationconfig.findOne({ where: { field: 'storedOTP' } });
-   const storedOTP = config ? config.value : null;
-//console.log(".....................storedOTP........................",storedOTP);
-   if (!storedOTP) {
-     return res.status(500).send("Unable to retrieve OTP from configuration");
-   }
-    if (storedOTP === OTP) {
-     // console.log(".......");
-
-      const hashedPassword = await bcrypt.hash(phone, 10);
-      const maxUserId = await reg.max('UId');
-      const UId = maxUserId + 1;
-      const currentDate = new Date().toJSON().split('T')[0]; // Get the current date in "YYYY-MM-DD" format
-
-     // console.log("..................currentDate.",currentDate)
-      let profilePicUrl = ''; 
-
-      if (req.file) {
-        const profilePicPath = `profile_pictures/${UId}/${req.file.originalname}`;
-
-        
-        await storage.upload(req.file.path, {
-          destination: profilePicPath,
-          metadata: {
-            contentType: req.file.mimetype
-          }
-        });
-
-        profilePicUrl = `gs://${storage.name}/${profilePicPath}`;
-      }
-
-      const user = await reg.create({
-        first_name,
-        last_name,
-        email,
-        DOB,
-        gender,
-        phone,
-        country,
-        reference,
-        ref_id,
-        languages,
-        remark,
-        UId,
-        DOJ: currentDate,
-        expiredDate: calculateExpirationDate(),
-        password: hashedPassword,
-        verify: 'true',
-        user_Status:'ACTIVE',
-        profilePicUrl: profilePicUrl 
-      });
-
-      // Create a record in the BankDetails table
-      await BankDetails.create({
-        AadarNo: "",
-        IFSCCode: "",
-        branchName: "",
-        accountName: "",
-        accountNo: "",
-        UId: user.UId
-      });
-
-      const responseData = {
-        message: "Success",
-        data: {
-          id: user.UserId,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          DOJ: user.DOJ,
-          expiredDate: user.expiredDate,
-          UId: user.UId
+    if (country === "India") {
+      // Verify OTP with the external API
+      const otpOptions = {
+        method: 'GET',
+        url: 'https://control.msg91.com/api/v5/otp/verify',
+        params: {
+          otp: OTP,
+          mobile: `91${phone}` // Prefix country code as required
+        },
+        headers: {
+          authkey: process.env.MSG91_AUTH_KEY // Use environment variable for authkey
         }
       };
 
-      return res.status(200).json(responseData);
+      // Call the OTP verification API
+      const otpResponse = await axios(otpOptions);
+
+      // Check response status from OTP verification
+      if (otpResponse.data.type !== 'success') {
+        console.error('Invalid OTP:', otpResponse.data);
+        return res.status(400).send("Invalid OTP");
+      }
+    
+      
+      else{
+        verifyOTP(first_name, last_name, email, DOB, gender, country, phone, reference, ref_id, languages, remark, OTP,req,res);
+      }
+  
+
     } else {
-      // Respond with an error message if OTP is invalid
-      return res.status(400).send("Invalid OTP");
-    }
+      // Retrieve the stored OTP from Redis
+      const redisKey = `otp:${phone}`;
+      const storedOTP = await redis.get(redisKey);
+
+      if (!storedOTP) {
+        return res.status(401).send("OTP not found in Redis");
+      }
+      if(storedOTP === OTP){
+        verifyOTP(first_name, last_name, email, DOB, gender, country, phone, reference, ref_id, languages, remark, OTP,req,res)
+      }
+   
+  }
+
   } catch (err) {
+    // Log the error and send an appropriate response
     console.error("<........error........>", err);
     return res.status(500).send(err.message || "An error occurred during OTP verification");
   }
 });
- 
+
+async function verifyOTP(first_name, last_name, email, DOB, gender, country, phone, reference, ref_id, languages, remark, OTP,req,res){
+  
+try{
+        
+    const hashedPassword = await bcrypt.hash(phone, 10);
+
+    // Get the next User ID
+    const maxUserId = await reg.max('UId');
+    const UId = maxUserId + 1;
+    const currentDate = new Date().toISOString().split('T')[0]; // Get the current date in "YYYY-MM-DD" format
+
+    let profilePicUrl = '';
+
+    // Handle profile picture upload if provided
+    if (req.file) {
+      const profilePicPath = `profile_pictures/${UId}/${req.file.originalname}`;
+
+      // Upload the profile picture to your storage service
+      await storage.upload(req.file.path, {
+        destination: profilePicPath,
+        metadata: {
+          contentType: req.file.mimetype
+        }
+      });
+
+      profilePicUrl = `gs://${storage.name}/${profilePicPath}`;
+
+      // Optionally, delete the temporary file after upload
+      fs.unlink(req.file.path, (err) => {
+        if (err) console.error("Error deleting temporary file:", err);
+      });
+    }
+
+    // Create the user record in the database
+    const user = await reg.create({
+      first_name,
+      last_name,
+      email,
+      DOB,
+      gender,
+      phone,
+      country,
+      reference,
+      ref_id,
+      languages,
+      remark,
+      UId,
+      DOJ: currentDate,
+      expiredDate: calculateExpirationDate(),
+      password: hashedPassword,
+      verify: 'true',
+      user_Status: 'ACTIVE',
+      profilePicUrl
+    });
+
+    // Create a record in the BankDetails table for the new user
+    await BankDetails.create({
+      AadarNo: "",
+      IFSCCode: "",
+      branchName: "",
+      accountName: "",
+      accountNo: "",
+      UId: user.UId
+    });
+
+  
+  const responseData = {
+    message: "Success",
+    data: {
+      id: user.UserId,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      DOJ: user.DOJ,
+      expiredDate: user.expiredDate,
+      UId: user.UId
+    }
+  }
+  return res.status(200).json(responseData);
+
+} catch (error) {
+  console.error("Error during user creation:", error);
+  return res.status(500).json({ message: "An error occurred during user creation" });
+}
+}
+
 function calculateExpirationDate() {
     const d = new Date();
     d.setFullYear(d.getFullYear() + 5);
@@ -366,66 +529,103 @@ router.get('/rulesAndConditions', async (req, res) => {
 });
  
 router.post('/requestPasswordReset', async (req, res) => {
-    const { email } = req.body;
- 
-    try {
-        // Find the user with the provided email
-        const user = await reg.findOne({ where: { email: email } });
- 
-        if (!user) {
-            return res.status(404).json({ message: "you are not register" });
-        } else {
-        // // User does not exist, generate a new OTP
-        // const otp = generateOTP();
- 
-        // // Save the OTP in Redis with a key that includes the user's phone number
-        // const redisKey = `reqotp:${user.phone}`;
-        // await redis.setex(redisKey, 600, otp);
- 
-        // // Send OTP to the user via SMS
-        // const otpRequest = {
-        //     method: 'get',
-        //     url: `https://www.fast2sms.com/dev/bulkV2?authorization=aKVbUigWHc8CBXFA9rRQ17YjD4xhz5ovJGd6Ite3k0mnSNuZPMolFREdzJGqw8YVAD7HU1OatPTS6uiK&variables_values=${otp}&route=otp&numbers=${user.phone}`,
-        //     headers: {
-        //         Accept: 'application/json'
-        //     }
-        // };
- 
-        // await axios(otpRequest);
- 
-        return res.status(200).json({ message: "OTP sent successfully"});
+  const { email} = req.body;
+
+  try {
+    // Find the user with the provided email
+    const user = await reg.findOne({ where: { email: email } });
+
+    // Check if the user exists
+    if (!user) {
+      return res.status(404).json({ message: 'You are not registered', status: 'false' });
     }
-} catch (error) {
-    console.error("Error registering user:", error);
-    return res.status(500).json({ message: "Internal Server Error" });
+else{
+
+  if(user.user_Status === 'DELETED') {
+    return res.status(404).json({ message:'account is deleted ! register again' });
+
+  }
 }
+    // Extract the phone number from the found user
+    const phone = user.phone;
+    const country = user.country;
+    if (!phone) {
+      return res.status(400).json({ message: 'Phone number not available for this user', status: 'false' });
+    }
+sendOTP(email,phone,country,res);
+
+  } catch (error) {
+    // Log error details for debugging
+    console.error('Error during OTP request:', error.message);
+    return res.status(500).json({ message: 'Internal Server Error', status: 'false' });
+  }
 });
 
 
 router.post('/verify-userotp', async (req, res) => {
   try {
-    const { otp,email } = req.body;
+    const { otp, email } = req.body;
+
+    // Fetch user from the database using email
     const regUser = await reg.findOne({ where: { email: email } });
- 
+
     if (!regUser) {
-        return res.status(401).json({ message: "User not found" });
+      return res.status(401).json({ message: "User not found" });
     }
-    const config = await applicationconfig.findOne({ where: { field: 'app_otp' } });
-    const app_otp = config ? config.value : null;
- 
-    if (!app_otp) {
-      return res.status(500).send("Unable to retrieve OTP from configuration");
-    }
-    if (app_otp === otp) {
-      return res.status(200).json({ message: 'OTP verified successfully' });
+
+    const phone = regUser.phone; // Assuming the phone number is stored in regUser
+    const country = regUser.country; // Assuming the country
+
+    if (country === 'India') {
+      // Setup request options for verifying OTP via MSG91
+      const otpOptions = {
+        method: 'GET',
+        url: 'https://control.msg91.com/api/v5/otp/verify',
+        params: {
+          otp: otp,
+          mobile: `91${phone}` // Prefix country code as required
+        },
+        headers: {
+          authkey: process.env.MSG91_AUTH_KEY // Use environment variable for authkey
+        }
+      };
+
+      try {
+        // Make the request to MSG91 to verify the OTP
+        const response = await axios.request(otpOptions);
+
+        // Check if OTP verification was successful
+        if (response.data.type === 'success') {
+          return res.status(200).json({ message: 'OTP verified successfully' });
+        } else {
+          return res.status(401).json({ message: 'Invalid OTP' });
+        }
+      } catch (error) {
+        console.error('Error during OTP verification via MSG91:', error);
+        return res.status(500).json({ message: 'Failed to verify OTP' });
+      }
     } else {
-      return res.status(400).json({ error: 'Invalid OTP' });
+      // Handle OTP verification for countries other than India
+      const redisKey = `otp:${phone}`;
+      const storedOTP = await redis.get(redisKey);
+
+      if (!storedOTP) {
+        return res.status(401).json({ message: "OTP not found" });
+      }
+
+      if (storedOTP === otp) {
+        return res.status(200).json({ message: 'OTP verified successfully' });
+      } else {
+        return res.status(401).json({ message: 'Invalid OTP' });
+      }
     }
+
   } catch (error) {
     console.error('Error:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
  
 router.post('/resetPassword', async (req, res) => {
   const { email, new_password } = req.body;
@@ -2625,7 +2825,7 @@ router.delete('/deleteMsg/:id' , async (req, res) =>{
 });
 
 router.delete('/delete-user', async (req, res) => {
-  const { UId } = req.session;
+  const { UId } = req.body;
   if (!UId) {
     return res.status(401).json({ message: 'UId is required' });
   }
@@ -2655,8 +2855,9 @@ router.delete('/delete-user', async (req, res) => {
     }
 
     validUser.coupons = 0;
-    await closeUser.save();
+    await validUser.save();
 
+    await BankDetails.destroy({ where: { UId } });
    //await user.destroy();
 
     return res.status(200).json({ message: 'User deleted successfully' });
