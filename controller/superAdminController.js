@@ -224,10 +224,16 @@ router.get('/expensePiechart' , async(req, res) =>{
 
 router.get('/waiting-list', async (req, res) => {
   try {
-    const classess = 1920;
-    const result = await zoom.count({
+
+    const a = 208;
+    const result = await reg.count({
+      where: {
+        classAttended: 'false'
+      }
     });
-     const list = classess+result
+
+    const list = a+result;
+
     res.json({list});
   } catch (err) {
     console.log(err);
