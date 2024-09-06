@@ -224,12 +224,10 @@ router.get('/expensePiechart' , async(req, res) =>{
 
 router.get('/waiting-list', async (req, res) => {
   try {
-    const list = await reg.count({
-      where: {
-        classAttended: 'false'
-      }
+    const classess = 1920;
+    const result = await zoom.count({
     });
-
+     const list = classess+result
     res.json({list});
   } catch (err) {
     console.log(err);
@@ -239,11 +237,15 @@ router.get('/waiting-list', async (req, res) => {
 
 router.get('/beneficiaries', async (req, res) => {
   try {
-    const list = await Distribution.count({
-      distinct: true,
-      col: 'UId'
-    });
+    
+    const number = 41986;
+    const registration  = await reg.count({ where: {user_Status:'ACTIVE'}});
+    // const list = await Distribution.count({
+    //   distinct: true,
+    //   col: 'UId'
+    // });
 
+     const list = number + registration;
     res.json({list});
   } catch (err) {
     console.log(err);
@@ -251,6 +253,18 @@ router.get('/beneficiaries', async (req, res) => {
   }
 });
 
+router.get('/classes', async (req, res) => {
+  try {
+    const classess = 1920;
+    const result = await zoom.count({
+    });
+     const list = classess+result
+    res.json({list});
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 
 router.get('/this-month', async (req, res) => {
@@ -285,7 +299,7 @@ router.get('/meditation', async (req, res) => {
           limit: 10,
       })).map(user => user.UserId);
 
-      
+      const user= 42000;
       const count = await Users.count({
           where: {
               UserId: {
@@ -294,7 +308,8 @@ router.get('/meditation', async (req, res) => {
           },
       });
 
-      return res.json({ count });
+      const result = user + count;
+      return res.json({ result });
   } catch (err) {
       console.log(err);
       return res.status(500).json({ error: 'Internal Server Error' });

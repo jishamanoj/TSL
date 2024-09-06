@@ -676,7 +676,6 @@ router.post('/login', async (req, res) => {
         const user = await reg.findOne({
           where: {
             email: email,
-            classAttended: true,
             [Op.or]: [
               { user_Status: 'ACTIVE' },
               { user_Status: null }
@@ -696,7 +695,8 @@ router.post('/login', async (req, res) => {
       // if (bannedUser) {
       //   return res.status(403).json({ message: 'Your account is banned. Please contact support.' });
       // }
-  
+      await reg.update({ classAttended : true
+      })
  
       // Create session and store user ID
       req.session.UId = user.UId;
@@ -1557,7 +1557,7 @@ router.post('/send-email', async (req, res) => {
       <td class="reg-card-number">
         <p>Card Number</p>
         <!-- <h1>{data.userId}</h1> -->
-        <h1>${UId}</h1>
+        <h1>TSL${UId}</h1>
       </td>
          <td class="logo-container">
       <img class="reg-card-logo" src="https://firebasestorage.googleapis.com/v0/b/thasmai-star-life.appspot.com/o/general_images%2Fthasmai%20(1).png?alt=media&token=5ffa5d93-caeb-4802-a8be-d92459766004" alt="Thasmai logo" />
