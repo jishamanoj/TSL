@@ -656,70 +656,70 @@ router.post('/resetPassword', async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
- 
-    // Validate email and password
- 
- 
+  const { email, password } = req.body;
+
+  // Validate email and password
   if (!email || !password) {
-      return res.status(400).json({ message:'Email and password are required' });
+    return res.status(400).json({ message: 'Email and password are required' });
+  }
+
+  try {
+    // Check if the user exists and has an active status
+    const user = await reg.findOne({
+      where: {
+        email: email,
+        [Op.or]: [
+          { user_Status: 'ACTIVE' },
+          { user_Status: null }
+        ]
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'Invalid email!' });
     }
- 
-    try {
- 
-      const validUser = await reg.findOne({ where: {email}  })
- 
-        if(!validUser){
-          return res.status(401).json({message:"Sorry ! your are not registered" });
-        }
- 
-        const user = await reg.findOne({
-          where: {
-            email: email,
-            [Op.or]: [
-              { user_Status: 'ACTIVE' },
-              { user_Status: null }
-            ]
-          },
-        });
-      if (!user) {
-        return res.status(404).json({ message: 'Invalid email !' });
-      }
- 
-      const isPasswordValid = await bcrypt.compare(password, user.password);
- 
-      if (!isPasswordValid) {
-        return res.status(401).json({ message: 'Incorrect password !' });
-      }
-      // const bannedUser = await Users.findOne({ where: { UId: user.UId, ban: true } });
-      // if (bannedUser) {
-      //   return res.status(403).json({ message: 'Your account is banned. Please contact support.' });
-      // }
-      await reg.update({ classAttended : true
-      })
- 
-      // Create session and store user ID
-      req.session.UId = user.UId;
-      //xconsole.log(res)
-      res.json({
-        message: 'Login successful',
-        user: {
-          UserId: user.UserId,
-          email: user.email,
-          first_name: user.first_name,
-          last_name : user.last_name,
-          UId : user.UId,
-          DOJ : user.DOJ,
-          isans : user.isans,
-          expiredDate :user.expiredDate
-          // Don't send sensitive information like password
-        },
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal server error' });
+
+    // Check if the password is correct
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Incorrect password!' });
     }
-  });
+
+    // Check if the user is banned
+    const bannedUser = await Users.findOne({ where: { UId: user.UId, ban: true } });
+    if (bannedUser) {
+      return res.status(403).json({ message: 'Your account is banned. Please contact support.' });
+    }
+
+    // Update the user's classAttended field
+    await reg.update(
+      { classAttended: true },
+      { where: { email: email } } // Ensure you update only the specific user
+    );
+
+    // Create session and store user ID
+    req.session.UId = user.UId;
+
+    // Respond with success message and user information
+    res.json({
+      message: 'Login successful',
+      user: {
+        UserId: user.UserId,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        UId: user.UId,
+        DOJ: user.DOJ,
+        isans: user.isans,
+        expiredDate: user.expiredDate
+        // Don't send sensitive information like password
+      },
+    });
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
  
   router.post('/logout', (req, res) => {
     req.session.destroy(err => {
