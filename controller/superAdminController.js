@@ -305,7 +305,7 @@ router.get('/meditation', async (req, res) => {
           limit: 10,
       })).map(user => user.UserId);
 
-      const user= 42000;
+      const user= 42002;
       const count = await Users.count({
           where: {
               UserId: {
