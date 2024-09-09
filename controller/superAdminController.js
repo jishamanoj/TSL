@@ -45,7 +45,7 @@ const operatorFund = require('../model/operatorFund');
 const mahadhanamDistribution = require('../model/mahadhanamDistribution');
 const mahadhanamCouponDistribution =require('../model/mahadhanamCouponDistribution');
 
-
+//////
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: "gs://thasmai-meditation-1fcff.appspot.com"
