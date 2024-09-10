@@ -21,8 +21,7 @@ const message = require('../model/gurujiMessage');
 const applicationconfig = require('../model/applicationConfig');
 const multer = require('multer');
 const admin = require('firebase-admin');
-// const serviceAccount = require("../serviceAccountKey.json");
-const privateMsg = require("../model/privatemsg");
+  const privateMsg = require("../model/privatemsg");
 const distribution = require('../model/distribution');
 const storage = admin.storage().bucket();
 const GroupMembers = require('../model/groupmembers');
@@ -114,7 +113,8 @@ const { v4: uuidv4 } = require('uuid');
 router.post('/registerUser', async (req, res) => {
   console.log("..................enter...................");
   const { email, phone, country } = req.body;
-//console.log(email, phone, country);
+
+console.log(email, phone, country);
   try {
     const existingUser = await reg.findOne({
       where: {
@@ -123,6 +123,7 @@ router.post('/registerUser', async (req, res) => {
     });
 
     if (existingUser) {
+      //console.log("existingUser");
       if (existingUser.email === email) {
         if(existingUser.user_Status == 'ACTIVE'){
         return res.status(400).json({ message: "Email already exists", status: 'false', flag: 'email' });
@@ -134,8 +135,10 @@ router.post('/registerUser', async (req, res) => {
       } 
       
       if(existingUser.phone === phone)  {
+        console.log("..............phn.................");
         if(existingUser.user_Status == 'ACTIVE')
           {
+            console.log("..................phone.......................");
         return res.status(400).json({ message: "Phone number already exists", status: 'false', flag: 'phone' });
       }
       else{
