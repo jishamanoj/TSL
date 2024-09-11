@@ -957,26 +957,26 @@ router.delete('/delete-user/:phone', async (req, res) => {
     }
 });
  
-router.delete('/deleteuser/:phone', async (req, res) => {
-    const phone = req.params.phone;
-    try {
-        // Find the user based on the phone number
-        const user = await reg.findOne({ where: { phone } });
-            if (!user) {
-                return res.status(401).json({ message: 'User not found' });
-            }
-const bank = await bankDetails.findOne({ where: {regId: user.id} });
-await user.destroy();
-if (bank) {
-    await bank.destroy();
-}
-return res.status(200).json({ message: 'User deleted successfully' });
+// router.delete('/deleteuser/:phone', async (req, res) => {
+//     const phone = req.params.phone;
+//     try {
+//         // Find the user based on the phone number
+//         const user = await reg.findOne({ where: { phone } });
+//             if (!user) {
+//                 return res.status(401).json({ message: 'User not found' });
+//             }
+// const bank = await bankDetails.findOne({ where: {regId: user.id} });
+// await user.destroy();
+// if (bank) {
+//     await bank.destroy();
+// }
+// return res.status(200).json({ message: 'User deleted successfully' });
  
-    } catch (error) {
-        console.error('Error:', error);
-        return res.status(500).json({ message: 'Internal Server Error' });
-    }
-});
+//     } catch (error) {
+//         console.error('Error:', error);
+//         return res.status(500).json({ message: 'Internal Server Error' });
+//     }
+// });
 
 router.post('/meditation', async (req, res) => {
   try {
@@ -2839,7 +2839,7 @@ router.delete('/deleteMsg/:id' , async (req, res) =>{
 });
 
 router.delete('/delete-user', async (req, res) => {
-  const { UId } = req.body;
+  const { UId } = req.session;
   if (!UId) {
     return res.status(401).json({ message: 'UId is required' });
   }
