@@ -2583,14 +2583,15 @@ router.post('/zoom_Records', async(req,res)=>{
 });
 
 router.post('/zoom', async (req, res) => {
-  const { zoomdate, zoomStartTime, zoomStopTime, zoomLink } = req.body;
+  const { zoomdate, zoomStartTime, zoomStopTime, zoomLink,languages } = req.body;
 
   try {
     const newZoom = await zoom.create({
       zoomdate,
       zoomStartTime,
       zoomStopTime,
-      zoomLink
+      zoomLink,
+      languages
     });
 
     res.status(201).json({ message: 'Zoom record created successfully', newZoom });
@@ -2602,16 +2603,26 @@ router.post('/zoom', async (req, res) => {
 
 router.get('/get-zoomclass', async (req, res) => {
   try {
+    const { UId } = req.session;
     const { currentDate } = req.query;
 
-    if (!currentDate) {
-      return res.status(400).json({ error: 'currentDate query parameter is required' });
+    if (!UId || !currentDate) {
+      return res.status(400).json({ message: 'UId and currentDate are required' });
+    }
+    const data = await reg.findAll({
+      where: {
+        UId: UId
+      }
+    });
+
+    if (data.length === 0) {
+      return res.status(404).json({ message: 'User data not found' });
     }
 
-    // Direct string comparison since both are strings
     const zoomRecords = await zoom.findAll({
       where: {
-        zoomdate: currentDate
+        zoomdate: currentDate,
+        languages: data[0]?.languages
       }
     });
 

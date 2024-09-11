@@ -12,6 +12,7 @@ zoomdate:{type:DataTypes.STRING},
 zoomStartTime:{type:DataTypes.STRING},
 zoomStopTime:{type:DataTypes.STRING},
 zoomLink:{type:DataTypes.STRING},
+languages:{type:DataTypes.STRING},
 },
 {
     timestamps: false, 
