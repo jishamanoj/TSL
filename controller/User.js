@@ -285,6 +285,7 @@ router.post("/verify_otp", upload.single('profilePic'), async (req, res) => {
   
   try {
     const { first_name, last_name, email, DOB, gender, country, phone, reference, ref_id, languages, remark, OTP } = req.body;
+   console.log("first_name: " + first_name, "last_name: " + last_name, "email: "+ email, "DOB: "+ DOB, "gender: "+ gender, "country: "+ country, "phone: "+ phone, "reference:"+reference, "ref_id: "+ ref_id, "languages:"+languages, "remark:"+ remark, "OTP:"+ OTP);
 
     if (country === "India") {
       // Verify OTP with the external API
@@ -430,6 +431,7 @@ function calculateExpirationDate() {
 router.get('/listName/:UId', async (req, res) => {
   try {
     const { UId } = req.params;
+    console.log("UId: " + UId)
  
     // Find the member with the provided UId
     const selectedMember = await reg.findOne({
@@ -533,7 +535,7 @@ router.get('/rulesAndConditions', async (req, res) => {
  
 router.post('/requestPasswordReset', async (req, res) => {
   const { email} = req.body;
-
+console.log("email:"+email);
   try {
     // Find the user with the provided email
     const user = await reg.findOne({ where: { email: email } });
@@ -568,6 +570,7 @@ sendOTP(email,phone,country,res);
 router.post('/verify-userotp', async (req, res) => {
   try {
     const { otp, email } = req.body;
+    console.log('otp:'+otp,"email:"+email);
 
     // Fetch user from the database using email
     const regUser = await reg.findOne({ where: { email: email } });
@@ -632,6 +635,7 @@ router.post('/verify-userotp', async (req, res) => {
  
 router.post('/resetPassword', async (req, res) => {
   const { email, new_password } = req.body;
+  console.log('email:'+ email, 'new_password:'+ new_password);
  
   try {
       // Find the user with the provided email in the 'reg' schema
@@ -660,6 +664,7 @@ router.post('/resetPassword', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
+  console.log("email:"+email,"password:"+ password);
 
   // Validate email and password
   if (!email || !password) {
@@ -702,6 +707,7 @@ router.post('/login', async (req, res) => {
 
     // Create session and store user ID
     req.session.UId = user.UId;
+    console.log(req.session.UId);
 
     // Respond with success message and user information
     res.json({
@@ -737,7 +743,13 @@ router.post('/login', async (req, res) => {
   
 router.get('/getUserById', async (req, res) => {
   try {
+    if(req.session.UId) {
+      console.log("session is..............", req.session.UId);
+  
+    }
       const { UId } = req.session;
+      console.log("UId is..........", UId);
+
  
       // Fetch user details by UId from the reg table
       const user = await reg.findOne({ where: { UId }, attributes: ['first_name', 'last_name' , 'DOB' , 'gender' , 'email', 'address','pincode', 'state', 'district' , 'country', 'phone' ,'reference' , 'languages' ,'UId', 'DOJ' ,'expiredDate', 'classAttended', 'isans','profilePicUrl', 'maintanance_fee' ] });
@@ -793,6 +805,7 @@ router.get('/flag', async (req, res) => {
   try {
     // Retrieve UId from the session
     const UId = req.session.UId;
+    console.log(UId);
 
     // Check if UId exists in the session
     if (!UId) {
@@ -838,6 +851,10 @@ router.get('/flag', async (req, res) => {
  
 router.post('/meditation-data', async (req, res) => {
     try {
+      if(req.session.UId) {
+          console.log("session is..............", req.session.UId);
+
+        }
       const UId = req.session.UId;
       console.log(".......................",req.session);
       const ans = req.body.ans;
@@ -876,6 +893,7 @@ router.post('/meditation-data', async (req, res) => {
 
 router.get('/reference', async (req, res) => {
   const UId = req.session.UId;
+  console.log(req.session.UId);
  
   try {
       const user = await reg.findOne({
@@ -906,7 +924,12 @@ router.get('/list-questions', async (req, res) => {
   });
  
 router.get('/user-details', async (req, res) => {
+  if(req.session.UId) {
+    console.log("session is..............", req.session.UId);
+
+  }
   const UId = req.session.UId;
+  console.log(req.session.UId)
  
   try {
       // Fetch details from reg table
@@ -938,6 +961,7 @@ router.get('/user-details', async (req, res) => {
  
 router.delete('/delete-user/:phone', async (req, res) => {
     const phone = req.params.phone;
+    console.log(req.params.phone)
  
     try {
         // Find the user based on the phone number
@@ -1108,6 +1132,7 @@ router.get('/guruji-date', async (req, res) => {
  router.post("/appointment", async (req, res) => {
   try {
    const UId = req.session.UId;
+   console.log('UId: ', UId);
     if (!UId) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
@@ -1173,7 +1198,9 @@ router.get('/guruji-date', async (req, res) => {
  
 router.put('/rating', async (req, res) => {
   const id = req.body.id;
+  console.log(id);
   const {rating , feedback}= req.body;
+  console.log(rating, feedback);
  
   try {
     const appointment = await Appointment.findOne({ where: { id: id } });
@@ -1193,6 +1220,7 @@ router.put('/rating', async (req, res) => {
 router.get('/list-appointment', async (req, res) => {
   try {
     const  UId = req.session.UId;
+    console.log(req.session.UId);
  
     // Check if the user is authenticated
     if (!UId) {
@@ -1222,7 +1250,9 @@ router.get('/list-appointment', async (req, res) => {
 router.put('/updateAppointment/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    console.log(id);
     const updateFields = req.body;
+    console.log(updateFields);
  
     // Check if appointment exists
     const appointment = await Appointment.findOne({ where: { id } });
@@ -1270,7 +1300,9 @@ router.put('/updateAppointment/:id', async (req, res) => {
  
 router.delete('/delete-appointment', async (req, res) => {
   const { id } = req.query;
+  console.log(id)
   const UId = req.session.UId; // Assuming UId is stored in req.session
+  console.log(req.session.UId);
  
   try {
     // Check if the user is authenticated
@@ -1635,6 +1667,7 @@ router.post('/send-email', async (req, res) => {
 router.get('/meditation-detail', async (req, res) => {
   try {
        const { UId } = req.session;
+       console.log(UId);
       //const UId = req.body.UId;
       if (!UId) {
           return res.status(401).json({ error: 'User not authenticated' });
@@ -1659,6 +1692,7 @@ router.get('/meditation-detail', async (req, res) => {
 router.get('/get-messages', async (req, res) => {
   try {
       const  { UId } = req.session;
+      console.log(UId);
  
       if (!UId) {
           return res.status(401).json({ error: 'User not authenticated' });
@@ -1683,6 +1717,7 @@ router.get('/get-messages', async (req, res) => {
 router.get('/meditation-date', async (req, res) => {
   try {
     const { UId } = req.session;
+    console.log(UId);
     if (!UId) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
@@ -1726,6 +1761,7 @@ router.get('/meditation-date', async (req, res) => {
 router.post('/addBankDetails', async (req, res) => {
   try {
     const UId = req.session.UId;
+    console.log(req.session.UId);
     const { AadarNo, bankName, IFSCCode, branchName, accountName, accountNo } = req.body;
     console.log(AadarNo, bankName, IFSCCode, branchName, accountName, accountNo);
 
@@ -1764,6 +1800,7 @@ router.post('/addBankDetails', async (req, res) => {
 router.get('/getBankDetails', async (req, res) => {
   try {
     const { UId } = req.session;
+    console.log(UId);
  
     if (!UId) {
       return res.status(401).json({ message: 'User not found' });
@@ -1779,6 +1816,7 @@ router.get('/getBankDetails', async (req, res) => {
 router.put('/updteBankDetails', async (req, res) => {
   try {
     const { UId } = req.session;
+    console.log(UId)
     const bankdetails = req.body;
     console.log(bankdetails);
  
@@ -1829,6 +1867,7 @@ try {
 router.get('/fetch-details', async (req, res) => {
   try {
       const { UId } = req.session;
+      console.log(UId);
  
       // Validate UId
       if (!UId) {
@@ -1867,7 +1906,9 @@ router.get('/fetch-details', async (req, res) => {
 
 router.put('/appointment-feedback/:id', async (req, res) => {
   const id = req.params.id;  // Corrected to access the ID from the parameters
+  console.log(req.params.id);
   const feedback = req.body.feedback;
+  console.log(feedback);
  
   try {
       if (!id) {
@@ -1895,7 +1936,9 @@ router.put('/appointment-feedback/:id', async (req, res) => {
 
 router.put('/maintances-fee', async (req, res) => {
   const UId = req.session.UId;
+  console.log(req.session.UId);
   const maintanance_fee = req.body.maintanance_fee;
+  console.log(maintanance_fee);
  
   try {
       if (!UId) {
@@ -1927,8 +1970,10 @@ router.put('/maintances-fee', async (req, res) => {
 router.post('/messages', async (req, res) => {
   try {
       const UId = req.session.UId
+      console.log(req.session.UId);
       //const UId = req.body.UId;
       const { message, messageTime,isAdminMessage, messagetype,messageDate} = req.body;
+      console.log(message, messageTime, isAdminMessage, messagetype, messageDate);
 
       // Check if the user exists in the reg table and maintanance_fee is true
       const regUser = await reg.findOne({ where: { UId, maintanance_fee: true } });
@@ -1986,6 +2031,7 @@ else{
 router.get('/validate-session', async (req, res) => {
     try{
       const { UId } = req.session;
+      console.log(UId);
       if(!UId) {
         return res.status(401).json('session invalid');
       }
@@ -2000,6 +2046,7 @@ router.get('/validate-session', async (req, res) => {
 router.get('/privateMessage/:page' , async(req, res) =>{
   try{
     const { UId } = req.session;
+    console.log(UId)
    // const UId = req.query.UId;
     const page = parseInt(req.params.page) || 1;
     const limit = 100;
@@ -2033,6 +2080,7 @@ router.get('/privateMessage/:page' , async(req, res) =>{
 router.get('/globalMessage/:page', async (req, res) => {
   try {
    const { UId } = req.session;
+   console.log(UId);
    // const UId = req.query.UId;
     if(!UId){
       return res.status(401).json('User not Authenticated');
@@ -2103,7 +2151,9 @@ router.get('/gurujimessage/:page', async (req, res) => {
  
 router.put('/updateUserDetails', async (req, res) => {
   const UId = req.session.UId
+  console.log(req.session.UId);
   const userData = req.body;
+  console.log(userData);
  
   try {
     // Check if the user is authenticated
@@ -2133,6 +2183,7 @@ router.put('/updateUserDetails', async (req, res) => {
 
 router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
   const UId = req.session.UId
+  console.log(req.session.UId);
 //  const userData = req.body;
   const profilePicFile = req.file;
 
@@ -2192,7 +2243,9 @@ router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
 
 router.post('/appFeedback' , async( req, res) => {
   const UId = req.session.UId;
+  console.log(req.session.UId);
   const { feedback, rating } = req.body;
+  console.log(feedback, rating);
   try{
     if(!UId) {
       return res.status(401).json({error:'invalid UId'});
@@ -2264,6 +2317,7 @@ router.get('/listevents', async (req, res) => {
 router.get('/rewardList', async (req, res) => {
   try {
     const { UId } = req.session;
+    console.log(UId);
     if (!UId) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
@@ -2296,6 +2350,7 @@ router.get('/rewardList', async (req, res) => {
 router.get('/transaction_summary', async (req, res) => {
   try {
     const { UId } = req.session;
+    console.log(UId);
     if (!UId) {
       return res.status(401).json('UId is required');
     }
@@ -2336,6 +2391,7 @@ router.get('/transaction_summary', async (req, res) => {
 router.get('/transaction_list', async (req, res) => {
   try {
     const { UId } = req.session;
+    console.log(UId);
     if (!UId) {
       return res.status(401).json('UId is required');
     }
@@ -2563,6 +2619,7 @@ router.post('/zoom_Records', async(req,res)=>{
   try{
     const {UId} = req.session;
     const {zoom_date,zoom_time} = req.body;
+    console.log(UId, zoom_date, zoom_time);
 
     if(!UId){
       return res.status(401).json({message: 'UId is required'});
@@ -2584,6 +2641,7 @@ router.post('/zoom_Records', async(req,res)=>{
 
 router.post('/zoom', async (req, res) => {
   const { zoomdate, zoomStartTime, zoomStopTime, zoomLink,languages } = req.body;
+  console.log(zoomdate, zoomStartTime, zoomStopTime, zoomLink,languages);
 
   try {
     const newZoom = await zoom.create({
@@ -2604,7 +2662,9 @@ router.post('/zoom', async (req, res) => {
 router.get('/get-zoomclass', async (req, res) => {
   try {
     const { UId } = req.session;
+    console.log(UId);
     const { currentDate } = req.query;
+    console.log(currentDate);
 
     if (!UId || !currentDate) {
       return res.status(400).json({ message: 'UId and currentDate are required' });
@@ -2641,6 +2701,7 @@ router.get('/get-zoomclass', async (req, res) => {
 router.post('/button-block', async (req, res) => {
   try {
     const { date } = req.body;
+    console.log(date);
 
     // Validate input
     if (!date) {
@@ -2786,7 +2847,9 @@ router.get('/listblogs', async (req, res) => {
 router.post('/global' , async(req,res)=>{
   try{
     const UId = req.session.UId;
+    console.log(req.session.UId);
     const { message, messageTime,isAdminMessage,messageDate} = req.body;
+    console.log(message, messageTime, isAdminMessage, messageDate);
 
     if(!UId){
       return res.status(401).json('UId is required');
@@ -2840,6 +2903,7 @@ router.delete('/deleteMsg/:id' , async (req, res) =>{
 
 router.delete('/delete-user', async (req, res) => {
   const { UId } = req.session;
+  console.log(UId);
   if (!UId) {
     return res.status(401).json({ message: 'UId is required' });
   }
