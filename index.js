@@ -18,6 +18,8 @@ const sessionMiddleware = session({
   });
  
   app.use(sessionMiddleware);
+  // app.use(function(){
+  //   console.log('session is ....',req.session)  })
 // app.use((req, res, next) => {
 //     console.log(".......................",req.session,"url",req.url);
 // next()

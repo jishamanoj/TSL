@@ -19,13 +19,13 @@ const meditationFees = require('../model/meditationFees');
 
 
 router.put('/processPayment', async (req, response) => {
- 
+  try {
   // const userId = req.session.userId;
   const UId = req.body.UId;
  
   console.log("...............................",UId);
 console.log(reg)
-try {
+
   const existingUser = await Users.findOne({ where: { UId } });
   if (existingUser) {
     return response.status(400).json({ error: 'UId already exists in the Users table' });
@@ -192,7 +192,6 @@ const userReg = await reg.findOne({
 
 
 router.get('/findall',async(request,response)=>{
-    console.log('findall')
     try {
         const user_list = await Users.findAll();
         if(user_list){
@@ -368,9 +367,10 @@ router.get('/search', async (req, res) => {
   });
   
   router.post('/meditation-flag', async (req, res) => {
+    try {
     const { UId,amount,payment_date,payment_time} = req.body;
   
-    try {
+    
       // Check if user exists
       const existingUser = await Users.findOne({ where: { UId } });
   

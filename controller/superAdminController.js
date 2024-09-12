@@ -327,10 +327,11 @@ router.get('/meditation', async (req, res) => {
 ////////////////////////////////events///////////////////////////////
 
 router.post('/add-event', upload.single('image'), async (req, res) => {
+  try {
   const { event_name, event_description, priority, place, date ,event_time } = req.body;
   const eventImageFile = req.file;
   
-  try {
+
     
     if (!event_name || !event_description || !priority || !place || !date) {
       return res.status(400).send({ error: 'Missing required fields' });
@@ -498,11 +499,12 @@ router.get('/get-event/:id', async (req, res) => {
 });
 
 router.put('/update-event/:id', upload.single('image'), async (req, res) => {
+  try {
   const id = req.params.id;
   const userData = req.body;
   const eventImageFile = req.file;
 
-  try {
+  
     // Check if the user is authenticated
     if (!id) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -630,28 +632,6 @@ router.post('/events-query', async (req, res) => {
 
 //////////////////////////////////meditator//////////////////////////
 
-
-// router.get('/list-meditators', async (req, res) => {
-//   try {
-//     //console.log(".................enter...............");
-//     // Pagination parameters
-//     const page = req.query.page || 1; // Current page, default is 1
-//     const limit =  10; // Number of records per page
-//     const offset = (page - 1) * limit; // Calculate offset based on page number
-
-//     // Step 1: Fetch the list of users with pagination
-//     const usersList = await Users.findAll({
-//       attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'user_Status'],
-//       limit: limit,
-//       offset: 10,
-//     });
-
-//     res.json( usersList );
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// });
 
 
 router.get('/searchfield', async (req, res) => {

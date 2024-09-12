@@ -26,11 +26,12 @@ const instance = new Razorpay({
 ///////mediation fees/////
  
 router.post('/meditation-checkout',async (req, res) => {
+  try {
   const options = {
     amount: Number(req.body.amount),
     currency: "INR",
   };
-  try {
+  
     const order = await instance.orders.create(options);
     res.status(200).json({
       success: true,
@@ -45,6 +46,7 @@ router.post('/meditation-checkout',async (req, res) => {
 });
  
 router.post('/meditation-paymentVerification', async (req, res) => {
+  try{
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature,UId,amount,payment_date,payment_time,fee_payment_status} =
     req.body;
  
@@ -84,16 +86,23 @@ router.post('/meditation-paymentVerification', async (req, res) => {
       error: "Invalid signature"
     });
   }
+} catch (error) {
+  res.status(500).json({
+    success: false,
+    error: error.message
+  });
+}
 });
  
 /////maintenance fees//////
  
 router.post('/maintenance-checkout',async (req, res) => {
+  try {
   const options = {
     amount: Number(req.body.amount),
     currency: "INR",
   };
-  try {
+  
     const order = await instance.orders.create(options);
     res.status(200).json({
       success: true,
@@ -152,11 +161,12 @@ router.post('/maintenance-paymentVerification', async (req, res) => {
 /////dekshina//////
  
 router.post('/dekshina-checkout',async (req, res) => {
+  try {
   const options = {
     amount: Number(req.body.amount),
     currency: "INR",
   };
-  try {
+  
     const order = await instance.orders.create(options);
     res.status(200).json({
       success: true,
