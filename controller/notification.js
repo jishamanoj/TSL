@@ -33,12 +33,12 @@ router.post('/meditation-checkout',async (req, res) => {
   };
   
     const order = await instance.orders.create(options);
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       order,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message
     });
@@ -73,21 +73,21 @@ router.post('/meditation-paymentVerification', async (req, res) => {
         fee_payment_status:true
       });
       await sendNotificationToUser(UId, 'Payment Successful', 'Your support is invaluable, and we are excited to accompany you on this transformative journey.If you have any questions or need further assistance, please feel free to contact us..');
-      res.status(200).json({success:true})
+      return res.status(200).json({success:true})
     } catch (error) {
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: error.message
       });
     }
   } else {
-    res.status(400).json({
+    return res.status(400).json({
       success: false,
       error: "Invalid signature"
     });
   }
 } catch (error) {
-  res.status(500).json({
+  return res.status(500).json({
     success: false,
     error: error.message
   });
@@ -104,12 +104,12 @@ router.post('/maintenance-checkout',async (req, res) => {
   };
   
     const order = await instance.orders.create(options);
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       order,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message
     });
@@ -117,6 +117,7 @@ router.post('/maintenance-checkout',async (req, res) => {
 });
  
 router.post('/maintenance-paymentVerification', async (req, res) => {
+  try{
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature,UId,amount,payment_date,payment_time,maintenance_payment_status} =
     req.body;
  
@@ -143,19 +144,23 @@ router.post('/maintenance-paymentVerification', async (req, res) => {
         maintenance_payment_status:true
       });
       await sendNotificationToUser(UId, 'Payment Successful', 'thank you for your valuable contribution. it helps us maintain the highest standards and continue providing exceptional service.This is a gentle reminder about the upcoming  zoom maintenance fee ..');
-      res.status(200).json({success:true})
+      return res.status(200).json({success:true})
     } catch (error) {
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: error.message
       });
     }
   } else {
-    res.status(400).json({
+    return res.status(400).json({
       success: false,
       error: "Invalid signature"
     });
   }
+}
+catch (error) {
+  return res.status(500).json('internal server error ');
+}
 });
  
 /////dekshina//////
@@ -166,14 +171,14 @@ router.post('/dekshina-checkout',async (req, res) => {
     amount: Number(req.body.amount),
     currency: "INR",
   };
-  
+ 
     const order = await instance.orders.create(options);
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       order,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message
     });
@@ -181,6 +186,7 @@ router.post('/dekshina-checkout',async (req, res) => {
 });
  
 router.post('/dekshina-paymentVerification', async (req, res) => {
+  try{
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature,UId,amount,payment_date,payment_time,dekshina_payment_status} =
     req.body;
  
@@ -207,20 +213,23 @@ router.post('/dekshina-paymentVerification', async (req, res) => {
         dekshina_payment_status:true
       });
       
-      res.status(200).json({success:true})
+      return res.status(200).json({success:true})
       await sendNotificationToUser(UId, 'Payment Successful', "This is a gentle reminder to pay your Guru Dakshina. Your contribution honors our Guru's guidance and supports our community.");
 
     } catch (error) {
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: error.message
       });
     }
   } else {
-    res.status(400).json({
+    return res.status(400).json({
       success: false,
       error: "Invalid signature"
     });
+  }}
+  catch (error) {
+    return res.status(500).json("internal server error");
   }
 });
  
@@ -228,18 +237,19 @@ router.post('/dekshina-paymentVerification', async (req, res) => {
 ////////donation///////
  
 router.post('/donation-checkout',async (req, res) => {
+  try {
   const options = {
     amount: Number(req.body.amount),
     currency: "INR",
   };
-  try {
+ 
     const order = await instance.orders.create(options);
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       order,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message
     });
@@ -247,6 +257,7 @@ router.post('/donation-checkout',async (req, res) => {
 });
  
 router.post('/donation-paymentVerification', async (req, res) => {
+  try{
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature,UId,amount,payment_date,payment_time,donation_payment_status} =
     req.body;
  
@@ -274,18 +285,21 @@ router.post('/donation-paymentVerification', async (req, res) => {
       });
       await sendNotificationToUser(UId, 'Payment Successful', 'We are deeply grateful for your generous contribution to Thasmai Star Life.Your kindness and support play a crucial role in empowering our mission and making a positive impact..');
 
-      res.status(200).json({success:true})
+      return res.status(200).json({success:true})
     } catch (error) {
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: error.message
       });
     }
   } else {
-    res.status(400).json({
+    return res.status(400).json({
       success: false,
       error: "Invalid signature"
     });
+  }}
+  catch (error) {
+    return res.status(500).json('internal server error')
   }
 });
  
@@ -417,7 +431,7 @@ router.post('/send-notification', async (req, res) => {
     res.json({ message: 'Specific notification sent successfully'});
   } catch (error) {
     console.error('Error sending specific notification:', error);
-    res.status(500).json({ error: 'An error occurred while sending specific notification' });
+    return res.status(500).json({ error: 'An error occurred while sending specific notification' });
   }
 });
  
@@ -444,7 +458,7 @@ router.post('/send-broadcast-notification', async (req, res) => {
     res.json({ message: 'Broadcast notification sent successfully',notification });
   } catch (error) {
     console.error('Error sending broadcast notification:', error);
-    res.status(500).json({ error: 'An error occurred while sending broadcast notification' });
+    return res.status(500).json({ error: 'An error occurred while sending broadcast notification' });
   }
 });
  
@@ -468,7 +482,7 @@ router.post('/get-notification', async (req, res) => {
     return res.status(200).json({ notifications: notification,totalpages: totalpages });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
  

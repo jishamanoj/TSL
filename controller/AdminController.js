@@ -388,14 +388,14 @@ router.get('/search', async (req, res) => {
       });
   
       // Respond with the new record or a success message
-      res.status(200).json({
+      return res.status(200).json({
         message: "Meditation fee status updated successfully",
         newFeeRecord
       });
   
     } catch (error) {
       console.error(error);
-      res.status(500).json({ error: 'Server error' });
+      return res.status(500).json({ error: 'Server error' });
     }
   });
 

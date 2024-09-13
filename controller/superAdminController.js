@@ -86,7 +86,7 @@ router.post('/login', async (req, res) => {
 
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
@@ -164,7 +164,7 @@ router.get('/register-count', async (req, res) => {
       res.json(result);
   } catch (error) {
       console.error(error);
-      res.status(500).json({ message: 'Internal server error' });
+      return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -239,7 +239,7 @@ router.get('/waiting-list', async (req, res) => {
     res.json({list});
   } catch (err) {
     console.log(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -257,7 +257,7 @@ router.get('/beneficiaries', async (req, res) => {
     res.json({list});
   } catch (err) {
     console.log(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -270,7 +270,7 @@ router.get('/classes', async (req, res) => {
     res.json({list});
   } catch (err) {
     console.log(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -294,7 +294,7 @@ router.get('/this-month', async (req, res) => {
       res.json({ count: userCount });
   } catch (error) {
       console.error('Error:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -364,10 +364,10 @@ router.post('/add-event', upload.single('image'), async (req, res) => {
 
     await newEvent.update({ image });
 
-    res.status(201).json({ message: 'Event created successfully', event: newEvent });
+    return res.status(201).json({ message: 'Event created successfully', event: newEvent });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -407,10 +407,10 @@ router.get('/events', async (req, res) => {
     });
 
     // Respond with events and total pages
-    res.status(200).json({ events: everyEvents, totalPages });
+    return res.status(200).json({ events: everyEvents, totalPages });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -457,7 +457,7 @@ router.post('/events-query', async (req, res) => {
     res.json({ queryResults, totalPages });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error.' });
+    return res.status(500).json({ message: 'Internal server error.' });
   }
 });
 
@@ -572,10 +572,10 @@ router.delete('/delete-events/:eventId', async (req, res) => {
   
       await event.destroy();
 
-      res.status(200).json({ message: 'Event deleted successfully' });
+      return res.status(200).json({ message: 'Event deleted successfully' });
   } catch (error) {
       console.log(error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -626,7 +626,7 @@ router.post('/events-query', async (req, res) => {
     res.json({ Results ,totalPages});
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error.' });
+    return res.status(500).json({ message: 'Internal server error.' });
   }
 });
 
@@ -676,7 +676,7 @@ router.get('/searchfield', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -742,7 +742,7 @@ router.post('/coupon-systemDistribute', async (req, res) => {
     res.json({ message: 'Coupons distributed successfully', updatedCoupons });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -820,7 +820,7 @@ router.post('/redeem', async (req, res) => {
     res.json({ message: 'Coupons reduced successfully for specified users.',distributionDetails: updatedUsers});
     } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -913,7 +913,7 @@ router.get('/download', async (req, res) => {
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -1050,7 +1050,7 @@ router.get('/TSL', async (req, res) => {
    // res.json(users);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -1089,7 +1089,7 @@ router.get('/list-meditators', async (req, res) => {
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -1122,10 +1122,10 @@ router.get('/total-coupons', async (req, res) => {
       return acc + (user.coupons || 0);
     }, 0);
 
-    res.status(200).json({ totalCoupons });
+    return res.status(200).json({ totalCoupons });
   } catch (error) {
     console.error('Error fetching total coupons:', error);
-    res.status(500).json({ message: 'Error fetching total coupons', details: error.message });
+    return res.status(500).json({ message: 'Error fetching total coupons', details: error.message });
   }
 });
 
@@ -1170,7 +1170,7 @@ router.post('/execute-query', async (req, res) => {
     res.json({ queryResults, totalPages });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error.' });
+    return res.status(500).json({ message: 'Internal server error.' });
   }
 });
 
@@ -1224,10 +1224,10 @@ router.post('/copy-users', async (req, res) => {
       await mahadhanam.bulkCreate(mahadhanamData, { transaction });
     });
 
-    res.status(200).json({ message: 'Data copied successfully!' });
+    return res.status(200).json({ message: 'Data copied successfully!' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error copying data', error });
+    return res.status(500).json({ message: 'Error copying data', error });
   }
 });
 
@@ -1275,7 +1275,7 @@ router.get('/mahadhanam-searchfield', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -1341,7 +1341,7 @@ router.post('/mahadhanam-coupon-systemDistribute', async (req, res) => {
     res.json({ message: 'Coupons distributed successfully', updatedCoupons });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -1419,7 +1419,7 @@ router.post('/mahadhanam-redeem', async (req, res) => {
     res.json({ message: 'Coupons reduced successfully for specified users.',distributionDetails: updatedUsers});
     } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -1512,7 +1512,7 @@ router.get('/mahadhanam-download', async (req, res) => {
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -1649,7 +1649,7 @@ router.get('/mahadhanam-TSL', async (req, res) => {
    // res.json(users);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -1688,7 +1688,7 @@ router.get('/mahadhanam-list-meditators', async (req, res) => {
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -1721,10 +1721,10 @@ router.get('/mahadhanam-total-coupons', async (req, res) => {
       return acc + (user.coupons || 0);
     }, 0);
 
-    res.status(200).json({ totalCoupons });
+    return res.status(200).json({ totalCoupons });
   } catch (error) {
     console.error('Error fetching total coupons:', error);
-    res.status(500).json({ message: 'Error fetching total coupons', details: error.message });
+    return res.status(500).json({ message: 'Error fetching total coupons', details: error.message });
   }
 });
 
@@ -1812,7 +1812,7 @@ router.post('/mahadhanam-execute-query', async (req, res) => {
     res.json({ queryResults, totalPages });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error.' });
+    return res.status(500).json({ message: 'Internal server error.' });
   }
 });
 
@@ -1824,10 +1824,10 @@ router.get('/financialconfig', async (req,res) => {
      // console.log("get financialconfig data");
       const finconfig = await financialconfig.findAll();
       
-      res.status(200).json({message:'Fetching data successfully',finconfig});
+      return res.status(200).json({message:'Fetching data successfully',finconfig});
   } catch(error) {
       //console.log(error);
-      res.status(500).json({message:'An error occurred while fetching data'});
+      return res.status(500).json({message:'An error occurred while fetching data'});
   }
 });
 
@@ -1869,10 +1869,10 @@ router.get('/appconfig',async(req,res) =>{
         }
     });
       
-      res.status(200).json({message:'Fetching data successfully',appconfig});
+    return res.status(200).json({message:'Fetching data successfully',appconfig});
   } catch(error) {
       //console.log(error);
-      res.status(500).json({message:'internal server error'});
+      return res.status(500).json({message:'internal server error'});
   }
 });
 
@@ -1907,19 +1907,20 @@ router.get('/support',async(req,res) =>{
   try{
      // console.log('get support');
       const support = await supportcontact.findAll();
-      res.status(200).json({message:'Fetching data successfully',support});
+      return res.status(200).json({message:'Fetching data successfully',support});
 
   } catch (error) {
       //console.log(error);
-      res.status(500).json({message:'internal server error'});
+      return res.status(500).json({message:'internal server error'});
   }
 });
 
 router.put('/update-support/:id', async (req, res) => {
+  try {
   const id = req.params.id;
   const usersdata = req.body;
 
-  try {
+
       if (!id) {
           return res.status(400).json({ error: 'Invalid request, missing ID' });
       }
@@ -1981,11 +1982,12 @@ router.put('/questions/:id', async (req, res) => {
 
 
 router.get('/list-users', async (req, res) => {
+  try {
   const pageSize = parseInt(req.query.pageSize)||10;
   const page = parseInt(req.query.page) || 1;
   const offset = (page - 1) * pageSize;
 
-  try {
+ 
     // Step 1: Fetch the list of users with pagination
     const { rows: usersList, count: totalUsers } = await Users.findAndCountAll({
       attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'Level', 'node_number'],
@@ -2020,15 +2022,20 @@ router.get('/list-users', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
 router.post('/query',async (req, res) => {
+  try {
   const results = await sequelize.query(`${req.body.query}`);
   if(results){
     return res.json({ response: results });
-  }}
+  }
+}catch(err) {
+  return res.status(500).json({"error": err.message});
+}
+}
 )
 
 router.post('/financial-query', async (req, res) => {
@@ -2090,7 +2097,7 @@ router.post('/financial-query', async (req, res) => {
     res.json({ results: mergedResults,totalPages });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error.' });
+    return res.status(500).json({ message: 'Internal server error.' });
   }
 });
 
@@ -2162,16 +2169,17 @@ router.get('/search', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
 router.get('/list-donation', async (req, res) => {
+  try {
   const pageSize =parseInt(req.query.pageSize) || 10;
   const page = parseInt(req.query.page) || 1;
   const offset = (page - 1) * pageSize;
  
-  try {
+
     // Step 1: Fetch the list of users with pagination
     const { rows: usersList, count: totalUsers } = await Users.findAndCountAll({
       attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'Level', 'node_number'],
@@ -2215,7 +2223,7 @@ router.get('/list-donation', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
  
@@ -2287,7 +2295,7 @@ router.post('/donation-query', async (req, res) => {
     res.json({ results: mergedResults,totalPages });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error.' });
+    return res.status(500).json({ message: 'Internal server error.' });
   }
 });
  
@@ -2367,16 +2375,17 @@ router.get('/donation-search', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
 router.get('/list-fees', async (req, res) => {
+  try {
   const pageSize =parseInt(req.query.pageSize) || 10;
   const page = parseInt(req.query.page) || 1;
   const offset = (page - 1) * pageSize;
  
-  try {
+ 
     // Step 1: Fetch the list of users with pagination
     const { rows: usersList, count: totalUsers } = await Users.findAndCountAll({
       attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'Level', 'node_number'],
@@ -2420,7 +2429,7 @@ router.get('/list-fees', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
  
@@ -2492,7 +2501,7 @@ router.post('/fees-query', async (req, res) => {
     res.json({ results: mergedResults,totalPages });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error.' });
+    return res.status(500).json({ message: 'Internal server error.' });
   }
 });
  
@@ -2572,7 +2581,7 @@ router.get('/fees-search', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 router.get('/list-operation', async (req, res) => {
@@ -2618,10 +2627,10 @@ router.get('/list-operation', async (req, res) => {
       };
     }));
  
-    res.status(200).json({ expense: everyEvents ,totalPages: Math.ceil(totalUsers / pageSize)});
+    return res.status(200).json({ expense: everyEvents ,totalPages: Math.ceil(totalUsers / pageSize)});
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -2672,7 +2681,7 @@ router.post('/operation-query', async (req, res) => {
     res.json({ queryResults, totalPages });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error.' });
+    return res.status(500).json({ message: 'Internal server error.' });
   }
 });
 
@@ -2751,7 +2760,7 @@ router.get('/operation-search', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
  
@@ -2795,10 +2804,10 @@ router.get('/list-ashram-appointments', async (req, res) => {
     }));
  
     // Respond with events and total pages
-    res.status(200).json({ events: everyEvents, totalPages });
+    return res.status(200).json({ events: everyEvents, totalPages });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
  
@@ -2856,7 +2865,7 @@ router.post('/ashram-query', async (req, res) => {
     res.json({ queryResults: detailedResults, totalPages });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error.' });
+    return res.status(500).json({ message: 'Internal server error.' });
   }
 });
  
@@ -2918,7 +2927,7 @@ router.get('/ashram-search', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -2971,7 +2980,7 @@ router.get('/list-all-appointment', async (req, res) => {
     res.json({ appointments: mergedResults, totalPages });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -3009,9 +3018,10 @@ const cron = require('node-cron');
 
 
 router.get('/list-appointment/:id', async (req, res) => {
+  try {
   const { id } = req.params;
 
-  try {
+
     // Find appointment by ID
     const appointment = await Appointment.findOne({ where: { id } });
 
@@ -3048,13 +3058,13 @@ router.get('/list-appointment/:id', async (req, res) => {
 });
 
 router.put('/update-payment/:id', upload.single('appointmentImage'), async (req, res) => {
-
+  try {
   console.log('update')
   const id = req.params.id;
   const appointmentData = req.body;
   const appointmentImageFile = req.file;
 
-  try {
+
       // Check if the user is authenticated
       if (!id) {
           return res.status(401).json({ error: 'Unauthorized' });
@@ -3106,10 +3116,11 @@ console.log(appointmentImageUrl);
 });
 
 router.put('/discount/:UId', async (req, res) => {
+  try {
   const { UId } = req.params;
   const { coupon, id } = req.body;
 
-  try {
+
     // Check if UId is a valid integer
     if (isNaN(parseInt(UId))) {
       return res.status(400).json({ error: 'Invalid User ID' });
@@ -3215,7 +3226,7 @@ router.post('/appointment-query', async (req, res) => {
     res.json({ results: results[0], totalPages });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error.' });
+    return res.status(500).json({ message: 'Internal server error.' });
   }
 });
 
@@ -3320,10 +3331,10 @@ router.post('/admin-messages', async (req, res) => {
       isAdminMessage,
     });
 
-    res.status(201).json({ message: 'Message created successfully', data: newMessage });
+    return res.status(201).json({ message: 'Message created successfully', data: newMessage });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -3407,10 +3418,10 @@ router.post('/global-message', async (req, res) => {
       isAdminMessage
     });
 
-    res.status(201).json({ message: 'Message created successfully', data: newMessage });
+    return res.status(201).json({ message: 'Message created successfully', data: newMessage });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -3455,10 +3466,11 @@ router.get('/get-event/:id', async (req, res) => {
 
 
 router.post('/expense', upload.array('invoice', 20), async (req, res) => {
+  try {
   const { Expense_Date, expenseType, amount, description, emp_id, name } = req.body;
   const invoiceFiles = req.files;
 
-  try {
+
       if (!Expense_Date || !expenseType || !amount || !emp_id) {
           return res.status(400).json({ error: 'Missing required fields' });
       }
@@ -3499,10 +3511,10 @@ router.post('/expense', upload.array('invoice', 20), async (req, res) => {
       const newBalance = parseFloat(adminRecord.balance_amount) - parseFloat(amount);
       await adminRecord.update({ balance_amount: newBalance });
 
-      res.status(201).json({ message: 'Ashram expense created successfully', expense: newExpense });
+      return res.status(201).json({ message: 'Ashram expense created successfully', expense: newExpense });
   } catch (error) {
       console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -3552,7 +3564,7 @@ router.post('/get-expense', async (req, res) => {
     return res.status(200).json({ expenses: upcomingEventsFormatted,totalpages });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -3644,7 +3656,7 @@ router.post('/expense-query', async (req, res) => {
     res.json({ results: results[0], totalPages });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error.' });
+    return res.status(500).json({ message: 'Internal server error.' });
   }
 });
 
@@ -3714,7 +3726,7 @@ router.post('/filter', async (req, res) => {
     res.json({ expenses: expensesWithImages, totalPages: totalPages });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -3767,7 +3779,7 @@ router.post('/expense-excel', async (req, res) => {
     res.end();
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error.' });
+    return res.status(500).json({ message: 'Internal server error.' });
   }
 });
 
@@ -3933,10 +3945,10 @@ router.post('/search_users', async (req, res) => {
       };
     });
 
-    res.status(200).json(usersWithBase64Image);
+    return res.status(200).json(usersWithBase64Image);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
@@ -3944,11 +3956,12 @@ router.post('/search_users', async (req, res) => {
 
 
 router.post('/add-blog', upload.single('image'), async (req, res) => {
+  try {
   const { blog_name, blog_description,date} = req.body;
   const eventImageFile = req.file;
   console.log(eventImageFile)
  
-  try {
+
  
  
     const newEvent = await blogs.create({
@@ -3975,10 +3988,10 @@ router.post('/add-blog', upload.single('image'), async (req, res) => {
  
     await newEvent.update({ image });
  
-    res.status(201).json({ message: 'blog created successfully', blog: newEvent });
+    return res.status(201).json({ message: 'blog created successfully', blog: newEvent });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -4032,7 +4045,7 @@ router.get('/listblogs', async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -4074,12 +4087,13 @@ router.get('/get-blog/:id', async (req, res) => {
 });
 
 router.put('/update-blog/:id', upload.single('image'), async (req, res) => {
+  try {
   const id = req.params.id;
   const userData = req.body;
   const eventImageFile = req.file;
   console.log(eventImageFile)
  
-  try {
+
  
     if (!id) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -4146,10 +4160,10 @@ router.delete('/delete-blogs/:blogId', async (req, res) => {
   
       await event.destroy();
  
-      res.status(200).json({ message: 'blog deleted successfully' });
+      return res.status(200).json({ message: 'blog deleted successfully' });
   } catch (error) {
       console.log(error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -4196,7 +4210,7 @@ router.post('/blogs-query', async (req, res) => {
     res.json({ queryResults, totalPages });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error.' });
+    return res.status(500).json({ message: 'Internal server error.' });
   }
 });
 
@@ -4204,10 +4218,11 @@ router.post('/blogs-query', async (req, res) => {
 
 
 router.post('/add-video', upload.single('playList_image'), async (req, res) => {
+  try {
   const { playList_heading, Video_heading, videoLink, category } = req.body;
   const playListImageFile = req.file;
 
-  try {
+
     // Parse JSON strings to arrays if they are provided
     const parsedVideoHeading = Video_heading ? JSON.parse(Video_heading) : [];
     const parsedVideoLink = videoLink ? JSON.parse(videoLink) : [];
@@ -4241,20 +4256,21 @@ router.post('/add-video', upload.single('playList_image'), async (req, res) => {
       await newVideo.update({ playList_image });
     }
 
-    res.status(201).json({ message: 'Video created successfully', video: newVideo });
+    return res.status(201).json({ message: 'Video created successfully', video: newVideo });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
  
 router.put('/update-video/:id', upload.single('playList_image'), async (req, res) => {
+  try {
   const { id } = req.params;
   const { playList_heading, Video_heading, videoLink, category } = req.body;
   const playListImageFile = req.file;
  
  
-  try {
+  
     // Parse JSON strings to arrays
     const parsedVideoHeading = JSON.parse(Video_heading);
     const parsedVideoLink = JSON.parse(videoLink);
@@ -4296,10 +4312,10 @@ router.put('/update-video/:id', upload.single('playList_image'), async (req, res
     // Save the updated video record
     await video.save();
  
-    res.status(200).json({ message: 'Video updated successfully', video });
+    return res.status(200).json({ message: 'Video updated successfully', video });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -4356,14 +4372,15 @@ router.get('/get-video', async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 router.delete('/delete-video/:id', async (req, res) => {
+  try {
   const { id } = req.params;
  
-  try {
+
     // Find the video record
     const video = await Video.findByPk(id);
     if (!video) {
@@ -4379,10 +4396,10 @@ router.delete('/delete-video/:id', async (req, res) => {
     // Delete the video record from the database
     await video.destroy();
  
-    res.status(200).json({ message: 'Video and associated image deleted successfully' });
+    return res.status(200).json({ message: 'Video and associated image deleted successfully' });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -4456,10 +4473,10 @@ router.post('/add-meditation-time', upload.fields([
     // Update the new record with the image URLs
     await newMeditationTime.update({ morning_image, evening_image, general_image });
  
-    res.status(201).json({ message: 'Meditation time added successfully', data: newMeditationTime });
+    return res.status(201).json({ message: 'Meditation time added successfully', data: newMeditationTime });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -4468,13 +4485,14 @@ router.put('/update-meditation-time/:id', upload.fields([
   { name: 'evening_image', maxCount: 1 },
   { name: 'general_image', maxCount: 1 }
 ]), async (req, res) => {
+  try {
   const { id } = req.params;
   const { country, general_video, morning_time_from, morning_time_to, evening_time_from, evening_time_to, morning_video, evening_video } = req.body;
   const morningImageFile = req.files['morning_image'] ? req.files['morning_image'][0] : null;
   const eveningImageFile = req.files['evening_image'] ? req.files['evening_image'][0] : null;
   const generalImageFile = req.files['general_image'] ? req.files['general_image'][0] : null;
  
-  try {
+ 
     // Find the existing meditation time record
     const existingMeditationTime = await meditationTime.findByPk(id);
  
@@ -4545,18 +4563,19 @@ router.put('/update-meditation-time/:id', upload.fields([
     // Save the updated record
     await existingMeditationTime.save();
  
-    res.status(200).json({ message: 'Meditation time updated successfully', data: existingMeditationTime });
+    return res.status(200).json({ message: 'Meditation time updated successfully', data: existingMeditationTime });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
  
 router.get('/meditation-time', async (req, res) => {
+  try {
   const {UId}  = req.session;
   const time = req.query.time;
  
-  try {
+
     // Fetch the country from the reg table using UId
     const userRegDetails = await reg.findOne({ where: { UId } });
  
@@ -4606,7 +4625,7 @@ router.get('/meditation-time', async (req, res) => {
  
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -4641,17 +4660,18 @@ router.get('/meditationTimeList', async (req, res) => {
       };
     }));
 
-    res.status(200).json(result);
+    return res.status(200).json(result);
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 router.get('/meditation-time/:id', async (req, res) => {
+  try {
   const { id } = req.params;
 
-  try {
+
     // Find the meditation time record by ID
     const meditationTimeRecord = await meditationTime.findByPk(id);
 
@@ -4683,10 +4703,10 @@ router.get('/meditation-time/:id', async (req, res) => {
       general_image: await getSignedUrl(meditationTimeRecord.general_image)
     };
 
-    res.status(200).json(result);
+    return res.status(200).json(result);
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -4699,13 +4719,13 @@ router.get('/get-zoomclass', async (req, res) => {
 
     // Check if any records are found
     if (zoomRecords.length > 0) {
-      res.status(200).json(zoomRecords);
+      return res.status(200).json(zoomRecords);
     } else {
-      res.status(404).json({ message: 'No zoom records found' });
+      return res.status(404).json({ message: 'No zoom records found' });
     }
   } catch (error) {
     console.error('Error fetching zoom records:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -4719,10 +4739,10 @@ router.delete('/delete-zoom/:zoomId', async (req, res) => {
       }
       await event.destroy();
 
-      res.status(200).json({ message: 'deleted successfully' });
+      return res.status(200).json({ message: 'deleted successfully' });
   } catch (error) {
       console.log(error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -4754,7 +4774,7 @@ router.get('/list-feedback', async (req, res) => {
           };
       }));
 
-      res.status(200).json({
+      return res.status(200).json({
           data: feedbackWithUsernames,
           currentPage: page,
           totalPages: totalPages,
@@ -4763,7 +4783,7 @@ router.get('/list-feedback', async (req, res) => {
       });
   } catch (error) {
       console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -4823,7 +4843,7 @@ router.post('/feedback-query', async (req, res) => {
     res.json({ queryResults: feedbackWithUsernames, totalPages });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error.' });
+    return res.status(500).json({ message: 'Internal server error.' });
   }
 });
 
@@ -4899,7 +4919,7 @@ router.get('/videos', async (req, res) => {
       res.json(groupedVideos);
   } catch (error) {
       console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -4941,16 +4961,16 @@ router.get('/get-fees-sum', async (req,res) => {
     return res.status(200).json({totalAmount});
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
 router.post('/payOperator', upload.single('image'), async (req,res) => {
- 
+  try{
   const { emp_Id,emp_Name,amount,date} = req.body;
   console.log("amount", amount);
   const bill_image = req.file;
-try{
+
   
   const newEntry = await operatorFund.create({
     emp_Id,
@@ -4981,12 +5001,12 @@ const adminRecord = await Admin.findOne({ where: { emp_Id: emp_Id } });
     const newBalance = parseFloat(adminRecord.balance_amount) + parseFloat(amount);
     await adminRecord.update({ balance_amount: newBalance });
   
-res.status(200).json({message:'data uploaded successfully', payment: newEntry});
+    return res.status(200).json({message:'data uploaded successfully', payment: newEntry});
 
 } catch(error){
   console.log(error);
 
-  res.status(500).json({ error: 'Internal Server Error'});
+  return res.status(500).json({ error: 'Internal Server Error'});
 }
 
 });
@@ -5135,14 +5155,14 @@ router.get('/check-payment-flag',async(req,res) =>{
                   });
       
      if(!user){
-      res.status(404).json({message:"user has not done a payment yet"});
+      return res.status(404).json({message:"user has not done a payment yet"});
      }
      return res.status(200).json(user);
 
   }
   catch(error){
     console.log(error);
-    res.status(500).json({message:"server error",error});
+    return res.status(500).json({message:"server error",error});
   }
 });
 
@@ -5202,7 +5222,7 @@ router.get('/thisMonthDetails', async (req, res) => {
       });
   } catch (error) {
       console.error('Error:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -5416,7 +5436,7 @@ router.get('/searchUser', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -5441,13 +5461,13 @@ router.put('/update-user-status', async (req, res) => {
     );
 
     if (affectedRows > 0) {
-      res.status(200).json({ message: 'User statuses updated successfully' });
+      return res.status(200).json({ message: 'User statuses updated successfully' });
     } else {
-      res.status(404).json({ message: 'No users found with user_Status null' });
+      return res.status(404).json({ message: 'No users found with user_Status null' });
     }
   } catch (error) {
     console.error('Error updating user statuses:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 

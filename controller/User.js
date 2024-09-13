@@ -78,6 +78,7 @@ router.get('/getAllUsers', async (req, res) => {
 });
  
 router.post('/countries', async (req, res) => {
+  try{
     const data = req.body; // Assuming req.body is an array of objects
  
     if (Array.isArray(data)) {
@@ -92,6 +93,9 @@ router.post('/countries', async (req, res) => {
         }
     } else {
         res.status(400).send({ message: "Invalid data format. Please send an array of objects." });
+    }}
+    catch (error) {
+      res.status(500).send({ message: "internal server error"});
     }
 });
  
@@ -111,11 +115,12 @@ router.get('/countrieslist', async (req, res) => {
 const { v4: uuidv4 } = require('uuid');
 
 router.post('/registerUser', async (req, res) => {
+  try {
   console.log("..................enter...................");
   const { email, phone, country } = req.body;
 
 console.log(email, phone, country);
-  try {
+
     const existingUser = await reg.findOne({
       where: {
         [Op.or]: [{ email }, { phone }],
@@ -260,9 +265,10 @@ function generateOTP() {
 }
  
 router.get('/displayDataFromRedis/:key', async (req, res) => {
+  
+  try {
     const key = req.params.key;
  
-    try {
         // Retrieve data from Redis using the provided key
         const data = await redis.get(key);
  
@@ -534,9 +540,10 @@ router.get('/rulesAndConditions', async (req, res) => {
 });
  
 router.post('/requestPasswordReset', async (req, res) => {
+  try {
   const { email} = req.body;
 console.log("email:"+email);
-  try {
+
     // Find the user with the provided email
     const user = await reg.findOne({ where: { email: email } });
 
@@ -634,10 +641,11 @@ router.post('/verify-userotp', async (req, res) => {
 
  
 router.post('/resetPassword', async (req, res) => {
+  try {
   const { email, new_password } = req.body;
   console.log('email:'+ email, 'new_password:'+ new_password);
  
-  try {
+ 
       // Find the user with the provided email in the 'reg' schema
       const regUser = await reg.findOne({ where: { email: email } });
  
@@ -663,6 +671,7 @@ router.post('/resetPassword', async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
+  try {
   const { email, password } = req.body;
   console.log("email:"+email,"password:"+ password);
 
@@ -671,7 +680,7 @@ router.post('/login', async (req, res) => {
     return res.status(400).json({ message: 'Email and password are required' });
   }
 
-  try {
+ 
     // Check if the user exists and has an active status
     const user = await reg.findOne({
       where: {
@@ -731,6 +740,7 @@ router.post('/login', async (req, res) => {
 });
  
   router.post('/logout', (req, res) => {
+    try{
     req.session.destroy(err => {
       if (err) {
         console.error('Error destroying session:', err);
@@ -739,6 +749,10 @@ router.post('/login', async (req, res) => {
       res.clearCookie('connect.sid'); // Clear the session cookie
       return res.status(200).json({ message: 'Logout successful' });
     });
+  }
+  catch (error) {
+    res.status(500).json({ message: 'Internal server error'});
+  }
   });
   
 router.get('/getUserById', async (req, res) => {
@@ -892,10 +906,11 @@ router.post('/meditation-data', async (req, res) => {
   });
 
 router.get('/reference', async (req, res) => {
+  try {
   const UId = req.session.UId;
   console.log(req.session.UId);
  
-  try {
+ 
       const user = await reg.findOne({
           where: { UId },
           attributes: ['first_name', 'last_name'],
@@ -924,6 +939,7 @@ router.get('/list-questions', async (req, res) => {
   });
  
 router.get('/user-details', async (req, res) => {
+  try {
   if(req.session.UId) {
     console.log("session is..............", req.session.UId);
 
@@ -931,7 +947,7 @@ router.get('/user-details', async (req, res) => {
   const UId = req.session.UId;
   console.log(req.session.UId)
  
-  try {
+ 
       // Fetch details from reg table
       const userDetails = await reg.findOne({
           where: { UId },
@@ -960,10 +976,11 @@ router.get('/user-details', async (req, res) => {
 });
  
 router.delete('/delete-user/:phone', async (req, res) => {
+  try {
     const phone = req.params.phone;
     console.log(req.params.phone)
  
-    try {
+  
         // Find the user based on the phone number
         const user = await reg.findOne({ where: { phone } });
  
@@ -1197,12 +1214,13 @@ router.get('/guruji-date', async (req, res) => {
 });
  
 router.put('/rating', async (req, res) => {
+  try {
   const id = req.body.id;
   console.log(id);
   const {rating , feedback}= req.body;
   console.log(rating, feedback);
  
-  try {
+
     const appointment = await Appointment.findOne({ where: { id: id } });
     if (!appointment) {
       return res.status(401).json({ error: 'Appointment not found' });
@@ -1299,12 +1317,13 @@ router.put('/updateAppointment/:id', async (req, res) => {
 });
  
 router.delete('/delete-appointment', async (req, res) => {
+  try {
   const { id } = req.query;
   console.log(id)
   const UId = req.session.UId; // Assuming UId is stored in req.session
   console.log(req.session.UId);
  
-  try {
+
     // Check if the user is authenticated
     if (!UId) {
       return res.status(401).json({ error: 'User not authenticated' });
@@ -1336,9 +1355,10 @@ router.delete('/delete-appointment', async (req, res) => {
 });
 
 router.delete('/group-members/:id', async (req, res) => {
+  try {
   const { id } = req.params;
  
-  try {
+  
     // Find the group member by ID
     const groupMember = await GroupMembers.findByPk(id);
  
@@ -1806,10 +1826,10 @@ router.get('/getBankDetails', async (req, res) => {
       return res.status(401).json({ message: 'User not found' });
     }
     const userBankDetails = await BankDetails.findOne({where: {UId}}); // assuming you've defined it as "BankDetail" in the reg model
-      res.status(200).json(userBankDetails);
+    return res.status(200).json(userBankDetails);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
  
@@ -1847,7 +1867,7 @@ const config = await applicationconfig.findAll();
 res.json({ config });
 }
 catch (error) {
-  res.status(500).json({ error: 'Internal server error' });
+  return res.status(500).json({ error: 'Internal server error' });
 }
 });
  
@@ -1857,10 +1877,10 @@ try {
     const config = await applicationconfig.findOne(); // Retrieve a single row from the table
     const prompt = config ? config.reg_email_prompt : null; // Access the reg_email_prompt property
     console.log(prompt);
-    res.status(200).json({ prompt });
+    return res.status(200).json({ prompt });
 } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
 }
 });
 
@@ -1905,12 +1925,13 @@ router.get('/fetch-details', async (req, res) => {
 });
 
 router.put('/appointment-feedback/:id', async (req, res) => {
+  try {
   const id = req.params.id;  // Corrected to access the ID from the parameters
   console.log(req.params.id);
   const feedback = req.body.feedback;
   console.log(feedback);
  
-  try {
+  
       if (!id) {
           return res.status(401).json({ error: 'ID not found' });
       }
@@ -1935,12 +1956,13 @@ router.put('/appointment-feedback/:id', async (req, res) => {
 });
 
 router.put('/maintances-fee', async (req, res) => {
+  try {
   const UId = req.session.UId;
   console.log(req.session.UId);
   const maintanance_fee = req.body.maintanance_fee;
   console.log(maintanance_fee);
  
-  try {
+ 
       if (!UId) {
           return res.status(401).json({ message: 'UId is not found' });
       }
@@ -2150,12 +2172,13 @@ router.get('/gurujimessage/:page', async (req, res) => {
 });
  
 router.put('/updateUserDetails', async (req, res) => {
+  try {
   const UId = req.session.UId
   console.log(req.session.UId);
   const userData = req.body;
   console.log(userData);
  
-  try {
+
     // Check if the user is authenticated
     if (!UId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -2182,12 +2205,13 @@ router.put('/updateUserDetails', async (req, res) => {
 });
 
 router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
+  try {
   const UId = req.session.UId
   console.log(req.session.UId);
 //  const userData = req.body;
   const profilePicFile = req.file;
 
-  try {
+ 
     // Check if the user is authenticated
     if (!UId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -2242,11 +2266,12 @@ router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
 });
 
 router.post('/appFeedback' , async( req, res) => {
+  try{
   const UId = req.session.UId;
   console.log(req.session.UId);
   const { feedback, rating } = req.body;
   console.log(feedback, rating);
-  try{
+ 
     if(!UId) {
       return res.status(401).json({error:'invalid UId'});
     }
@@ -2310,7 +2335,7 @@ router.get('/listevents', async (req, res) => {
     return res.status(200).json({ events: upcomingEventsFormatted });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
  
@@ -2424,10 +2449,10 @@ router.get('/transaction_list', async (req, res) => {
 router.get('/broadcasts', async (req, res) => {
   try {
       const broadcasts = await Broadcast.findAll();
-      res.status(200).json(broadcasts);
+      return res.status(200).json(broadcasts);
   } catch (error) {
       console.error('Error fetching broadcasts:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -2490,14 +2515,15 @@ router.get('/playlists', async (req, res) => {
       };
     }));
 
-    res.status(200).json({ playlists: playListList });
+    return res.status(200).json({ playlists: playListList });
   } catch (error) {
     console.error('Error fetching playlists:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 router.get('/videos-by-playlist', async (req, res) => {
+  try {
   const playList_heading = req.query.playList_heading;
 
   console.log(playList_heading);
@@ -2505,7 +2531,7 @@ router.get('/videos-by-playlist', async (req, res) => {
     return res.status(400).json({ error: 'playList_heading query parameter is required' });
   }
 
-  try {
+ 
     const videos = await Video.findAll({
       where: { playList_heading },
       attributes: ['Video_heading', 'videoLink']
@@ -2530,19 +2556,20 @@ router.get('/videos-by-playlist', async (req, res) => {
       }
     });
 
-    res.status(200).json(response);
+    return res.status(200).json(response);
   } catch (error) {
     console.error('Error fetching videos:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 router.get('/meditation-time', async (req, res) => {
+  try {
   const { UId} = req.session;
   const { time } = req.query;
   console.log(time, UId);
   
-  try {
+  
     // Fetch the country from the reg table using UId
     const userRegDetails = await reg.findOne({ where: { UId } });
 
@@ -2581,15 +2608,16 @@ router.get('/meditation-time', async (req, res) => {
     
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 router.get('/meditationTimeDetails', async (req, res) => {
+  try {
   const { UId } = req.session;
   console.log( UId);
   
-  try {
+
     // Fetch the country from the reg table using UId
     const userRegDetails = await reg.findOne({ where: { UId } });
 
@@ -2610,7 +2638,7 @@ router.get('/meditationTimeDetails', async (req, res) => {
  
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -2640,10 +2668,11 @@ router.post('/zoom_Records', async(req,res)=>{
 });
 
 router.post('/zoom', async (req, res) => {
+  try {
   const { zoomdate, zoomStartTime, zoomStopTime, zoomLink,languages } = req.body;
   console.log(zoomdate, zoomStartTime, zoomStopTime, zoomLink,languages);
 
-  try {
+  
     const newZoom = await zoom.create({
       zoomdate,
       zoomStartTime,
@@ -2652,10 +2681,10 @@ router.post('/zoom', async (req, res) => {
       languages
     });
 
-    res.status(201).json({ message: 'Zoom record created successfully', newZoom });
+    return res.status(201).json({ message: 'Zoom record created successfully', newZoom });
   } catch (error) {
     console.error('Error creating zoom record:', error);
-    res.status(400).json({ error: 'Error creating zoom record', details: error.message });
+    return res.status(400).json({ error: 'Error creating zoom record', details: error.message });
   }
 });
 
@@ -2687,13 +2716,13 @@ router.get('/get-zoomclass', async (req, res) => {
     });
 
     if (zoomRecords.length > 0) {
-      res.status(200).json(zoomRecords);
+      return res.status(200).json(zoomRecords);
     } else {
-      res.status(404).json({ message: 'No zoom records found for the specified date' });
+      return res.status(404).json({ message: 'No zoom records found for the specified date' });
     }
   } catch (error) {
     console.error('Error fetching zoom records:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -2840,7 +2869,7 @@ router.get('/listblogs', async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -2902,13 +2931,14 @@ router.delete('/deleteMsg/:id' , async (req, res) =>{
 });
 
 router.delete('/delete-user', async (req, res) => {
+  try {
   const { UId } = req.session;
   console.log(UId);
   if (!UId) {
     return res.status(401).json({ message: 'UId is required' });
   }
 
-  try {
+ 
     const user = await reg.findOne({ where: { UId } });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
