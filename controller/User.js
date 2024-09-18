@@ -114,12 +114,11 @@ router.get('/countrieslist', async (req, res) => {
 
 const { v4: uuidv4 } = require('uuid');
 
-router.post('/registerUser', async (req, res) => {
+router.post('/registerUser', async (req, res) => { 
   try {
   console.log("..................enter...................");
   const { email, phone, country } = req.body;
-
-console.log(email, phone, country);
+  console.log(email, phone, country);
 
     const existingUser = await reg.findOne({
       where: {
@@ -197,7 +196,7 @@ async function sendOTP(email,phone,country,res) {
       service: 'gmail',
       auth: {
         user: 'thasmaistarlife@gmail.com', // Use environment variables for sensitive data
-        pass: 'ndkj dxdq kxca zplg', // Securely manage this via environment variables
+        pass: 'kdus dwdb gpfa jpf', // Securely manage this via environment variables
       },
     });
 
@@ -263,6 +262,8 @@ function generateOTP() {
     // Generate a random 4-digit OTP
     return Math.floor(1000 + Math.random() * 9000).toString();
 }
+
+
  
 router.get('/displayDataFromRedis/:key', async (req, res) => {
   
@@ -539,9 +540,9 @@ router.get('/rulesAndConditions', async (req, res) => {
   }
 });
  
-router.post('/requestPasswordReset', async (req, res) => {
+router.post('/send-otp', async (req, res) => {
   try {
-  const { email} = req.body;
+  const { email,phone,country} = req.body;
 console.log("email:"+email);
 
     // Find the user with the provided email
@@ -549,18 +550,17 @@ console.log("email:"+email);
 
     // Check if the user exists
     if (!user) {
-      return res.status(404).json({ message: 'You are not registered', status: 'false' });
+      sendOTP(email,phone,country,res);
+      return res.status(201).json({ message: 'You are not registered', status: 'false',verify: false });
     }
 else{
 
   if(user.user_Status === 'DELETED') {
-    return res.status(404).json({ message:'account is deleted ! register again' });
+    sendOTP(email,phone,country,res);
+    return res.status(202).json({ message:'account is deleted ! register again',verify: false });
 
   }
 }
-    // Extract the phone number from the found user
-    const phone = user.phone;
-    const country = user.country;
     if (!phone) {
       return res.status(400).json({ message: 'Phone number not available for this user', status: 'false' });
     }
@@ -738,6 +738,7 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
  
   router.post('/logout', (req, res) => {
     try{
@@ -1395,7 +1396,7 @@ router.post('/send-email', async (req, res) => {
       auth: {
  
         user: 'thasmaistarlife@gmail.com',
-        pass: 'ndkj dxdq kxca zplg',
+        pass: 'kdus dwdb gpfa jpf',
       },
     });
  

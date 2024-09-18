@@ -4755,7 +4755,9 @@ router.get('/list-feedback', async (req, res) => {
 
       const feedbacks = await feedback.findAndCountAll({
           limit: pageSize,
-          offset: offset
+          offset: offset,
+          order:[['id','DESC']]
+
       });
 
       const totalItems = feedbacks.count;
