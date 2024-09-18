@@ -163,8 +163,11 @@ router.post('/registerUser', async (req, res) => {
 });
 
 async function sendOTP(email,phone,country,res) {
+  console.log('send otp')
   try{
   if (country === 'India') {
+  console.log('send otp if india ')
+
     // Send OTP via the external service
     const otpRequest = {
       method: 'post',
@@ -186,6 +189,9 @@ async function sendOTP(email,phone,country,res) {
       return res.status(400).json({ message: "Failed to send OTP", status: 'false', details: otpResponse.data.message });
     }
   } else {
+
+  console.log('send otp else india')
+
     // For other countries, generate a random OTP
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     const redisKey = `otp:${phone}`;
