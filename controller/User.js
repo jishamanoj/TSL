@@ -196,7 +196,7 @@ async function sendOTP(email,phone,country,res) {
       service: 'gmail',
       auth: {
         user: 'thasmaistarlife@gmail.com', // Use environment variables for sensitive data
-        pass: 'kdus dwdb gpfa jpf', // Securely manage this via environment variables
+        pass: 'zwmg ezjk kbmv xukm', // Securely manage this via environment variables
       },
     });
 
@@ -1396,7 +1396,7 @@ router.post('/send-email', async (req, res) => {
       auth: {
  
         user: 'thasmaistarlife@gmail.com',
-        pass: 'kdus dwdb gpfa jpf',
+        pass: 'zwmg ezjk kbmv xukm',
       },
     });
  
