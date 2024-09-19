@@ -113,6 +113,7 @@ router.get('/countrieslist', async (req, res) => {
   });
 
 const { v4: uuidv4 } = require('uuid');
+const { verify } = require('crypto');
 
 router.post('/registerUser', async (req, res) => { 
   try {
@@ -485,42 +486,7 @@ router.get('/listName/:UId', async (req, res) => {
 /////////////////////////////////// USER     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
  
  
-// router.post('/requestPasswordReset', async (req, res) => {
-//         const { email } = req.body;
- 
-//         try {
-//             // Find the user with the provided email
-//             const user = await reg.findOne({ where: { email: email } });
- 
-//             if (!user) {
-//                 return res.status(404).json({ message: "User not found" });
-//             } else {
-//             // User does not exist, generate a new OTP
-//             const otp = generateOTP();
- 
-//             // Save the OTP in Redis with a key that includes the user's phone number
-//             const redisKey = `reqotp:${user.phone}`;
-//             await redis.setex(redisKey, 600, otp);
- 
-//             // Send OTP to the user via SMS
-//             const otpRequest = {
-//                 method: 'get',
-//                 url: `https://www.fast2sms.com/dev/bulkV2?authorization=aKVbUigWHc8CBXFA9rRQ17YjD4xhz5ovJGd6Ite3k0mnSNuZPMolFREdzJGqw8YVAD7HU1OatPTS6uiK&variables_values=${otp}&route=otp&numbers=${user.phone}`,
-//                 headers: {
-//                     Accept: 'application/json'
-//                 }
-//             };
- 
-//             await axios(otpRequest);
- 
-//             return res.status(200).json({ message: "OTP sent successfully",otp : otp });
-//         }
-//     } catch (error) {
-//         console.error("Error registering user:", error);
-//         return res.status(500).json({ message: "Internal Server Error" });
-//     }
-// });
- 
+
  
 router.get('/rulesAndConditions', async (req, res) => {
   try {
@@ -582,18 +548,60 @@ sendOTP(email,phone,country,res);
 
 router.post('/verify-userotp', async (req, res) => {
   try {
-    const { otp, email,phone } = req.body;
+    const { otp, email,phone,country } = req.body;
     console.log('otp:'+otp,"email:"+email);
 
     // Fetch user from the database using email
     const regUser = await reg.findOne({ where: { email: email } });
 
     if (!regUser) {
-      return res.status(401).json({ message: "User not found" });
+      if (country === 'India') {
+        // Setup request options for verifying OTP via MSG91
+        const otpOptions = {
+          method: 'GET',
+          url: 'https://control.msg91.com/api/v5/otp/verify',
+          params: {
+            otp: otp,
+            mobile: `91${phone}` // Prefix country code as required
+          },
+          headers: {
+            authkey: process.env.MSG91_AUTH_KEY // Use environment variable for authkey
+          }
+        };
+  
+        try {
+          // Make the request to MSG91 to verify the OTP
+          const response = await axios.request(otpOptions);
+  
+          // Check if OTP verification was successful
+          if (response.data.type === 'success') {
+            return res.status(200).json({ message: 'OTP verified successfully' });
+          } else {
+            return res.status(401).json({ message: 'Invalid OTP' });
+          }
+        } catch (error) {
+          console.error('Error during OTP verification via MSG91:', error);
+          return res.status(500).json({ message: 'Failed to verify OTP' });
+        }
+      } else {
+        // Handle OTP verification for countries other than India
+        const redisKey = `otp:${phone}`;
+        const storedOTP = await redis.get(redisKey);
+  
+        if (!storedOTP) {
+          return res.status(401).json({ message: "OTP not found" });
+        }
+  
+        if (storedOTP === otp) {
+          return res.status(200).json({ message: 'OTP verified successfully',verify:false });
+        } else {
+          return res.status(401).json({ message: 'Invalid OTP' });
+        }
+      }
+     // return res.status(401).json({ message: "User not found" });
     }
 
-    //const phone = regUser.phone; // Assuming the phone number is stored in regUser
-    const country = regUser.country; // Assuming the country
+   // const country = regUser.country; // Assuming the country
 
     if (country === 'India') {
       // Setup request options for verifying OTP via MSG91
@@ -633,7 +641,31 @@ router.post('/verify-userotp', async (req, res) => {
       }
 
       if (storedOTP === otp) {
-        return res.status(200).json({ message: 'OTP verified successfully' });
+        await reg.update(
+          { classAttended: true },
+          { where: { email: email } } // Ensure you update only the specific user
+        );
+    
+        // Create session and store user ID
+        req.session.UId = user.UId;
+        console.log(req.session.UId);
+    
+        // Respond with success message and user information
+        res.json({
+          message: 'Login successful',
+          user: {
+            UserId: user.UserId,
+            email: user.email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            UId: user.UId,
+            DOJ: user.DOJ,
+            isans: user.isans,
+            expiredDate: user.expiredDate
+            // Don't send sensitive information like password
+          },
+        });
+        return res.status(200).json({ message: 'OTP verified successfully',verify: true });
       } else {
         return res.status(401).json({ message: 'Invalid OTP' });
       }
@@ -676,74 +708,74 @@ router.post('/resetPassword', async (req, res) => {
   }
 });
 
-router.post('/login', async (req, res) => {
-  try {
-  const { email, password } = req.body;
-  console.log("email:"+email,"password:"+ password);
+// router.post('/login', async (req, res) => {
+//   try {
+//   const { email, password } = req.body;
+//   console.log("email:"+email,"password:"+ password);
 
-  // Validate email and password
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required' });
-  }
+//   // Validate email and password
+//   if (!email || !password) {
+//     return res.status(400).json({ message: 'Email and password are required' });
+//   }
 
  
-    // Check if the user exists and has an active status
-    const user = await reg.findOne({
-      where: {
-        email: email,
-        [Op.or]: [
-          { user_Status: 'ACTIVE' },
-          { user_Status: null }
-        ]
-      },
-    });
+//     // Check if the user exists and has an active status
+//     const user = await reg.findOne({
+//       where: {
+//         email: email,
+//         [Op.or]: [
+//           { user_Status: 'ACTIVE' },
+//           { user_Status: null }
+//         ]
+//       },
+//     });
 
-    if (!user) {
-      return res.status(404).json({ message: 'Invalid email!' });
-    }
+//     if (!user) {
+//       return res.status(404).json({ message: 'Invalid email!' });
+//     }
 
-    // Check if the password is correct
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Incorrect password!' });
-    }
+//     // Check if the password is correct
+//     const isPasswordValid = await bcrypt.compare(password, user.password);
+//     if (!isPasswordValid) {
+//       return res.status(401).json({ message: 'Incorrect password!' });
+//     }
 
-    // Check if the user is banned
-    const bannedUser = await Users.findOne({ where: { UId: user.UId, ban: true } });
-    if (bannedUser) {
-      return res.status(403).json({ message: 'Your account is banned. Please contact support.' });
-    }
+//     // Check if the user is banned
+//     const bannedUser = await Users.findOne({ where: { UId: user.UId, ban: true } });
+//     if (bannedUser) {
+//       return res.status(403).json({ message: 'Your account is banned. Please contact support.' });
+//     }
 
-    // Update the user's classAttended field
-    await reg.update(
-      { classAttended: true },
-      { where: { email: email } } // Ensure you update only the specific user
-    );
+//     // Update the user's classAttended field
+//     await reg.update(
+//       { classAttended: true },
+//       { where: { email: email } } // Ensure you update only the specific user
+//     );
 
-    // Create session and store user ID
-    req.session.UId = user.UId;
-    console.log(req.session.UId);
+//     // Create session and store user ID
+//     req.session.UId = user.UId;
+//     console.log(req.session.UId);
 
-    // Respond with success message and user information
-    res.json({
-      message: 'Login successful',
-      user: {
-        UserId: user.UserId,
-        email: user.email,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        UId: user.UId,
-        DOJ: user.DOJ,
-        isans: user.isans,
-        expiredDate: user.expiredDate
-        // Don't send sensitive information like password
-      },
-    });
-  } catch (error) {
-    console.error('Error during login:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
+//     // Respond with success message and user information
+//     res.json({
+//       message: 'Login successful',
+//       user: {
+//         UserId: user.UserId,
+//         email: user.email,
+//         first_name: user.first_name,
+//         last_name: user.last_name,
+//         UId: user.UId,
+//         DOJ: user.DOJ,
+//         isans: user.isans,
+//         expiredDate: user.expiredDate
+//         // Don't send sensitive information like password
+//       },
+//     });
+//   } catch (error) {
+//     console.error('Error during login:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// });
 
  
   router.post('/logout', (req, res) => {
