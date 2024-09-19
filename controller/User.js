@@ -201,14 +201,14 @@ async function sendOTP(email,phone,country,res) {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: 'thasmaistarlife@gmail.com', // Use environment variables for sensitive data
-        pass: 'zwmg ezjk kbmv xukm', // Securely manage this via environment variables
+        user: 'thasmai2016@gmail.com', // Use environment variables for sensitive data
+        pass: 'bwaz sgbn oalp heik', // Securely manage this via environment variables
       },
     });
 
     // Email options
     const mailOptions = {
-      from: 'thasmaistarlife@gmail.com',
+      from: 'thasmai2016@gmail.com',
       to: email, // User's email address
       subject: 'Thasmai Star Life: OTP for Registration',
       html: `
@@ -582,7 +582,7 @@ sendOTP(email,phone,country,res);
 
 router.post('/verify-userotp', async (req, res) => {
   try {
-    const { otp, email } = req.body;
+    const { otp, email,phone } = req.body;
     console.log('otp:'+otp,"email:"+email);
 
     // Fetch user from the database using email
@@ -592,7 +592,7 @@ router.post('/verify-userotp', async (req, res) => {
       return res.status(401).json({ message: "User not found" });
     }
 
-    const phone = regUser.phone; // Assuming the phone number is stored in regUser
+    //const phone = regUser.phone; // Assuming the phone number is stored in regUser
     const country = regUser.country; // Assuming the country
 
     if (country === 'India') {
@@ -1401,14 +1401,14 @@ router.post('/send-email', async (req, res) => {
       service: 'gmail',
       auth: {
  
-        user: 'thasmaistarlife@gmail.com',
-        pass: 'zwmg ezjk kbmv xukm',
+        user: 'thasmai2016@gmail.com',
+        pass: 'bwaz sgbn oalp heik',
       },
     });
  
     // Define email options
     const mailOptions = {
-      from: 'thasmaistarlife@gmail.com',
+      from: 'thasmai2016@gmail.com',
       to,
       subject: 'Thasmai Star Life : Registration Success Email',
       text: 'Your registration is complete!',
