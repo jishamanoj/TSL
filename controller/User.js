@@ -651,7 +651,7 @@ router.post('/verify-userotp', async (req, res) => {
         console.log(req.session.UId);
     
         // Respond with success message and user information
-        res.json({
+        return res.status(200).json({
           message: 'Login successful',
           user: {
             UserId: regUser.UserId,
@@ -665,7 +665,7 @@ router.post('/verify-userotp', async (req, res) => {
             // Don't send sensitive information like password
           },
         });
-        return res.status(200).json({ message: 'OTP verified successfully',verify: true });
+      //  return res.status(200).json({ message: 'OTP verified successfully',verify: true });
       } else {
         return res.status(401).json({ message: 'Invalid OTP' });
       }
