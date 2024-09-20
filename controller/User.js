@@ -647,21 +647,21 @@ router.post('/verify-userotp', async (req, res) => {
         );
     
         // Create session and store user ID
-        req.session.UId = user.UId;
+        req.session.UId = regUser.UId;
         console.log(req.session.UId);
     
         // Respond with success message and user information
         res.json({
           message: 'Login successful',
           user: {
-            UserId: user.UserId,
-            email: user.email,
-            first_name: user.first_name,
-            last_name: user.last_name,
-            UId: user.UId,
-            DOJ: user.DOJ,
-            isans: user.isans,
-            expiredDate: user.expiredDate
+            UserId: regUser.UserId,
+            email: regUser.email,
+            first_name: regUser.first_name,
+            last_name: regUser.last_name,
+            UId: regUser.UId,
+            DOJ: regUser.DOJ,
+            isans: regUser.isans,
+            expiredDate: regUser.expiredDate
             // Don't send sensitive information like password
           },
         });
