@@ -341,6 +341,10 @@ router.post("/verify_otp", upload.single('profilePic'), async (req, res) => {
       if(storedOTP === OTP){
         verifyOTP(first_name, last_name, email, DOB, gender, country, phone, reference, ref_id, languages, remark, OTP,req,res)
       }
+      else{
+      return res.status(400).send("Invalid OTP");
+
+      }
    
   }
 
@@ -555,7 +559,7 @@ router.post('/verify-userotp', async (req, res) => {
     const regUser = await reg.findOne({ where: { email: email } });
 
     if (!regUser) {
-      console.log('...........!regUser........');
+   //   console.log('...........!regUser........');
       if (country === 'India') {
         // Setup request options for verifying OTP via MSG91
         const otpOptions = {
@@ -605,7 +609,7 @@ router.post('/verify-userotp', async (req, res) => {
    // const country = regUser.country; // Assuming the country
 
     if (country === 'India') {
-      console.log("......................enterIndia................ ")
+     // console.log("......................enterIndia................ ")
       // Setup request options for verifying OTP via MSG91
       const otpOptions = {
         method: 'GET',
@@ -703,107 +707,110 @@ router.post('/verify-userotp', async (req, res) => {
   }
 });
 
- 
-router.post('/resetPassword', async (req, res) => {
-  try {
-  const { email, new_password } = req.body;
-  console.log('email:'+ email, 'new_password:'+ new_password);
- 
- 
-      // Find the user with the provided email in the 'reg' schema
-      const regUser = await reg.findOne({ where: { email: email } });
- 
-      if (!regUser) {
-          return res.status(401).json({ message: "User not found" });
+router.post("/register", upload.single('profilePic'), async (req, res) => {
+  try{
+    const { first_name, last_name, email, DOB, gender, country, phone, reference, ref_id, languages, remark} = req.body;
+    console.log("first_name: " + first_name, "last_name: " + last_name, "email: "+ email, "DOB: "+ DOB, "gender: "+ gender, "country: "+ country, "phone: "+ phone, "reference:"+reference, "ref_id: "+ ref_id, "languages:"+languages, "remark:"+ remark);
+    
+    const existingUser = await reg.findOne({
+      where: {
+        [Op.or]: [{ email }, { phone }],
+      },
+    });
+
+    if (existingUser) {
+      if (existingUser.email === email && existingUser.user_Status === 'ACTIVE') {
+        return res.status(400).json({ message: "Email already exists", status: 'false', flag: 'email' });
       }
- 
-      const hashedPassword = await bcrypt.hash(new_password, 10);
- 
-      // Update password and set classAttended to true in the 'reg' table
-      await reg.update({
-          password: hashedPassword,
-          classAttended: true,
-      }, {
-          where: { email: regUser.email },
+
+      if (existingUser.phone === phone && existingUser.user_Status === 'ACTIVE') {
+        return res.status(400).json({ message: "Phone number already exists", status: 'false', flag: 'phone' });
+      }
+    }
+        
+    const hashedPassword = await bcrypt.hash(phone, 10);
+
+    // Get the next User ID
+    const maxUserId = await reg.max('UId');
+    const UId = maxUserId + 1;
+    const currentDate = new Date().toISOString().split('T')[0]; // Get the current date in "YYYY-MM-DD" format
+
+    let profilePicUrl = '';
+
+    // Handle profile picture upload if provided
+    if (req.file) {
+      const profilePicPath = `profile_pictures/${UId}/${req.file.originalname}`;
+try{
+      // Upload the profile picture to your storage service
+      await storage.upload(req.file.path, {
+        destination: profilePicPath,
+        metadata: {
+          contentType: req.file.mimetype
+        }
       });
- 
-      return res.status(200).json({ message: "Password reset successfully" });
-  } catch (err) {
-      console.error("Error resetting password:", err);
-      return res.status(500).send(err.message || "An error occurred during password reset");
+
+      profilePicUrl = `gs://${storage.name}/${profilePicPath}`;
+
+      // Optionally, delete the temporary file after upload
+      fs.unlink(req.file.path, (err) => {
+        if (err) console.error("Error deleting temporary file:", err);
+      });
+    }
+    catch (uploadError) {
+      console.error("Error uploading profile picture:", uploadError);
+      return res.status(500).json({ message: "Profile picture upload failed" });
+    }
   }
+    // Create the user record in the database
+    const user = await reg.create({
+      first_name,
+      last_name,
+      email,
+      DOB,
+      gender,
+      phone,
+      country,
+      reference,
+      ref_id,
+      languages,
+      remark,
+      UId,
+      DOJ: currentDate,
+      expiredDate: calculateExpirationDate(),
+      password: hashedPassword,
+      verify: 'true',
+      user_Status: 'ACTIVE',
+      profilePicUrl
+    });
+
+    // Create a record in the BankDetails table for the new user
+    await BankDetails.create({
+      AadarNo: "",
+      IFSCCode: "",
+      branchName: "",
+      accountName: "",
+      accountNo: "",
+      UId: user.UId
+    });
+
+  
+    return res.status(200).json({
+      message: "Success",
+      data: {
+        id: user.UserId,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        DOJ: user.DOJ,
+        expiredDate: user.expiredDate,
+        UId: user.UId
+      }
+    });
+} catch (error) {
+  console.error("Error during user creation:", error);
+  return res.status(500).json({ message: "An error occurred during user creation" });
+}
 });
 
-// router.post('/login', async (req, res) => {
-//   try {
-//   const { email, password } = req.body;
-//   console.log("email:"+email,"password:"+ password);
-
-//   // Validate email and password
-//   if (!email || !password) {
-//     return res.status(400).json({ message: 'Email and password are required' });
-//   }
-
- 
-//     // Check if the user exists and has an active status
-//     const user = await reg.findOne({
-//       where: {
-//         email: email,
-//         [Op.or]: [
-//           { user_Status: 'ACTIVE' },
-//           { user_Status: null }
-//         ]
-//       },
-//     });
-
-//     if (!user) {
-//       return res.status(404).json({ message: 'Invalid email!' });
-//     }
-
-//     // Check if the password is correct
-//     const isPasswordValid = await bcrypt.compare(password, user.password);
-//     if (!isPasswordValid) {
-//       return res.status(401).json({ message: 'Incorrect password!' });
-//     }
-
-//     // Check if the user is banned
-//     const bannedUser = await Users.findOne({ where: { UId: user.UId, ban: true } });
-//     if (bannedUser) {
-//       return res.status(403).json({ message: 'Your account is banned. Please contact support.' });
-//     }
-
-//     // Update the user's classAttended field
-//     await reg.update(
-//       { classAttended: true },
-//       { where: { email: email } } // Ensure you update only the specific user
-//     );
-
-//     // Create session and store user ID
-//     req.session.UId = user.UId;
-//     console.log(req.session.UId);
-
-//     // Respond with success message and user information
-//     res.json({
-//       message: 'Login successful',
-//       user: {
-//         UserId: user.UserId,
-//         email: user.email,
-//         first_name: user.first_name,
-//         last_name: user.last_name,
-//         UId: user.UId,
-//         DOJ: user.DOJ,
-//         isans: user.isans,
-//         expiredDate: user.expiredDate
-//         // Don't send sensitive information like password
-//       },
-//     });
-//   } catch (error) {
-//     console.error('Error during login:', error);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// });
-
- 
   router.post('/logout', (req, res) => {
     try{
     req.session.destroy(err => {
@@ -3039,5 +3046,6 @@ router.delete('/delete-user', async (req, res) => {
     return res.status(500).json({ message: 'Error deleting user' });
   }
 });
+
 
 module.exports = router;
