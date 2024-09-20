@@ -22,25 +22,56 @@ const instance = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY,
   key_secret: process.env.RAZORPAY_API_SECRET,
 });
+
+const instance1 = new Razorpay({
+  key_id: process.env.RAZORPAY_API_KEY1,
+  key_secret: process.env.RAZORPAY_API_SECRET1,
+});
  
 ///////mediation fees/////
  
-router.post('/meditation-checkout',async (req, res) => {
-  try {
+router.post('/meditation-checkout', async (req, res) => {
+  const totalAmount = Number(req.body.amount);
+
+  const account1Amount = totalAmount * 0.50; 
+  const account2Amount = totalAmount * 0.25; 
+  const account3Amount = totalAmount * 0.25;
+
   const options = {
-    amount: Number(req.body.amount),
+    amount: totalAmount,
     currency: "INR",
+    transfers: [
+      {
+        account: "acc_Oz1KV0Ypue1q9X", 
+        amount: account1Amount, 
+        currency: "INR",
+        on_hold: 0,
+      },
+      {
+        account: "acc_OyvngROSXRXKrz", 
+        amount: account2Amount, 
+        currency: "INR",
+        on_hold: 0,
+      },
+      {
+        account: "acc_Oyw6zHLwGxOAKk", 
+        amount: account3Amount, 
+        currency: "INR",
+        on_hold: 0,
+      },
+    ],
   };
-  
+
+  try {
     const order = await instance.orders.create(options);
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       order,
     });
   } catch (error) {
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -166,34 +197,33 @@ catch (error) {
 /////dekshina//////
  
 router.post('/dekshina-checkout',async (req, res) => {
-  try {
   const options = {
     amount: Number(req.body.amount),
     currency: "INR",
   };
- 
-    const order = await instance.orders.create(options);
-    return res.status(200).json({
+  try {
+    const order = await instance1.orders.create(options);
+    res.status(200).json({
       success: true,
       order,
     });
   } catch (error) {
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       error: error.message
     });
   }
 });
  
+ 
 router.post('/dekshina-paymentVerification', async (req, res) => {
-  try{
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature,UId,amount,payment_date,payment_time,dekshina_payment_status} =
     req.body;
  
   const body = razorpay_order_id + "|" + razorpay_payment_id;
  
   const expectedSignature = crypto
-    .createHmac("sha256", process.env.RAZORPAY_API_SECRET)
+    .createHmac("sha256", process.env.RAZORPAY_API_SECRET1)
     .update(body.toString())
     .digest("hex");
  
@@ -213,23 +243,20 @@ router.post('/dekshina-paymentVerification', async (req, res) => {
         dekshina_payment_status:true
       });
       
-      return res.status(200).json({success:true})
+      res.status(200).json({success:true})
       await sendNotificationToUser(UId, 'Payment Successful', "This is a gentle reminder to pay your Guru Dakshina. Your contribution honors our Guru's guidance and supports our community.");
 
     } catch (error) {
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         error: error.message
       });
     }
   } else {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       error: "Invalid signature"
     });
-  }}
-  catch (error) {
-    return res.status(500).json("internal server error");
   }
 });
  

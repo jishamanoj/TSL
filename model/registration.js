@@ -19,7 +19,6 @@ const reg = sequelize.define('reg', {
     gender: { type: DataTypes.STRING,defaultValue: '' },
     email: {
         type: DataTypes.STRING,
-        unique: true,
         allowNull: true
     },
     address: { type: DataTypes.STRING,defaultValue: '' },
@@ -29,7 +28,6 @@ const reg = sequelize.define('reg', {
     country: { type: DataTypes.STRING,defaultValue: '' },
     phone: {
         type: DataTypes.STRING,
-        unique: true,
         allowNull: true
     },
     reference: { type: DataTypes.STRING,defaultValue: '' },
@@ -56,7 +54,7 @@ const reg = sequelize.define('reg', {
     user_Status: { type: DataTypes.STRING},
  });
 
-sequelize.sync({alter: false})
+sequelize.sync({alter: true})
     .then((data) => {
        // console.log(data);
         console.log('reg table created');

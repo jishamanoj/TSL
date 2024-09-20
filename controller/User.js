@@ -128,30 +128,29 @@ router.post('/registerUser', async (req, res) => {
     });
 
     if (existingUser) {
-      //console.log("existingUser");
+      // Check if the email exists and user is active or banned
       if (existingUser.email === email) {
-        if(existingUser.user_Status == 'ACTIVE'){
-        return res.status(400).json({ message: "Email already exists", status: 'false', flag: 'email' });
+        if (existingUser.user_Status === 'ACTIVE' || existingUser.user_Status === 'BANNED') {
+          return res.status(400).json({ message: "Email already exists", status: 'false', flag: 'email' });
+        } else {
+          // If the user is not active or banned, send OTP
+          sendOTP(email, phone, country, res);
+          return;
         }
-        else{
-          sendOTP(email,phone,country,res)
-        }
-
-      } 
-      
-      if(existingUser.phone === phone)  {
-        console.log("..............phn.................");
-        if(existingUser.user_Status == 'ACTIVE')
-          {
-            console.log("..................phone.......................");
-        return res.status(400).json({ message: "Phone number already exists", status: 'false', flag: 'phone' });
       }
-      else{
-        console.log("...................")
-        sendOTP(email,phone,country,res)
+    
+      // Check if the phone number exists and user is active or banned
+      if (existingUser.phone === phone) {
+        if (existingUser.user_Status === 'ACTIVE' || existingUser.user_Status === 'BANNED') {
+          return res.status(400).json({ message: "Phone number already exists", status: 'false', flag: 'phone' });
+        } else {
+          // If the user is not active or banned, send OTP
+          sendOTP(email, phone, country, res);
+          return;
+        }
       }
     }
-  }
+    
   else{
     sendOTP(email,phone,country,res)
   }
