@@ -555,6 +555,7 @@ router.post('/verify-userotp', async (req, res) => {
     const regUser = await reg.findOne({ where: { email: email } });
 
     if (!regUser) {
+      console.log('...........!regUser........');
       if (country === 'India') {
         // Setup request options for verifying OTP via MSG91
         const otpOptions = {
@@ -575,7 +576,7 @@ router.post('/verify-userotp', async (req, res) => {
   
           // Check if OTP verification was successful
           if (response.data.type === 'success') {
-            return res.status(200).json({ message: 'OTP verified successfully' });
+            return res.status(200).json({ message: 'OTP verified successfully',verify:false });
           } else {
             return res.status(401).json({ message: 'Invalid OTP' });
           }
@@ -604,6 +605,7 @@ router.post('/verify-userotp', async (req, res) => {
    // const country = regUser.country; // Assuming the country
 
     if (country === 'India') {
+      console.log("......................enterIndia................ ")
       // Setup request options for verifying OTP via MSG91
       const otpOptions = {
         method: 'GET',
@@ -623,7 +625,31 @@ router.post('/verify-userotp', async (req, res) => {
 
         // Check if OTP verification was successful
         if (response.data.type === 'success') {
-          return res.status(200).json({ message: 'OTP verified successfully' });
+          await reg.update(
+            { classAttended: true },
+            { where: { email: email } } // Ensure you update only the specific user
+          );
+      
+          // Create session and store user ID
+          req.session.UId = regUser.UId;
+          console.log(req.session.UId);
+      
+          // Respond with success message and user information
+          return res.status(200).json({
+            message: 'Login successful',
+            user: {
+              UserId: regUser.UserId,
+              email: regUser.email,
+              first_name: regUser.first_name,
+              last_name: regUser.last_name,
+              UId: regUser.UId,
+              DOJ: regUser.DOJ,
+              isans: regUser.isans,
+              expiredDate: regUser.expiredDate
+              // Don't send sensitive information like password
+            },
+          });
+         // return res.status(200).json({ message: 'OTP verified successfully' });
         } else {
           return res.status(401).json({ message: 'Invalid OTP' });
         }
