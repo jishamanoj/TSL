@@ -54,20 +54,14 @@ const reg = sequelize.define('reg', {
     user_Status: { type: DataTypes.STRING},
  });
 
-sequelize.sync({alter: true})
-    .then((data) => {
-       // console.log(data);
-        console.log('reg table created');
-    })
-    .catch((err) => {
-        console.log(err);
-    });
+ sequelize.sync({ alter: true })
+ .then(() => {
+     console.log('reg table created');
+ })
+ .catch((err) => {
+     console.error('Error creating table:', err);
+ });
 
-
-    
-
-
-module.exports = { reg,sequelize };
-
+module.exports = { reg, sequelize };
 
 
