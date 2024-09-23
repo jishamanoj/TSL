@@ -525,13 +525,13 @@ console.log("email:"+email);
 
     // Check if the user exists
     if (!user) {
-      sendOTP(email,phone,country,res);
+    //  sendOTP(email,phone,country,res);
       return res.status(201).json({ message: 'You are not registered', status: 'false',verify: false });
     }
 else{
 
   if(user.user_Status === 'DELETED') {
-    sendOTP(email,phone,country,res);
+   // sendOTP(email,phone,country,res);
     return res.status(202).json({ message:'account is deleted ! register again',verify: false });
 
   }
@@ -791,7 +791,7 @@ try{
       accountNo: "",
       UId: user.UId
     });
-
+    sendOTP(email,phone,country,res);
   
     return res.status(200).json({
       message: "Success",
