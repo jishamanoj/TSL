@@ -182,7 +182,7 @@ async function sendOTP(email,phone,country,res) {
 
     // Check if the OTP was sent successfully based on the response from the API
     if (otpResponse.data.type === 'success') {
-      return res.status(200).json({ message: "OTP sent successfully", status: 'true',verify: True });
+      return res.status(200).json({ message: "OTP sent successfully", status: 'true',verify: true });
     } else {
       // Log the reason if OTP was not successful (msg91 provides a response message)
       console.error('OTP sending failed:', otpResponse.data);
@@ -253,7 +253,7 @@ async function sendOTP(email,phone,country,res) {
         return res.status(500).json({ message: 'Failed to send email', status: 'false' });
       } else {
         console.log('Email sent:', info.response);
-        return res.status(200).json({ message: 'OTP sent successfully via email', status: 'true',verify: True, redisKey });
+        return res.status(200).json({ message: 'OTP sent successfully via email', status: 'true',verify: true, redisKey });
       }
     });
   }
@@ -614,7 +614,7 @@ router.post('/verify-userotp', async (req, res) => {
               // Don't send sensitive information like password
             },
             status: 'True',
-            verify: True
+            verify: true
           });
         
         } else {
@@ -657,7 +657,7 @@ router.post('/verify-userotp', async (req, res) => {
             expiredDate: regUser.expiredDate
           },
           status: 'True',
-          verify: True
+          verify: true
         });
       } else {
         return res.status(401).json({ message: 'Invalid OTP' });
@@ -1054,6 +1054,8 @@ router.delete('/delete-user/:phone', async (req, res) => {
 //         return res.status(500).json({ message: 'Internal Server Error' });
 //     }
 // });
+
+
 
 router.post('/meditation', async (req, res) => {
   try {
