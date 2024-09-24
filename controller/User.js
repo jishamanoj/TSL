@@ -530,9 +530,7 @@ console.log("email:"+email);
       }
     });
 
-    // Check if the user exists
     if (!user) {
-    //  sendOTP(email,phone,country,res);
       return res.status(201).json({ message: 'You are not registered', status: 'false',verify: false });
     }
 else{
@@ -615,6 +613,8 @@ router.post('/verify-userotp', async (req, res) => {
               expiredDate: regUser.expiredDate
               // Don't send sensitive information like password
             },
+            status: 'True',
+            verify: True
           });
         
         } else {
@@ -656,11 +656,14 @@ router.post('/verify-userotp', async (req, res) => {
             isans: regUser.isans,
             expiredDate: regUser.expiredDate
           },
+          status: 'True',
+          verify: True
         });
       } else {
         return res.status(401).json({ message: 'Invalid OTP' });
       }
-    }}
+    }
+  }
 
   } catch (error) {
     console.error('Error:', error);
@@ -2240,7 +2243,7 @@ router.put('/updateUserDetails', async (req, res) => {
 router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
   try {
   const UId = req.session.UId
-  console.log(req.session.UId);
+  console.log(req.body.UId);
 //  const userData = req.body;
   const profilePicFile = req.file;
 
