@@ -521,7 +521,14 @@ router.post('/send-otp', async (req, res) => {
 console.log("email:"+email);
 
     // Find the user with the provided email
-    const user = await reg.findOne({ where: { email: email } });
+    const user = await reg.findOne({
+      where: {
+        [Op.or]: [
+          { email: email }, // Check by email
+          { phone: phone }  // Check by phone
+        ]
+      }
+    });
 
     // Check if the user exists
     if (!user) {
@@ -555,61 +562,18 @@ router.post('/verify-userotp', async (req, res) => {
     console.log('otp:'+otp,"email:"+email);
 
     // Fetch user from the database using email
-    const regUser = await reg.findOne({ where: { email: email } });
-
-    if (!regUser) {
-   //   console.log('...........!regUser........');
-      if (country === 'India') {
-        // Setup request options for verifying OTP via MSG91
-        const otpOptions = {
-          method: 'GET',
-          url: 'https://control.msg91.com/api/v5/otp/verify',
-          params: {
-            otp: otp,
-            mobile: `91${phone}` // Prefix country code as required
-          },
-          headers: {
-            authkey: process.env.MSG91_AUTH_KEY // Use environment variable for authkey
-          }
-        };
-  
-        try {
-          // Make the request to MSG91 to verify the OTP
-          const response = await axios.request(otpOptions);
-  
-          // Check if OTP verification was successful
-          if (response.data.type === 'success') {
-            return res.status(200).json({ message: 'OTP verified successfully',verify:false });
-          } else {
-            return res.status(401).json({ message: 'Invalid OTP' });
-          }
-        } catch (error) {
-          console.error('Error during OTP verification via MSG91:', error);
-          return res.status(500).json({ message: 'Failed to verify OTP' });
-        }
-      } else {
-        // Handle OTP verification for countries other than India
-        const redisKey = `otp:${phone}`;
-        const storedOTP = await redis.get(redisKey);
-  
-        if (!storedOTP) {
-          return res.status(401).json({ message: "OTP not found" });
-        }
-  
-        if (storedOTP === otp) {
-          return res.status(200).json({ message: 'OTP verified successfully',verify:false });
-        } else {
-          return res.status(401).json({ message: 'Invalid OTP' });
-        }
+    const regUser = await reg.findOne({
+      where: {
+        [Op.or]: [
+          { email: email }, // Check by email
+          { phone: phone }  // Check by phone
+        ]
       }
-     // return res.status(401).json({ message: "User not found" });
-    }
+    });
 
-   // const country = regUser.country; // Assuming the country
-
+    if (regUser) {
     if (country === 'India') {
-     // console.log("......................enterIndia................ ")
-      // Setup request options for verifying OTP via MSG91
+    
       const otpOptions = {
         method: 'GET',
         url: 'https://control.msg91.com/api/v5/otp/verify',
@@ -630,7 +594,7 @@ router.post('/verify-userotp', async (req, res) => {
         if (response.data.type === 'success') {
           await reg.update(
             { classAttended: true },
-            { where: { email: email } } // Ensure you update only the specific user
+            { where: { phone: phone } } // Ensure you update only the specific user
           );
       
           // Create session and store user ID
@@ -652,7 +616,7 @@ router.post('/verify-userotp', async (req, res) => {
               // Don't send sensitive information like password
             },
           });
-         // return res.status(200).json({ message: 'OTP verified successfully' });
+        
         } else {
           return res.status(401).json({ message: 'Invalid OTP' });
         }
@@ -691,14 +655,12 @@ router.post('/verify-userotp', async (req, res) => {
             DOJ: regUser.DOJ,
             isans: regUser.isans,
             expiredDate: regUser.expiredDate
-            // Don't send sensitive information like password
           },
         });
-      //  return res.status(200).json({ message: 'OTP verified successfully',verify: true });
       } else {
         return res.status(401).json({ message: 'Invalid OTP' });
       }
-    }
+    }}
 
   } catch (error) {
     console.error('Error:', error);
