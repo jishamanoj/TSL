@@ -8,11 +8,15 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
 
 });
 const zoom = sequelize.define('zoom',{
-zoomdate:{type:DataTypes.STRING},
+zoomdateto:{type:DataTypes.STRING},
+zoomdatefrom:{type:DataTypes.STRING},
 zoomStartTime:{type:DataTypes.STRING},
 zoomStopTime:{type:DataTypes.STRING},
 zoomLink:{type:DataTypes.STRING},
 languages:{type:DataTypes.STRING},
+daysOfWeek: {
+    type: DataTypes.JSON 
+  }
 },
 {
     timestamps: false, 

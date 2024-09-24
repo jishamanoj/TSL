@@ -182,7 +182,7 @@ async function sendOTP(email,phone,country,res) {
 
     // Check if the OTP was sent successfully based on the response from the API
     if (otpResponse.data.type === 'success') {
-      return res.status(200).json({ message: "OTP sent successfully", status: 'true' });
+      return res.status(200).json({ message: "OTP sent successfully", status: 'true',verify: True });
     } else {
       // Log the reason if OTP was not successful (msg91 provides a response message)
       console.error('OTP sending failed:', otpResponse.data);
@@ -253,7 +253,7 @@ async function sendOTP(email,phone,country,res) {
         return res.status(500).json({ message: 'Failed to send email', status: 'false' });
       } else {
         console.log('Email sent:', info.response);
-        return res.status(200).json({ message: 'OTP sent successfully via email', status: 'true', redisKey });
+        return res.status(200).json({ message: 'OTP sent successfully via email', status: 'true',verify: True, redisKey });
       }
     });
   }
@@ -2705,16 +2705,18 @@ router.post('/zoom_Records', async(req,res)=>{
 
 router.post('/zoom', async (req, res) => {
   try {
-  const { zoomdate, zoomStartTime, zoomStopTime, zoomLink,languages } = req.body;
-  console.log(zoomdate, zoomStartTime, zoomStopTime, zoomLink,languages);
+  const { zoomdateto,zoomdatefrom, zoomStartTime, zoomStopTime, zoomLink,languages,daysOfWeek } = req.body;
+  console.log(zoomdateto,zoomdatefrom, zoomStartTime, zoomStopTime, zoomLink,languages);
 
   
     const newZoom = await zoom.create({
-      zoomdate,
+      zoomdateto,
+      zoomdatefrom,
       zoomStartTime,
       zoomStopTime,
       zoomLink,
-      languages
+      languages,
+      daysOfWeek
     });
 
     return res.status(201).json({ message: 'Zoom record created successfully', newZoom });
