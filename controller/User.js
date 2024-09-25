@@ -1775,37 +1775,50 @@ router.get('/get-messages', async (req, res) => {
 router.get('/meditation-date', async (req, res) => {
   try {
     const { UId } = req.session;
-    console.log(UId);
     if (!UId) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
     // Validate and parse page query parameter
-    
     const page = req.query.page ? parseInt(req.query.page, 10) : 1;
     const limit = 25;
-
     const offset = (page - 1) * limit;
 
-    const totalCount = await timeTracking.count({ where: { UId } });
-    const totalPages = Math.ceil(totalCount / limit);
-
-    const user = await timeTracking.findAll({
+    // Fetch all meditation entries for the user
+    const allEntries = await timeTracking.findAll({
       attributes: ['UId', 'med_starttime', 'timeEstimate', 'ismeditated'],
-      where: {
-        UId: UId,
-        ismeditated:1
-      },
-      limit,
-      offset
+      where: { UId },
+      raw: true
     });
+
+    // Group entries by the date of 'med_starttime' and sum the 'timeEstimate' for each date
+    const groupedData = allEntries.reduce((acc, entry) => {
+      const date = new Date(entry.med_starttime).toISOString().split('T')[0]; // Extract the date part (YYYY-MM-DD)
+      if (!acc[date]) {
+        acc[date] = { totalTimeEstimate: 0, UId: entry.UId, ismeditated: entry.ismeditated, date };
+      }
+      acc[date].totalTimeEstimate += parseInt(entry.timeEstimate, 10); // Sum up the timeEstimate
+      return acc;
+    }, {});
+
+    // Filter the grouped data based on the condition (totalTimeEstimate >= 90)
+    const filteredData = Object.values(groupedData).filter(data => data.totalTimeEstimate >= 90);
+
+    // Paginate the filtered data
+    const paginatedData = filteredData.slice(offset, offset + limit);
+    const totalCount = filteredData.length;
+    const totalPages = Math.ceil(totalCount / limit);
 
     // Format response data and send it
     const responseData = {
       totalPages,
       currentPage: page,
       totalCount,
-      data: user
+      data: paginatedData.map(({ date, UId, ismeditated }) => ({
+        date,
+        UId,
+        ismeditated
+      }))
     };
 
     return res.status(200).json(responseData);
