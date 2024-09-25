@@ -44,6 +44,9 @@ const feedback =require('../model/feedback');
 const operatorFund = require('../model/operatorFund');
 const mahadhanamDistribution = require('../model/mahadhanamDistribution');
 const mahadhanamCouponDistribution =require('../model/mahadhanamCouponDistribution');
+const departments =require('../model/department');
+const supportandcontact = require('../model/supportandcontact');
+
 
 //////
 admin.initializeApp({
@@ -4710,6 +4713,40 @@ router.get('/meditation-time/:id', async (req, res) => {
   }
 });
 
+router.delete('/delete-meditation-time/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const meditationTimeRecord = await meditationTime.findByPk(id);
+
+    if (!meditationTimeRecord) {
+      return res.status(404).json({ error: 'Meditation time record not found' });
+    }
+    const deleteFile = async (gsUrl) => {
+      if (!gsUrl) return;
+      const filePath = gsUrl.replace(`gs://${storage.name}/`, '');
+      const file = storage.file(filePath);
+      const [exists] = await file.exists();
+      if (exists) {
+        await file.delete();
+        console.log(`File ${filePath} deleted successfully.`);
+      } else {
+        console.log(`File ${filePath} does not exist.`);
+      }
+    };
+
+    await deleteFile(meditationTimeRecord.morning_image);
+    await deleteFile(meditationTimeRecord.evening_image);
+    await deleteFile(meditationTimeRecord.general_image);
+    await meditationTimeRecord.destroy();
+
+    res.status(200).json({ message: 'Meditation time record and associated images deleted successfully.' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 //////////////////////////zoom meeting/////////////////////////////
 
 router.get('/get-zoomclass', async (req, res) => {
@@ -5470,6 +5507,140 @@ router.put('/update-user-status', async (req, res) => {
   } catch (error) {
     console.error('Error updating user statuses:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+router.post('/addDepartments', async (req, res) => {
+  try {
+    const data = req.body; 
+    await departments.create(data); 
+    return res.status(200).json('Department added successfully');
+  } catch (error) {
+    return res.status(500).json({ error: error.message }); 
+  }
+});
+ 
+ 
+router.get('/listDepartments',async(req,res) =>{
+  try{
+      const departmentsList = await departments.findAll();
+      return res.status(200).json({message:'Fetching data successfully',departmentsList});
+ 
+  } catch (error) {
+      return res.status(500).json({message:'internal server error'});
+  }
+});
+ 
+ 
+router.put('/updateDepartments',async(req,res) =>{
+  try{
+    const id = req.body.id;
+    const updatedData = req.body;
+    await departments.update(updatedData,{where:{id}});
+    return res.status(200).json('Department updated successfully');
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+ 
+router.delete('/deleteDepartments/:id', async (req, res) => {
+  try {
+    const id = req.params.id; 
+    const department = await departments.findByPk(id); 
+ 
+    if (!department) { 
+      return res.status(404).json('Department not found');
+    }
+ 
+    await department.destroy(); 
+    return res.status(200).json('Department deleted successfully');
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+ 
+ 
+router.post('/addContact' , async (req,res) =>{
+  try{
+    const {departments,name,contact} = req.body;
+    const newdata= await supportandcontact.create({
+      departments,
+      name,
+      contact
+    });
+    return res.status(200).json('Contact added successfully');
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+ 
+ 
+router.get('/listContacts' , async (req,res) =>{
+  try{
+    const list = await supportandcontact.findAll();
+    return res.status(200).json({message:'Fetching data successfully',list});
+  } catch(error) {
+    return res.status(500).json({message:'internal server error'});
+  }
+});
+ 
+router.put('/updateContacts', async (req,res) =>{
+  console.log('enter');
+  try{
+   // const id = req.body.id;
+    const {id,departments,name,contact} =req.body
+    console.log(id,departments,name,contact);
+     await supportandcontact.update(
+      {departments,name,contact},{where:{ id:id }});
+     return res.status(200).json({
+      message: 'Contact updated successfully',
+      //data: newData
+    });
+  } catch(error) {
+    console.log(error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+ 
+ 
+router.delete('/deleteContact/:id' , async (req, res) =>{
+  try{
+    const id = req.params.id;
+    await supportandcontact.destroy({where:{id}});
+    return res.status(200).json('Contact deleted successfully');
+  } catch(error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+ 
+router.get('/searchContact/:value', async (req, res) => {
+  try {
+    const value = req.params.value;
+ 
+    if (!value) {
+      return res.status(400).json({ message: 'Please provide a value to search' });
+    }
+ 
+    // Modify query to use the correct operator for MySQL (`LIKE` instead of `ILIKE`)
+    const result = await supportandcontact.findAll({
+      where: {
+        [Op.or]: [
+          { departments: { [Op.like]: `%${value}%` } },
+          { name: { [Op.like]: `%${value}%` } },
+          { contact: { [Op.like]: `%${value}%` } }
+        ]
+      }
+    });
+ 
+    // Handle case where no results are found
+    if (result.length === 0) {
+      return res.status(404).json({ message: 'No matching contacts found' });
+    }
+ 
+    return res.status(200).json({ message: 'Search results', result });
+  } catch (error) {
+    return res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
 

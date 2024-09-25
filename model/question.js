@@ -14,6 +14,7 @@ const questions = sequelize.define('questions', {
     ans3: { type: DataTypes.STRING},
     ans4: { type: DataTypes.STRING},
     ans5:{ type: DataTypes.STRING},
+    ans6:{ type: DataTypes.STRING},
     conditions:{type:DataTypes.TEXT}
 },
  {

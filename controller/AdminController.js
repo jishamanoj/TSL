@@ -365,6 +365,36 @@ router.get('/search', async (req, res) => {
           return res.status(500).json({ error: 'Internal Server Error' });
       }
   });
+
+  router.put('/admin-changepassword', async (req, res) => {
+    try {
+      const { username, newPassword } = req.body;
+  
+      // Validate request body
+      if (!username || !newPassword) {
+        return res.status(400).json({ error: 'Username and new password are required' });
+      }
+  
+      // Fetch the admin user by username
+      const admin = await Admin.findOne({ where: { username } });
+  
+      if (!admin) {
+        return res.status(404).json({ error: 'Admin not found' });
+      }
+  
+      // Hash the new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10); // 10 is the salt rounds
+  
+      // Update the admin's password
+      admin.password = hashedPassword;
+      await admin.save(); // Save the updated admin to the database
+  
+      return res.status(200).json({ message: 'Password updated successfully' });
+    } catch (error) {
+      console.error('Error updating password:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
   
   router.post('/meditation-flag', async (req, res) => {
     try {
