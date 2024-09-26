@@ -5644,6 +5644,22 @@ router.get('/searchContact/:value', async (req, res) => {
   }
 });
 
+router.get('/contact/:id' , async(req,res) =>{
+  try{
+    const id = req.params.id;
+    if(!id){
+      return res.status(400).json('Id is required');  
+    }
+    const contact = await supportandcontact.findOne({where:{id}});
+    if(!contact){
+      return res.status(404).json('Contact not found');  
+    }
+    return res.status(200).json({message:'Fetching data successfully',contact});
+  } catch (error){
+    return res.status(500).json({message:'internal server error'});
+  }
+});
+
 module.exports = router;
 
 
