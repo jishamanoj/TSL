@@ -3343,35 +3343,79 @@ router.post('/admin-messages', async (req, res) => {
 
 ///////////////get global messages////////////////////////////////
 
+// router.post('/adminglobalMessage', async (req, res) => {
+//   try {
+//     const page = parseInt(req.body.page) || 1;
+//     const limit = 10;
+
+//     const totalCount = await globalMessage.count();
+
+//     const totalPages = Math.ceil(totalCount / limit);
+
+//     const messages = await globalMessage.findAll({
+//       attributes: ['UId', 'id','message', 'messageTime','messageDate', 'isAdminMessage'],
+//       include: [], // No need for Sequelize include here
+//       order: [['id', 'DESC']],
+//       limit: limit,
+//       offset: (page - 1) * limit
+//     });
+//    // console.log(".................",messages);
+
+//     // Fetch first_name and last_name from reg table for each message UId
+//     const messageData = await Promise.all(messages.map(async (message) => {
+//       const userData = await Users.findOne({ where: { UId: message.UId }, attributes: ['firstName', 'secondName'] });
+//       console.log("................",userData)
+//       const userName = `${userData.firstName} ${userData.secondName}`;
+  
+//       return { 
+//         ...message.toJSON(), 
+//         userName 
+//       };
+//     }));
+
+//     return res.status(200).json({
+//       message: 'fetching messages',
+//       messages: messageData,
+//       totalPages
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
 router.post('/adminglobalMessage', async (req, res) => {
   try {
     const page = parseInt(req.body.page) || 1;
     const limit = 10;
 
     const totalCount = await globalMessage.count();
-
     const totalPages = Math.ceil(totalCount / limit);
 
     const messages = await globalMessage.findAll({
-      attributes: ['UId', 'id','message', 'messageTime','messageDate', 'isAdminMessage'],
-      include: [], // No need for Sequelize include here
+      attributes: ['UId', 'id', 'message', 'messageTime', 'messageDate', 'isAdminMessage'],
       order: [['id', 'DESC']],
       limit: limit,
       offset: (page - 1) * limit
     });
-   // console.log(".................",messages);
 
     // Fetch first_name and last_name from reg table for each message UId
-    const messageData = await Promise.all(messages.map(async (message) => {
-      const userData = await Users.findOne({ where: { UId: message.UId }, attributes: ['firstName', 'secondName'] });
-      console.log("................",userData)
-      const userName = `${userData.firstName} ${userData.secondName}`;
-  
-      return { 
-        ...message.toJSON(), 
-        userName 
-      };
-    }));
+    const messageData = await Promise.all(
+      messages.map(async (message) => {
+        const userData = await Users.findOne({
+          where: { UId: message.UId },
+          attributes: ['firstName', 'secondName']
+        });
+
+        // Check if userData exists to avoid null errors
+        const userName = userData ? `${userData.firstName} ${userData.secondName}` : 'Unknown User';
+
+        return {
+          ...message.toJSON(),
+          userName
+        };
+      })
+    );
 
     return res.status(200).json({
       message: 'fetching messages',
@@ -3379,10 +3423,12 @@ router.post('/adminglobalMessage', async (req, res) => {
       totalPages
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching messages:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
 
 router.post('/gurujimessage', async (req, res) => {
   try {
