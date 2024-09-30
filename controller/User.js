@@ -175,6 +175,9 @@ async function sendOTP(email,phone,country,res) {
       headers: {
         Accept: 'application/json',
       },
+      // data: {
+      //   otp_message: `Your OTP is {{otp}}. @otp-autofill.vercel.app #.`
+      // }
     };
 
     // Await OTP response
@@ -2741,33 +2744,92 @@ router.post('/zoom', async (req, res) => {
   }
 });
 
+// router.get('/get-zoomclass', async (req, res) => {
+//   try {
+//     const { UId } = req.session;
+//     console.log(UId);
+//     const { currentDate,currentDay } = req.query;
+//     console.log(currentDate);
+
+//     if (!UId || !currentDate || !currentDay) {
+//       return res.status(400).json({ message: 'UId ,currentDay and currentDate  are required' });
+//     }
+//     const data = await reg.findAll({
+//       where: {
+//         UId: UId
+//       }
+//     });
+
+//     if (data.length === 0) {
+//       return res.status(404).json({ message: 'User data not found' });
+//     }
+
+//     const zoomRecords = await zoom.findAll({
+//       where: {
+//         zoomdate: currentDate,
+//         languages: data.languages
+//       }
+//     });
+
+//     if (zoomRecords.length > 0) {
+//       return res.status(200).json(zoomRecords);
+//     } else {
+//       return res.status(404).json({ message: 'No zoom records found for the specified date' });
+//     }
+//   } catch (error) {
+//     console.error('Error fetching zoom records:', error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
+
+
 router.get('/get-zoomclass', async (req, res) => {
   try {
     const { UId } = req.session;
-    console.log(UId);
-    const { currentDate } = req.query;
-    console.log(currentDate);
+    console.log(`UId: ${UId}`);
+    const { currentDate, currentDay } = req.query;
+    console.log(`currentDate: ${currentDate}, currentDay: ${currentDay}`);
 
-    if (!UId || !currentDate) {
-      return res.status(400).json({ message: 'UId and currentDate are required' });
+    // Check if required parameters are provided
+    if (!UId || !currentDate || !currentDay) {
+      return res.status(400).json({ message: 'UId, currentDay, and currentDate are required' });
     }
+
+    // Fetch user data
     const data = await reg.findAll({
       where: {
         UId: UId
       }
     });
 
+    // If no user data is found
     if (data.length === 0) {
       return res.status(404).json({ message: 'User data not found' });
     }
+    const userLanguages = data[0]?.languages;
+    console.log("language",userLanguages)
+    
 
+    // Fetch Zoom records where the date is within the range and day matches
     const zoomRecords = await zoom.findAll({
       where: {
-        zoomdate: currentDate,
-        languages: data[0]?.languages
+        zoomdatefrom: {
+          [Op.lte]: currentDate // currentDate is greater than or equal to zoomdatefrom
+        },
+        zoomdateto: {
+          [Op.gte]: currentDate // currentDate is less than or equal to zoomdateto
+        },
+        languages: data[0]?.languages, // Ensure this value is defined
+        [Op.and]: sequelize.where(
+          sequelize.fn('JSON_CONTAINS', sequelize.col('daysOfWeek'), JSON.stringify(currentDay)),
+          1 // Check if currentDay is in daysOfWeek array
+        )
       }
     });
-
+    console.log("zoom records",zoomRecords);
+    
+    // Return Zoom records if found, otherwise send a 404 response
     if (zoomRecords.length > 0) {
       return res.status(200).json(zoomRecords);
     } else {

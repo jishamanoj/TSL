@@ -10,4 +10,5 @@ app.use('/admin',require('../controller/AdminController'));
 app.use('/superadmin',require('../controller/superAdminController'));
 app.use('/User',require('../controller/User'));
 app.use('/payment',require('../controller/notification'));
+app.use('/rnd',require('../controller/RND'));
 module.exports = app;
