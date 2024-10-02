@@ -26,7 +26,10 @@ const Video = sequelize.define('video', {
     },
     playList_image: {
         type:DataTypes.STRING
-    }   
+    }  , 
+    position:{
+    type: DataTypes.INTEGER
+    }
 }, {
     timestamps: false,
 });

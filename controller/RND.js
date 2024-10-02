@@ -84,6 +84,49 @@ router.get('/get-questions', async (req, res) => {
     }
   });
   
+
+// router.get('/get-questions', async (req, res) => {
+//     try {
+//       const questions = await rnd.findAll();
+      
+//       const formattedQuestions = questions.map(q => {
+//         const options = {
+//           ans1: q.ans1 !== null ? { label: q.ans1, score: q.ans1_score } : null,
+//           ans2: q.ans2 !== null ? { label: q.ans2, score: q.ans2_score } : null,
+//           ans3: q.ans3 !== null ? { label: q.ans3, score: q.ans3_score } : null,
+//           ans4: q.ans4 !== null ? { label: q.ans4, score: q.ans4_score } : null,
+//           ans5: q.ans5 !== null ? { label: q.ans5, score: q.ans5_score } : null,
+//           ans6: q.ans6 !== null ? { label: q.ans6, score: q.ans6_score } : null,
+//           ans7: q.ans7 !== null ? { label: q.ans7, score: q.ans7_score } : null,
+//           ans8: q.ans8 !== null ? { label: q.ans8, score: q.ans8_score } : null,
+//           ans9: q.ans9 !== null ? { label: q.ans9, score: q.ans9_score } : null,
+//           ans10: q.ans10 !== null ? { label: q.ans10, score: q.ans10_score } : null
+//         };
+  
+//         // Filter out fields with null values
+//         const filteredOptions = Object.fromEntries(
+//           Object.entries(options).filter(([key, value]) => value !== null)
+//         );
+        
+//         return {
+//           id: q.id,
+//           type: q.type,
+//           question: q.question,
+//           options: filteredOptions
+//         };
+//       });
+  
+//       return res.status(200).json({
+//         message: 'Questions retrieved successfully',
+//         data: formattedQuestions
+//       });
+//     } catch (error) {
+//       console.error('Error fetching questions:', error);
+//       return res.status(500).json({ message: 'Internal Server Error' });
+//     }
+//   });
+  
+
   router.get('/get-question/:id', async (req, res) => {
     const { id } = req.params;
   

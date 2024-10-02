@@ -21,16 +21,16 @@ const rnd = sequelize.define('rnd', {
     ans8:{ type: DataTypes.STRING},
     ans9:{ type: DataTypes.STRING},
     ans10:{ type: DataTypes.STRING},
-    ans1_score:{ type: DataTypes.STRING},
-    ans2_score:{ type: DataTypes.STRING},
-    ans3_score:{ type: DataTypes.STRING},
-    ans4_score:{ type: DataTypes.STRING},
-    ans5_score:{ type: DataTypes.STRING},
-    ans6_score:{ type: DataTypes.STRING},
-    ans7_score:{ type: DataTypes.STRING},
-    ans8_score:{ type: DataTypes.STRING},
-    ans9_score:{ type: DataTypes.STRING},
-    ans10_score:{ type: DataTypes.STRING}   
+    ans1_score:{ type: DataTypes.INTEGER},
+    ans2_score:{ type: DataTypes.INTEGER},
+    ans3_score:{ type: DataTypes.INTEGER},
+    ans4_score:{ type: DataTypes.INTEGER},
+    ans5_score:{ type: DataTypes.INTEGER},
+    ans6_score:{ type: DataTypes.INTEGER},
+    ans7_score:{ type: DataTypes.INTEGER},
+    ans8_score:{ type: DataTypes.INTEGER},
+    ans9_score:{ type: DataTypes.INTEGER},
+    ans10_score:{ type: DataTypes.INTEGER}   
 
 },
  {

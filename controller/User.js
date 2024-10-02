@@ -1632,7 +1632,7 @@ router.post('/send-email', async (req, res) => {
   </div>
   <div class="message" style="color: #4F4539;">
       <p>Hi ${first_name} ${last_name},</p>
-      <p>Congratulations! Registration complete. Your register number: ${UId}.</p>
+      <p>Congratulations! Registration complete. Your register number: TSL${UId}.</p>
       <p>To receive further details about the introduction class (zoom session): Please send a “hi” to number ‘+91 9900829007’. Thank you for taking the first step.</p>
  
       <p class="whatsapp-link">
@@ -2047,12 +2047,9 @@ router.post('/messages', async (req, res) => {
   try {
       const UId = req.session.UId
       console.log(req.session.UId);
-      //const UId = req.body.UId;
       const { message, messageTime,isAdminMessage, messagetype,messageDate} = req.body;
       console.log(message, messageTime, isAdminMessage, messagetype, messageDate);
-
-      // Check if the user exists in the reg table and maintanance_fee is true
-      const regUser = await reg.findOne({ where: { UId, maintanance_fee: true } });
+      const regUser = await maintenance.findOne({ where: { UId, maintanance_fee: true } });
 
       // Check if the user exists in the User table
       const user = await Users.findOne({ where: { UId } });
@@ -2095,7 +2092,6 @@ else{
         messagetype
       });
     }
-      // Check the message type and save accordingly
       
       return res.status(200).json({ message: 'Message created successfully' });
   } catch (error) {
