@@ -2167,7 +2167,7 @@ router.get('/globalMessage/:page', async (req, res) => {
  
     const messages = await globalMessage.findAll({
       attributes: [ 'id','UId', 'message', 'messageTime','messageDate', 'isAdminMessage'],
-      include: [], // No need for Sequelize include here
+      include: [], 
       order: [['id', 'DESC']],
       limit: limit,
       offset: (page - 1) * limit

@@ -2,6 +2,8 @@ const express = require('express');
 const rnd = require('../model/rnd');
 const router = express.Router();
 const rndUserresponse = require('../model/rndUserresponce');
+const healthDetail = require('../model/healthResponceDetails');
+const healthQuestion = require('../model/healthQuestions');
 
 router.post('/insert-question', async (req, res) => {
     const {category,type, question, ans1, ans2, ans3, ans4, ans5, ans6, ans7, ans8, ans9, ans10, ans1_score,
@@ -340,6 +342,170 @@ router.get('/fetch-data/:UId', async (req, res) => {
 });
 
 
+router.post('/submit-health-questions', async (req, res) => {
+  try {
+    const questionsData = req.body; // Expecting an array of question-answer pairs
 
-  
+    // Validate the input
+    if (!Array.isArray(questionsData) || questionsData.length === 0) {
+      return res.status(400).json({ message: 'The input should be an array of question-answer pairs.' });
+    }
+
+    // Loop through the array and insert each question-answer pair
+    const insertedData = [];
+    for (const entry of questionsData) {
+      const { questions, answers } = entry;
+
+      // Validate each entry
+      if (!questions || !answers || !Array.isArray(answers)) {
+        return res.status(400).json({ message: 'Each entry must have a question and an array of answers.' });
+      }
+
+      const newResponse = await healthQuestion.create({
+        questions,
+        answers
+      });
+
+      insertedData.push(newResponse);
+    }
+
+    // Send success response with all inserted data
+    return res.status(201).json({
+      message: 'Health questions and answers inserted successfully!',
+      data: insertedData
+    });
+  } catch (error) {
+    console.error('Error inserting health questions and answers:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+router.get('/get-health-questions', async (req, res) => {
+  try {
+      const questionsData = await healthQuestion.findAll();
+
+      const formattedData = questionsData.map((entry) => ({
+          question: entry.questions,  
+          ans: entry.answers           
+      }));
+
+     
+      if (formattedData.length === 0) {
+          return res.status(404).json({ message: 'No questions found.' });
+      }
+
+      
+      return res.status(200).json({
+         // message: 'Questions retrieved successfully!',
+          data: formattedData
+      });
+  } catch (error) {
+      console.error('Error fetching questions:', error);
+      return res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+// router.post('/submit-health-data', async (req, res) => {
+//   try {
+//       const { answers } = req.body; // Expecting { answers: [{question: ..., answer: ...}, ...] }
+//      // const UId = req.session.UId; // Get UId from session
+
+//       // Validate that 'answers' is an array
+//       if (!Array.isArray(answers) || answers.length === 0) {
+//           return res.status(400).json({ message: 'Answers must be a non-empty array' });
+//       }
+
+//       // Loop through the answers array and insert each question-answer pair into the table
+//       const healthEntries = await Promise.all(
+//           answers.map(async (entry) => {
+//               const { question, answer } = entry;
+
+//               // Ensure both question and answer are provided
+//               if (!question || !answer) {
+//                   throw new Error('Both question and answer are required.');
+//               }
+
+//               return healthDetail.create({
+//               //    UId, // Store UId from session
+//                   question,
+//                   answer,
+//                   // Dates can be included here if needed
+//               });
+//           })
+//       );
+
+//       return res.status(201).json({
+//           message: 'Health data inserted successfully!',
+//           data: healthEntries
+//       });
+//   } catch (error) {
+//       console.error('Error inserting health data:', error);
+//       return res.status(500).json({ message: 'Internal Server Error', error: error.message });
+//   }
+// });
+
+
+router.post('/submit-health-data', async (req, res) => {
+  try {
+      const { answers } = req.body; 
+      const UId = req.session.UId; 
+
+    
+      if (!Array.isArray(answers) || answers.length === 0) {
+          return res.status(400).json({ message: 'Answers must be a non-empty array' });
+      }
+
+      const healthEntries = await Promise.all(
+          answers.map(async (entry) => {
+              const { question, answer } = entry;
+
+             
+              if (!question || !answer) {
+                  throw new Error('Both question and answer are required.');
+              }
+
+              
+              return healthDetail.create({
+                  UId, 
+                  question,
+                  answers:  answer, 
+                  Dates: new Date().toISOString(), 
+                  Rndprequestion : true
+              });
+          })
+      );
+
+      return res.status(201).json({
+          message: 'Health data inserted successfully!',
+          data: healthEntries
+      });
+  } catch (error) {
+      console.error('Error inserting health data:', error);
+      return res.status(500).json({ message: 'Internal Server Error', error: error.message });
+  }
+});
+
+router.get('/fetch-rndprequestion', async (req, res) => {
+  try {
+      const UId = req.session.UId; // Get UId from session
+
+      const results = await healthDetail.findOne({
+          where: { UId },
+          attributes: ['Rndprequestion'], 
+      });
+
+      // Check if any results were found
+      if (results.length === 0) {
+          return res.status(404).json({ message: 'No records found for the provided UId.' });
+      }
+
+      return res.status(200).json({
+          message: 'Rndprequestion retrieved successfully!',
+          data: results,
+      });
+  } catch (error) {
+      console.error('Error fetching Rndprequestion:', error);
+      return res.status(500).json({ message: 'Internal Server Error', error: error.message });
+  }
+});
+
 module.exports = router;
