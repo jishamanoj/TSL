@@ -2151,13 +2151,13 @@ router.get('/privateMessage/:page' , async(req, res) =>{
  
 router.get('/globalMessage/:page', async (req, res) => {
   try {
-   const { UId } = req.session;
-   console.log(UId);
-   // const UId = req.query.UId;
-    if(!UId){
-      return res.status(401).json('User not Authenticated');
-    }
-    else{
+  //  const { UId } = req.body;
+  //  console.log(UId);
+  //  // const UId = req.query.UId;
+  //   if(!UId){
+  //     return res.status(401).json('User not Authenticated');
+  //   }
+  //   else{
     const page = parseInt(req.params.page) || 1;
     const limit = 100;
  
@@ -2190,7 +2190,7 @@ router.get('/globalMessage/:page', async (req, res) => {
       messages: messageData,
       totalPages
     });
-    }
+    
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Internal Server Error' });
@@ -2692,7 +2692,6 @@ router.get('/meditationTimeDetails', async (req, res) => {
   }
 });
 
-
 router.post('/zoom_Records', async(req,res)=>{
   try{
     const {UId} = req.session;
@@ -2740,45 +2739,6 @@ router.post('/zoom', async (req, res) => {
   }
 });
 
-// router.get('/get-zoomclass', async (req, res) => {
-//   try {
-//     const { UId } = req.session;
-//     console.log(UId);
-//     const { currentDate,currentDay } = req.query;
-//     console.log(currentDate);
-
-//     if (!UId || !currentDate || !currentDay) {
-//       return res.status(400).json({ message: 'UId ,currentDay and currentDate  are required' });
-//     }
-//     const data = await reg.findAll({
-//       where: {
-//         UId: UId
-//       }
-//     });
-
-//     if (data.length === 0) {
-//       return res.status(404).json({ message: 'User data not found' });
-//     }
-
-//     const zoomRecords = await zoom.findAll({
-//       where: {
-//         zoomdate: currentDate,
-//         languages: data.languages
-//       }
-//     });
-
-//     if (zoomRecords.length > 0) {
-//       return res.status(200).json(zoomRecords);
-//     } else {
-//       return res.status(404).json({ message: 'No zoom records found for the specified date' });
-//     }
-//   } catch (error) {
-//     console.error('Error fetching zoom records:', error);
-//     return res.status(500).json({ error: 'Internal Server Error' });
-//   }
-// });
-
-
 
 router.get('/get-zoomclass', async (req, res) => {
   try {
@@ -2799,15 +2759,12 @@ router.get('/get-zoomclass', async (req, res) => {
       }
     });
 
-    // If no user data is found
     if (data.length === 0) {
       return res.status(404).json({ message: 'User data not found' });
     }
     const userLanguages = data[0]?.languages;
     console.log("language",userLanguages)
     
-
-    // Fetch Zoom records where the date is within the range and day matches
     const zoomRecords = await zoom.findAll({
       where: {
         zoomdatefrom: {
@@ -2995,7 +2952,7 @@ router.post('/global' , async(req,res)=>{
       return res.status(401).json('UId is required');
     }
 
-    const regUser = await reg.findOne({ where: { UId, maintanance_fee: true } });
+    const regUser = await maintenance.findOne({ where: { UId, maintanance_fee: true } });
 
     // Check if the user exists in the User table
     const user = await Users.findOne({ where: { UId } });
