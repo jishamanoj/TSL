@@ -2049,7 +2049,7 @@ router.post('/messages', async (req, res) => {
       console.log(req.session.UId);
       const { message, messageTime,isAdminMessage, messagetype,messageDate} = req.body;
       console.log(message, messageTime, isAdminMessage, messagetype, messageDate);
-      const regUser = await maintenance.findOne({ where: { UId, maintanance_fee: true } });
+      const regUser = await maintenance.findOne({ where: { UId, maintenance_payment_status: true } });
 
       // Check if the user exists in the User table
       const user = await Users.findOne({ where: { UId } });
@@ -2952,7 +2952,7 @@ router.post('/global' , async(req,res)=>{
       return res.status(401).json('UId is required');
     }
 
-    const regUser = await maintenance.findOne({ where: { UId, maintanance_fee: true } });
+    const regUser = await maintenance.findOne({ where: { UId, maintenance_payment_status: true } });
 
     // Check if the user exists in the User table
     const user = await Users.findOne({ where: { UId } });
