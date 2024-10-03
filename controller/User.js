@@ -2193,7 +2193,7 @@ router.get('/globalMessage/:page', async (req, res) => {
     });
       
   } catch (error) {
-    console.error(error);
+    console.error("................................",error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
