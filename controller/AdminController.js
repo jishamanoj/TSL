@@ -184,7 +184,7 @@ const userReg = await reg.findOne({
 }
     return response.status(200).json({ message: 'Payment processed and data copied successfully' });
   } catch (error) {
-    console.error('Error:', error);
+    console.log('Error:', error);
     return response.status(500).json({ error: 'Internal Server Error' });
   }
 
@@ -231,7 +231,7 @@ return response.json({status:"success",refs:refs})
       }
       catch (err) {
         // Handle errors
-        console.error(err);
+        console.log(err);
         return response.status(500).json({ status: "error", message: "Internal server error" });
     }
 
@@ -258,7 +258,7 @@ return response.json({status:"success",refs:refs})
 //       return res.json({ status: "success", data: "User updated successfully" });
 //   } catch (err) {
 //       // Handle errors
-//       console.error(err);
+//       console.log(err);
 //       return res.status(500).json({ status: "error", message: "Internal server error" });
 //   }
 // });
@@ -301,7 +301,7 @@ router.post('/closeuser', async (req, res) => {
     return res.json({ status: "success", data: "User updated successfully" });
   } catch (err) {
     // Handle errors
-    console.error(err);
+    console.log(err);
     return res.status(500).json({ status: "error", message: "Internal server error" });
   }
 });
@@ -338,7 +338,7 @@ router.get('/search', async (req, res) => {
   
       return res.json({ status: 'success', data: searchResults });
     } catch (error) {
-      console.error(error);
+      console.log(error);
       return res.status(500).json({ status: 'error', message: 'Internal Server Error' });
     }
   });
@@ -361,7 +361,7 @@ router.get('/search', async (req, res) => {
   
           return res.status(201).json({ message: 'Admin details inserted successfully', admin: newAdmin });
       } catch (error) {
-          console.error('Error:', error);
+          console.log('Error:', error);
           return res.status(500).json({ error: 'Internal Server Error' });
       }
   });
@@ -391,7 +391,7 @@ router.get('/search', async (req, res) => {
   
       return res.status(200).json({ message: 'Password updated successfully' });
     } catch (error) {
-      console.error('Error updating password:', error);
+      console.log('Error updating password:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   });
@@ -424,7 +424,7 @@ router.get('/search', async (req, res) => {
       });
   
     } catch (error) {
-      console.error(error);
+      console.log(error);
       return res.status(500).json({ error: 'Server error' });
     }
   });

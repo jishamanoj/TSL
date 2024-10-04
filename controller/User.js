@@ -72,7 +72,7 @@ router.get('/getAllUsers', async (req, res) => {
     // Send the response with users data including profilePicUrl
     return res.status(200).json({ users: usersWithProfilePicUrl });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -88,7 +88,7 @@ router.post('/countries', async (req, res) => {
  
             res.status(200).send({ message: "Countries added to the database successfully" });
         } catch (error) {
-            console.error(error);
+            console.log(error);
             res.status(500).send({ message: "An error occurred while adding countries to the database" });
         }
     } else {
@@ -107,7 +107,7 @@ router.get('/countrieslist', async (req, res) => {
  
       res.json(countries);
     } catch (error) {
-      console.error(error);
+      console.log(error);
       res.status(500).send({ message: 'An error occurred while fetching countries' });
     }
   });
@@ -157,7 +157,7 @@ router.post('/registerUser', async (req, res) => {
    
   } catch (error) {
     // Log error details for debugging
-    console.error("Error registering user:", error.message);
+    console.log("Error registering user:", error.message);
     return res.status(500).json({ message: "Internal Server Error", status: 'false' });
   }
 });
@@ -188,7 +188,7 @@ async function sendOTP(email,phone,country,res) {
       return res.status(200).json({ message: "OTP sent successfully", status: 'true',verify: true });
     } else {
       // Log the reason if OTP was not successful (msg91 provides a response message)
-      console.error('OTP sending failed:', otpResponse.data);
+      console.log('OTP sending failed:', otpResponse.data);
       return res.status(400).json({ message: "Failed to send OTP", status: 'false', details: otpResponse.data.message });
     }
   } else {
@@ -252,7 +252,7 @@ async function sendOTP(email,phone,country,res) {
     // Send the email
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        console.error('Error sending email:', error);
+        console.log('Error sending email:', error);
         return res.status(500).json({ message: 'Failed to send email', status: 'false' });
       } else {
         console.log('Email sent:', info.response);
@@ -290,7 +290,7 @@ router.get('/displayDataFromRedis/:key', async (req, res) => {
             res.status(404).json({ message: 'Data not found in Redis' });
         }
     } catch (error) {
-        console.error('Error retrieving data from Redis:', error);
+        console.log('Error retrieving data from Redis:', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
@@ -322,7 +322,7 @@ router.post("/verify_otp", upload.single('profilePic'), async (req, res) => {
 
       // Check response status from OTP verification
       if (otpResponse.data.type !== 'success') {
-        console.error('Invalid OTP:', otpResponse.data);
+        console.log('Invalid OTP:', otpResponse.data);
         return res.status(400).send("Invalid OTP");
       }
     
@@ -352,7 +352,7 @@ router.post("/verify_otp", upload.single('profilePic'), async (req, res) => {
 
   } catch (err) {
     // Log the error and send an appropriate response
-    console.error("<........error........>", err);
+    console.log("<........error........>", err);
     return res.status(500).send(err.message || "An error occurred during OTP verification");
   }
 });
@@ -386,7 +386,7 @@ try{
 
       // Optionally, delete the temporary file after upload
       fs.unlink(req.file.path, (err) => {
-        if (err) console.error("Error deleting temporary file:", err);
+        if (err) console.log("Error deleting temporary file:", err);
       });
     }
 
@@ -437,7 +437,7 @@ try{
   return res.status(200).json(responseData);
 
 } catch (error) {
-  console.error("Error during user creation:", error);
+  console.log("Error during user creation:", error);
   return res.status(500).json({ message: "An error occurred during user creation" });
 }
 }
@@ -484,7 +484,7 @@ router.get('/listName/:UId', async (req, res) => {
  
     res.status(200).json(processedData);
   } catch (error) {
-    console.error(error);
+    console.log(error);
     res.status(500).json({ error: 'An error occurred' });
   }
 });
@@ -513,7 +513,7 @@ router.get('/rulesAndConditions', async (req, res) => {
     // Return the condition value in the API response
     return res.status(200).json({ message: 'Condition value retrieved successfully', condition: conditionValue });
   } catch (error) {
-    console.error('Error retrieving condition value:', error);
+    console.log('Error retrieving condition value:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -551,7 +551,7 @@ sendOTP(email,phone,country,res);
 
   } catch (error) {
     // Log error details for debugging
-    console.error('Error during OTP request:', error.message);
+    console.log('Error during OTP request:', error.message);
     return res.status(500).json({ message: 'Internal Server Error', status: 'false' });
   }
 });
@@ -624,7 +624,7 @@ router.post('/verify-userotp', async (req, res) => {
           return res.status(401).json({ message: 'Invalid OTP' });
         }
       } catch (error) {
-        console.error('Error during OTP verification via MSG91:', error);
+        console.log('Error during OTP verification via MSG91:', error);
         return res.status(500).json({ message: 'Failed to verify OTP' });
       }
     } else {
@@ -669,7 +669,7 @@ router.post('/verify-userotp', async (req, res) => {
   }
 
   } catch (error) {
-    console.error('Error:', error);
+    console.log('Error:', error);
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
@@ -720,11 +720,11 @@ try{
 
       // Optionally, delete the temporary file after upload
       fs.unlink(req.file.path, (err) => {
-        if (err) console.error("Error deleting temporary file:", err);
+        if (err) console.log("Error deleting temporary file:", err);
       });
     }
     catch (uploadError) {
-      console.error("Error uploading profile picture:", uploadError);
+      console.log("Error uploading profile picture:", uploadError);
       return res.status(500).json({ message: "Profile picture upload failed" });
     }
   }
@@ -773,7 +773,7 @@ try{
       }
     });
 } catch (error) {
-  console.error("Error during user creation:", error);
+  console.log("Error during user creation:", error);
   return res.status(500).json({ message: "An error occurred during user creation" });
 }
 });
@@ -782,7 +782,7 @@ try{
     try{
     req.session.destroy(err => {
       if (err) {
-        console.error('Error destroying session:', err);
+        console.log('Error destroying session:', err);
         return res.status(500).json({ message: 'Failed to logout' });
       }
       res.clearCookie('connect.sid'); // Clear the session cookie
@@ -849,7 +849,7 @@ router.get('/getUserById', async (req, res) => {
       // Send the response with merged user data
       return res.status(200).json({ user: mergedUser });
   } catch (error) {
-      console.error(error);
+      console.log(error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -897,7 +897,7 @@ router.get('/flag', async (req, res) => {
     return res.status(200).json({message:response});
 
   } catch (error) {
-    console.error('Error fetching flag data:', error);
+    console.log('Error fetching flag data:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -939,7 +939,7 @@ router.post('/meditation-data', async (req, res) => {
  
       return res.status(200).json({ message: 'Meditation data updated successfully' });
     } catch (error) {
-      console.error(error);
+      console.log(error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   });
@@ -962,7 +962,7 @@ router.get('/reference', async (req, res) => {
       const fullName = `${user.first_name} ${user.last_name}`.trim();
       res.json({ full_name: fullName });
   } catch (error) {
-      console.error('Error:', error);
+      console.log('Error:', error);
       res.status(500).json({ message: 'Internal Server Error' });
   }
 });
@@ -972,7 +972,7 @@ router.get('/list-questions', async (req, res) => {
       const Questions = await questions.findAll();
       res.json(Questions);
     } catch (error) {
-      console.error('Error:', error);
+      console.log('Error:', error);
       res.status(500).json({ message: 'Internal Server Error' });
     }
   });
@@ -1009,7 +1009,7 @@ router.get('/user-details', async (req, res) => {
  
       res.json(combinedData);
   } catch (error) {
-      console.error('Error:', error);
+      console.log('Error:', error);
       res.status(500).json({ message: 'Internal Server Error' });
   }
 });
@@ -1032,7 +1032,7 @@ router.delete('/delete-user/:phone', async (req, res) => {
  
         return res.status(200).json({ message: 'User deleted successfully' });
     } catch (error) {
-        console.error('Error:', error);
+        console.log('Error:', error);
         return res.status(500).json({ message: 'Internal Server Error' });
     }
 });
@@ -1053,7 +1053,7 @@ router.delete('/delete-user/:phone', async (req, res) => {
 // return res.status(200).json({ message: 'User deleted successfully' });
  
 //     } catch (error) {
-//         console.error('Error:', error);
+//         console.log('Error:', error);
 //         return res.status(500).json({ message: 'Internal Server Error' });
 //     }
 // });
@@ -1162,7 +1162,7 @@ router.post('/meditation', async (req, res) => {
     }
 
   } catch (error) {
-    console.error('Error:', error);
+    console.log('Error:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -1182,7 +1182,7 @@ router.get('/guruji-date', async (req, res) => {
       return res.status(404).json({ error: 'Application config not found' });
     }
   } catch (error) {
-    console.error('Error retrieving application config:', error);
+    console.log('Error retrieving application config:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -1249,7 +1249,7 @@ router.get('/guruji-date', async (req, res) => {
       message: 'Appointment has been allocated successfully! We will notify guruji soon.',
     });
   } catch (error) {
-    console.error('Error:', error);
+    console.log('Error:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -1271,7 +1271,7 @@ router.put('/rating', async (req, res) => {
  
     return res.status(200).json({ message: 'Rating updated successfully' });
   } catch (error) {
-    console.error('Error updating rating:', error);
+    console.log('Error updating rating:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -1301,7 +1301,7 @@ router.get('/list-appointment', async (req, res) => {
     // Respond with the list of appointments
     return res.status(200).json({ message: 'Fetching appointments', appointments });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -1352,7 +1352,7 @@ router.put('/updateAppointment/:id', async (req, res) => {
  
     return res.status(200).json({ message: 'Appointment and GroupMembers updated successfully' });
   } catch (error) {
-    console.error('Error updating appointment and group members:', error);
+    console.log('Error updating appointment and group members:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -1390,7 +1390,7 @@ router.delete('/delete-appointment', async (req, res) => {
     // Respond with a success message
     return res.status(200).json({ message: 'Appointment and associated group members deleted successfully' });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -1414,7 +1414,7 @@ router.delete('/group-members/:id', async (req, res) => {
     // Respond with a success message
     return res.status(200).json({ message: 'Group member deleted successfully' });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -1713,14 +1713,14 @@ router.post('/send-email', async (req, res) => {
     // Send the email
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        console.error('Error:', error);
+        console.log('Error:', error);
       } else {
         console.log('Email sent:', info.response);
       }
     return res.status(200).json({ message: 'Email sent successfully' });
     });
   } catch (error) {
-    console.error('Error:', error);
+    console.log('Error:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -1745,7 +1745,7 @@ router.get('/meditation-detail', async (req, res) => {
  
       return res.status(200).json(user);
   } catch (error) {
-      console.error('Error:', error);
+      console.log('Error:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -1770,7 +1770,7 @@ router.get('/get-messages', async (req, res) => {
  
       return res.status(200).json(messages);
   } catch (error) {
-      console.error('Error:', error);
+      console.log('Error:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -1827,7 +1827,7 @@ router.get('/meditation-date', async (req, res) => {
     return res.status(200).json(responseData);
 
   } catch (error) {
-    console.error('Error:', error);
+    console.log('Error:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -1866,7 +1866,7 @@ router.post('/addBankDetails', async (req, res) => {
 
     return res.status(200).json({ message: 'Bank details added successfully' });
   } catch (error) {
-    console.error('Error:', error);
+    console.log('Error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -1882,7 +1882,7 @@ router.get('/getBankDetails', async (req, res) => {
     const userBankDetails = await BankDetails.findOne({where: {UId}}); // assuming you've defined it as "BankDetail" in the reg model
     return res.status(200).json(userBankDetails);
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -1933,7 +1933,7 @@ try {
     console.log(prompt);
     return res.status(200).json({ prompt });
 } catch (error) {
-    console.error('Error:', error);
+    console.log('Error:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
 }
 });
@@ -1973,7 +1973,7 @@ router.get('/fetch-details', async (req, res) => {
  
       return res.status(200).json(mergedDetails);
   } catch (error) {
-      console.error('Error:', error);
+      console.log('Error:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -2004,7 +2004,7 @@ router.put('/appointment-feedback/:id', async (req, res) => {
           return res.status(404).json({ error: 'Appointment not found' });
       }
   } catch (error) {
-      console.error('Error:', error);
+      console.log('Error:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -2038,7 +2038,7 @@ router.put('/maintances-fee', async (req, res) => {
       return res.status(200).json({ message: 'Maintenance fee updated successfully', updatedFee });
  
   } catch (error) {
-      console.error(error);
+      console.log(error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -2095,7 +2095,7 @@ else{
       
       return res.status(200).json({ message: 'Message created successfully' });
   } catch (error) {
-      console.error('Error:', error);
+      console.log('Error:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -2144,7 +2144,7 @@ router.get('/privateMessage/:page' , async(req, res) =>{
       return res.status(200).json({messages: 'fetching messages', messages , totalPages});
     }
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -2193,7 +2193,7 @@ router.get('/globalMessage/:page', async (req, res) => {
     });
       
   } catch (error) {
-    console.error("................................",error);
+    console.log("................................",error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -2217,7 +2217,7 @@ router.get('/gurujimessage/:page', async (req, res) => {
 
     return res.status(200).json({ message: 'fetching messages', messages, totalPages });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -2250,7 +2250,7 @@ router.put('/updateUserDetails', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -2311,7 +2311,7 @@ router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -2459,7 +2459,7 @@ router.get('/transaction_summary', async (req, res) => {
       totalTransactionCount
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json('Internal server error');
   }
 });
@@ -2492,7 +2492,7 @@ router.get('/transaction_list', async (req, res) => {
       transactions
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json('Internal server error');
   }
 });
@@ -2502,7 +2502,7 @@ router.get('/broadcasts', async (req, res) => {
       const broadcasts = await Broadcast.findAll();
       return res.status(200).json(broadcasts);
   } catch (error) {
-      console.error('Error fetching broadcasts:', error);
+      console.log('Error fetching broadcasts:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -2568,7 +2568,7 @@ router.get('/playlists', async (req, res) => {
 
     return res.status(200).json({ playlists: playListList });
   } catch (error) {
-    console.error('Error fetching playlists:', error);
+    console.log('Error fetching playlists:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -2609,7 +2609,7 @@ router.get('/videos-by-playlist', async (req, res) => {
 
     return res.status(200).json(response);
   } catch (error) {
-    console.error('Error fetching videos:', error);
+    console.log('Error fetching videos:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -2658,7 +2658,7 @@ router.get('/meditation-time', async (req, res) => {
     }
     
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -2688,7 +2688,7 @@ router.get('/meditationTimeDetails', async (req, res) => {
     return res.status(200).json({message:'meditation time details' , meditationTimeDetails});
  
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -2735,7 +2735,7 @@ router.post('/zoom', async (req, res) => {
 
     return res.status(201).json({ message: 'Zoom record created successfully', newZoom });
   } catch (error) {
-    console.error('Error creating zoom record:', error);
+    console.log('Error creating zoom record:', error);
     return res.status(400).json({ error: 'Error creating zoom record', details: error.message });
   }
 });
@@ -2790,7 +2790,7 @@ router.get('/get-zoomclass', async (req, res) => {
       return res.status(404).json({ message: 'No zoom records found for the specified date' });
     }
   } catch (error) {
-    console.error('Error fetching zoom records:', error);
+    console.log('Error fetching zoom records:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -2845,7 +2845,7 @@ router.post('/button-block', async (req, res) => {
       return res.status(404).json({ key: false, message: 'UId not found or date does not match in timeTracking', UId, date });
     }
   } catch (error) {
-    console.error('Error checking date:', error);
+    console.log('Error checking date:', error);
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
@@ -2895,7 +2895,7 @@ console.log(user);
     return res.status(200).json(responseData);
 
   } catch (error) {
-    console.error('Error:', error);
+    console.log('Error:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -2972,7 +2972,7 @@ router.post('/global' , async(req,res)=>{
   });
   return res.status(200).json({ message: 'Message created successfully' });
 } catch (error) {
-    console.error('Error:', error);
+    console.log('Error:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
 }
 });
@@ -2994,7 +2994,7 @@ router.delete('/deleteMsg/:id' , async (req, res) =>{
     return res.status(200).json('message deleted successfully');
   }
   catch(error){
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -3039,7 +3039,7 @@ router.delete('/delete-user', async (req, res) => {
 
     return res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Error deleting user' });
   }
 });

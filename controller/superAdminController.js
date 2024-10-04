@@ -166,7 +166,7 @@ router.get('/register-count', async (req, res) => {
 
       res.json(result);
   } catch (error) {
-      console.error(error);
+      console.log(error);
       return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -296,7 +296,7 @@ router.get('/this-month', async (req, res) => {
 
       res.json({ count: userCount });
   } catch (error) {
-      console.error('Error:', error);
+      console.log('Error:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -459,7 +459,7 @@ router.post('/events-query', async (req, res) => {
 
     res.json({ queryResults, totalPages });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
   }
 });
@@ -496,7 +496,7 @@ router.get('/get-event/:id', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -555,7 +555,7 @@ router.put('/update-event/:id', upload.single('image'), async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
   } catch (error) {
-    //console.error(error);
+    //console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -628,7 +628,7 @@ router.post('/events-query', async (req, res) => {
     // Assuming sequelize returns an array of rows in the first element of the results array
     res.json({ Results ,totalPages});
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
   }
 });
@@ -678,7 +678,7 @@ router.get('/searchfield', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -744,7 +744,7 @@ router.post('/coupon-systemDistribute', async (req, res) => {
     // Send response after all updates are complete
     res.json({ message: 'Coupons distributed successfully', updatedCoupons });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -822,7 +822,7 @@ router.post('/redeem', async (req, res) => {
 
     res.json({ message: 'Coupons reduced successfully for specified users.',distributionDetails: updatedUsers});
     } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -915,7 +915,7 @@ router.get('/download', async (req, res) => {
     res.end();
 
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -993,7 +993,7 @@ router.post('/revoke-coupons', async (req, res) => {
 
     return res.status(200).json({ message: 'Coupons revoked successfully' });
   } catch (error) {
-    console.error('Error revoking coupons:', error);
+    console.log('Error revoking coupons:', error);
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
@@ -1031,7 +1031,7 @@ router.post('/distributetousers', async (req, res) => {
 
     return res.status(200).json({ message: 'Coupons distributed equally successfully' });
   } catch (error) {
-    console.error('Error distributing coupons equally:', error);
+    console.log('Error distributing coupons equally:', error);
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
@@ -1052,7 +1052,7 @@ router.get('/TSL', async (req, res) => {
 
    // res.json(users);
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -1091,7 +1091,7 @@ router.get('/list-meditators', async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -1110,7 +1110,7 @@ router.get('/view-cart', async (req, res) => {
     // Send the response with the distribution records and total coupons to distribute
     return res.status(200).json({ distributionRecords, totalCouponsToDistribute });
   } catch (error) {
-    console.error('Error fetching distribution records:', error);
+    console.log('Error fetching distribution records:', error);
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
@@ -1127,7 +1127,7 @@ router.get('/total-coupons', async (req, res) => {
 
     return res.status(200).json({ totalCoupons });
   } catch (error) {
-    console.error('Error fetching total coupons:', error);
+    console.log('Error fetching total coupons:', error);
     return res.status(500).json({ message: 'Error fetching total coupons', details: error.message });
   }
 });
@@ -1172,7 +1172,7 @@ router.post('/execute-query', async (req, res) => {
 
     res.json({ queryResults, totalPages });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
   }
 });
@@ -1229,7 +1229,7 @@ router.post('/copy-users', async (req, res) => {
 
     return res.status(200).json({ message: 'Data copied successfully!' });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Error copying data', error });
   }
 });
@@ -1277,7 +1277,7 @@ router.get('/mahadhanam-searchfield', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -1343,7 +1343,7 @@ router.post('/mahadhanam-coupon-systemDistribute', async (req, res) => {
     // Send response after all updates are complete
     res.json({ message: 'Coupons distributed successfully', updatedCoupons });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -1421,7 +1421,7 @@ router.post('/mahadhanam-redeem', async (req, res) => {
 
     res.json({ message: 'Coupons reduced successfully for specified users.',distributionDetails: updatedUsers});
     } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -1514,7 +1514,7 @@ router.get('/mahadhanam-download', async (req, res) => {
     res.end();
 
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -1592,7 +1592,7 @@ router.post('/mahadhanam-revoke-coupons', async (req, res) => {
 
     return res.status(200).json({ message: 'Coupons revoked successfully' });
   } catch (error) {
-    console.error('Error revoking coupons:', error);
+    console.log('Error revoking coupons:', error);
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
@@ -1630,7 +1630,7 @@ router.post('/mahadhanam-distributetousers', async (req, res) => {
 
     return res.status(200).json({ message: 'Coupons distributed equally successfully' });
   } catch (error) {
-    console.error('Error distributing coupons equally:', error);
+    console.log('Error distributing coupons equally:', error);
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
@@ -1651,7 +1651,7 @@ router.get('/mahadhanam-TSL', async (req, res) => {
 
    // res.json(users);
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -1690,7 +1690,7 @@ router.get('/mahadhanam-list-meditators', async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -1709,7 +1709,7 @@ router.get('/mahadhanam-view-cart', async (req, res) => {
     // Send the response with the distribution records and total coupons to distribute
     return res.status(200).json({ distributionRecords, totalCouponsToDistribute });
   } catch (error) {
-    console.error('Error fetching distribution records:', error);
+    console.log('Error fetching distribution records:', error);
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
@@ -1726,7 +1726,7 @@ router.get('/mahadhanam-total-coupons', async (req, res) => {
 
     return res.status(200).json({ totalCoupons });
   } catch (error) {
-    console.error('Error fetching total coupons:', error);
+    console.log('Error fetching total coupons:', error);
     return res.status(500).json({ message: 'Error fetching total coupons', details: error.message });
   }
 });
@@ -1769,7 +1769,7 @@ router.post('/ban-User', async (req, res) => {
     return res.json({ status: "success", data: "User updated successfully" });
   } catch (err) {
     // Handle errors
-    console.error(err);
+    console.log(err);
     return res.status(500).json({ status: "error", message: "Internal server error" });
   }
 });
@@ -1814,7 +1814,7 @@ router.post('/mahadhanam-execute-query', async (req, res) => {
 
     res.json({ queryResults, totalPages });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
   }
 });
@@ -1940,7 +1940,7 @@ router.put('/update-support/:id', async (req, res) => {
           return res.status(404).json({ error: 'Support contact not found' });
       }
   } catch (error) {
-      //console.error(error); 
+      //console.log(error); 
 
       return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
@@ -2024,7 +2024,7 @@ router.get('/list-users', async (req, res) => {
       currentPage: page 
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -2099,7 +2099,7 @@ router.post('/financial-query', async (req, res) => {
 
     res.json({ results: mergedResults,totalPages });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
   }
 });
@@ -2171,7 +2171,7 @@ router.get('/search', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -2225,7 +2225,7 @@ router.get('/list-donation', async (req, res) => {
       currentPage: page 
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -2297,7 +2297,7 @@ router.post('/donation-query', async (req, res) => {
  
     res.json({ results: mergedResults,totalPages });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
   }
 });
@@ -2377,7 +2377,7 @@ router.get('/donation-search', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -2431,7 +2431,7 @@ router.get('/list-fees', async (req, res) => {
       currentPage: page 
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -2503,7 +2503,7 @@ router.post('/fees-query', async (req, res) => {
  
     res.json({ results: mergedResults,totalPages });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
   }
 });
@@ -2583,7 +2583,7 @@ router.get('/fees-search', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -2683,7 +2683,7 @@ router.post('/operation-query', async (req, res) => {
 
     res.json({ queryResults, totalPages });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
   }
 });
@@ -2762,7 +2762,7 @@ router.get('/operation-search', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -2867,7 +2867,7 @@ router.post('/ashram-query', async (req, res) => {
  
     res.json({ queryResults: detailedResults, totalPages });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
   }
 });
@@ -2929,7 +2929,7 @@ router.get('/ashram-search', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -2982,7 +2982,7 @@ router.get('/list-all-appointment', async (req, res) => {
 
     res.json({ appointments: mergedResults, totalPages });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -3012,7 +3012,7 @@ router.get('/list-appointment-details', async (req, res) => {
     // Respond with the list of merged appointment data
     return res.status(200).json({ message: 'Fetching appointments', appointments: appointmentsWithGroupMembersAndCoupons });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 })
@@ -3055,7 +3055,7 @@ router.get('/list-appointment/:id', async (req, res) => {
       imageUrl
     } });
   } catch (error) {
-   // console.error(error);
+   // console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -3113,7 +3113,7 @@ console.log(appointmentImageUrl);
           return res.status(404).json({ error: 'Appointment not found' });
       }
   } catch (error) {
-      console.error(error);
+      console.log(error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -3153,7 +3153,7 @@ router.put('/discount/:UId', async (req, res) => {
 
     return res.status(200).json({ message: 'Discount updated successfully' });
   } catch (error) {
-    console.error('Error:', error);
+    console.log('Error:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -3179,7 +3179,7 @@ router.put('/update-gurujidate', async (req, res) => {
 
     return res.status(200).json({ message: 'Application config updated successfully' });
   } catch (error) {
-    console.error('Error updating application config:', error);
+    console.log('Error updating application config:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -3228,7 +3228,7 @@ router.post('/appointment-query', async (req, res) => {
     // Assuming sequelize returns an array of rows in the first element of the results array
     res.json({ results: results[0], totalPages });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
   }
 });
@@ -3336,7 +3336,7 @@ router.post('/admin-messages', async (req, res) => {
 
     return res.status(201).json({ message: 'Message created successfully', data: newMessage });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -3379,7 +3379,7 @@ router.post('/admin-messages', async (req, res) => {
 //       totalPages
 //     });
 //   } catch (error) {
-//     console.error(error);
+//     console.log(error);
 //     return res.status(500).json({ error: 'Internal Server Error' });
 //   }
 // });
@@ -3423,7 +3423,7 @@ router.post('/adminglobalMessage', async (req, res) => {
       totalPages
     });
   } catch (error) {
-    console.error('Error fetching messages:', error);
+    console.log('Error fetching messages:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -3449,7 +3449,7 @@ router.post('/gurujimessage', async (req, res) => {
 
     return res.status(200).json({ message: 'fetching messages', messages, totalPages });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -3469,7 +3469,7 @@ router.post('/global-message', async (req, res) => {
 
     return res.status(201).json({ message: 'Message created successfully', data: newMessage });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -3506,7 +3506,7 @@ router.get('/get-event/:id', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -3562,7 +3562,7 @@ router.post('/expense', upload.array('invoice', 20), async (req, res) => {
 
       return res.status(201).json({ message: 'Ashram expense created successfully', expense: newExpense });
   } catch (error) {
-      console.error(error);
+      console.log(error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -3655,7 +3655,7 @@ router.get('/get-expensebyid/:id', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -3704,7 +3704,7 @@ router.post('/expense-query', async (req, res) => {
     // Assuming sequelize returns an array of rows in the first element of the results array
     res.json({ results: results[0], totalPages });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
   }
 });
@@ -3774,7 +3774,7 @@ router.post('/filter', async (req, res) => {
 
     res.json({ expenses: expensesWithImages, totalPages: totalPages });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -3827,7 +3827,7 @@ router.post('/expense-excel', async (req, res) => {
     await workbook.xlsx.write(res);
     res.end();
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
   }
 });
@@ -3868,7 +3868,7 @@ router.post('/operatorCreation', async (req, res) => {
 
     return res.status(200).json({ message: 'Operator created successfully', operator });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -3896,7 +3896,7 @@ router.put('/updateOperator/:emp_Id', async (req, res) => {
 
     return res.status(200).json({ message: 'data updated successfully' });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'internal server error' });
   }
 });
@@ -3996,7 +3996,7 @@ router.post('/search_users', async (req, res) => {
 
     return res.status(200).json(usersWithBase64Image);
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
@@ -4130,7 +4130,7 @@ router.get('/get-blog/:id', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -4190,7 +4190,7 @@ router.put('/update-blog/:id', upload.single('image'), async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
   } catch (error) {
-    //console.error(error);
+    //console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -4258,7 +4258,7 @@ router.post('/blogs-query', async (req, res) => {
 
     res.json({ queryResults, totalPages });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
   }
 });
@@ -4807,7 +4807,7 @@ router.get('/get-zoomclass', async (req, res) => {
       return res.status(404).json({ message: 'No zoom records found' });
     }
   } catch (error) {
-    console.error('Error fetching zoom records:', error);
+    console.log('Error fetching zoom records:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -4867,7 +4867,7 @@ router.get('/list-feedback', async (req, res) => {
           totalItems: totalItems
       });
   } catch (error) {
-      console.error(error);
+      console.log(error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -4927,7 +4927,7 @@ router.post('/feedback-query', async (req, res) => {
  
     res.json({ queryResults: feedbackWithUsernames, totalPages });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
   }
 });
@@ -5003,7 +5003,7 @@ router.get('/videos', async (req, res) => {
 
       res.json(groupedVideos);
   } catch (error) {
-      console.error(error);
+      console.log(error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -5033,7 +5033,7 @@ router.get('/app-feedback-by-id/:id', async (req, res) => {
       feedbackWithUsernames
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -5131,7 +5131,7 @@ router.get('/getFundById', async (req, res) => {
       users: usersWithBillImages
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -5169,7 +5169,7 @@ router.get('/get-balance', async (req, res) => {
 
       return res.status(200).json(user);
   } catch (error) {
-      console.error('Error:', error);
+      console.log('Error:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -5187,7 +5187,7 @@ router.delete('/global-Delete/:id' , async (req, res) =>{
     return res.status(200).json('message deleted successfully');
   }
   catch(error){
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -5224,7 +5224,7 @@ router.get('/appointmentFeedback', async (req, res) => {
       totalPages: totalPages
     });
   } catch (error) {
-    console.error('Error fetching appointment feedback:', error);
+    console.log('Error fetching appointment feedback:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -5273,7 +5273,7 @@ router.get('/waitingListDetails', async (req, res) => {
       waitingListDetails: waitingList
     });
   } catch (error) {
-    console.error('Error:', error);
+    console.log('Error:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -5306,7 +5306,7 @@ router.get('/thisMonthDetails', async (req, res) => {
           users
       });
   } catch (error) {
-      console.error('Error:', error);
+      console.log('Error:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -5330,7 +5330,7 @@ router.get('/thisMonthDetails', async (req, res) => {
 //       beneficiariesDetails: beneficiaries
 //     });
 //   } catch (error) {
-//     console.error('Error:', error);
+//     console.log('Error:', error);
 //     return res.status(500).json({ error: 'Internal Server Error' });
 //   }
 // });
@@ -5362,7 +5362,7 @@ router.get('/thisMonthDetails', async (req, res) => {
 //       waitingListDetails: list
 //     });
 //   } catch (error) {
-//     console.error('Error:', error);
+//     console.log('Error:', error);
 //     return res.status(500).json({ error: 'Internal Server Error' });
 //   }
 // });
@@ -5402,7 +5402,7 @@ router.get('/thisMonthDetails', async (req, res) => {
 //       waitingListDetails: list
 //     });
 //   } catch (error) {
-//     console.error('Error:', error);
+//     console.log('Error:', error);
 //     return res.status(500).json({ error: 'Internal Server Error' });
 //   }
 // });
@@ -5441,7 +5441,7 @@ router.get('/beneficiariesDetails', async (req, res) => {
       beneficiariesDetails: beneficiaries
     });
   } catch (error) {
-    console.error('Error:', error);
+    console.log('Error:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -5474,7 +5474,7 @@ router.get('/paymentDetails', async (req, res) => {
       waitingListDetails: list
     });
   } catch (error) {
-    console.error('Error:', error);
+    console.log('Error:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -5520,7 +5520,7 @@ router.get('/searchUser', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -5551,7 +5551,7 @@ router.put('/update-user-status', async (req, res) => {
       return res.status(404).json({ message: 'No users found with user_Status null' });
     }
   } catch (error) {
-    console.error('Error updating user statuses:', error);
+    console.log('Error updating user statuses:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });

@@ -356,7 +356,7 @@ async function sendNotificationToUser(UId, title, message) {
   try {
     const notification = await Notification.findOne({ where: { UId: UId } });
     if (!notification) {
-      console.error('Notification not found');
+      console.log('Notification not found');
       return;
     }
  
@@ -368,7 +368,7 @@ async function sendNotificationToUser(UId, title, message) {
     const response = await admin.messaging().send(notificationMessage);
     console.log('Notification sent successfully:', response);
   } catch (error) {
-    console.error('Error sending notification:', error);
+    console.log('Error sending notification:', error);
   }
 }
  
@@ -394,7 +394,7 @@ const notificationCronJob = cron.schedule('0 0 * * *', async () => {
       await sendNotificationToUser(UId, title, message);
     });
   } catch (error) {
-    console.error('Error in cron job:', error);
+    console.log('Error in cron job:', error);
   }
 });
 
@@ -408,7 +408,7 @@ router.get('/list-users', async(req,res)=>{
     return res.status(200).json(users);
   }
   catch(error){
-    console.error(error);
+    console.log(error);
     return res.status(500).json({message:'internal server error'})
   }
  
@@ -421,7 +421,7 @@ async function sendNotificationToUsers(userIds, title, message) {
  
  
     if (!notifications.length) {
-      console.error('Notifications not found for any user');
+      console.log('Notifications not found for any user');
       return;
     }
  
@@ -441,7 +441,7 @@ async function sendNotificationToUsers(userIds, title, message) {
       console.log(`Notification sent successfully to user ${userIds[index]}:`, response);
     });
   } catch (error) {
-    console.error('Error sending notifications:', error);
+    console.log('Error sending notifications:', error);
   }
 }
  
@@ -457,7 +457,7 @@ router.post('/send-notification', async (req, res) => {
  
     res.json({ message: 'Specific notification sent successfully'});
   } catch (error) {
-    console.error('Error sending specific notification:', error);
+    console.log('Error sending specific notification:', error);
     return res.status(500).json({ error: 'An error occurred while sending specific notification' });
   }
 });
@@ -484,7 +484,7 @@ router.post('/send-broadcast-notification', async (req, res) => {
  
     res.json({ message: 'Broadcast notification sent successfully',notification });
   } catch (error) {
-    console.error('Error sending broadcast notification:', error);
+    console.log('Error sending broadcast notification:', error);
     return res.status(500).json({ error: 'An error occurred while sending broadcast notification' });
   }
 });
@@ -526,7 +526,7 @@ router.get('/get-notificationbyid/:id', async (req, res) => {
  
     return res.status(200).json({notification:notification });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -560,7 +560,7 @@ async function updateMaintenanceStatus() {
           }
       }
   } catch (error) {
-      console.error('Error updating maintenance payment status:', error);
+      console.log('Error updating maintenance payment status:', error);
   }
 }
 

@@ -49,7 +49,7 @@ router.post('/insert-question', async (req, res) => {
             data: newQuestion
         });
     } catch (error) {
-        console.error('Error inserting question:', error);
+        console.log('Error inserting question:', error);
         return res.status(500).json({ message: 'Internal Server Error' });
     }
 });
@@ -81,7 +81,7 @@ router.get('/get-questions', async (req, res) => {
         data: formattedQuestions
       });
     } catch (error) {
-      console.error('Error fetching questions:', error);
+      console.log('Error fetching questions:', error);
       return res.status(500).json({ message: 'Internal Server Error' });
     }
   });
@@ -118,7 +118,7 @@ router.get('/get-questions', async (req, res) => {
         data: formattedQuestion
       });
     } catch (error) {
-      console.error('Error fetching question:', error);
+      console.log('Error fetching question:', error);
       return res.status(500).json({ message: 'Internal Server Error' });
     }
   });
@@ -186,7 +186,7 @@ router.get('/get-questions', async (req, res) => {
         data: existingQuestion
       });
     } catch (error) {
-      console.error('Error updating question:', error);
+      console.log('Error updating question:', error);
       return res.status(500).json({ message: 'Internal Server Error' });
     }
   });
@@ -207,7 +207,7 @@ router.get('/get-questions', async (req, res) => {
         message: 'Question deleted successfully!'
       });
     } catch (error) {
-      console.error('Error deleting question:', error);
+      console.log('Error deleting question:', error);
       return res.status(500).json({ message: 'Internal Server Error' });
     }
   });
@@ -249,7 +249,7 @@ router.post('/insert-response', async (req, res) => {
         data: newResponse
       });
     } catch (error) {
-      console.error('Error inserting response:', error);
+      console.log('Error inserting response:', error);
       return res.status(500).json({ message: 'Internal Server Error' });
     }
   });
@@ -267,7 +267,7 @@ router.post('/insert-response', async (req, res) => {
             data: responses
         });
     } catch (error) {
-        console.error('Error fetching responses:', error);
+        console.log('Error fetching responses:', error);
         return res.status(500).json({ message: 'Internal Server Error' });
     }
 });
@@ -293,7 +293,7 @@ router.get('/fetch-data/:UId', async (req, res) => {
             data: responses
         });
     } catch (error) {
-        console.error('Error fetching responses:', error);
+        console.log('Error fetching responses:', error);
         return res.status(500).json({ message: 'Internal Server Error' });
     }
 });
@@ -331,7 +331,7 @@ router.post('/submit-health-questions', async (req, res) => {
       data: insertedData
     });
   } catch (error) {
-    console.error('Error inserting health questions and answers:', error);
+    console.log('Error inserting health questions and answers:', error);
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
@@ -355,7 +355,7 @@ router.get('/get-health-questions', async (req, res) => {
           data: formattedData
       });
   } catch (error) {
-      console.error('Error fetching questions:', error);
+      console.log('Error fetching questions:', error);
       return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
@@ -395,7 +395,7 @@ router.post('/submit-health-data', async (req, res) => {
           data: healthEntries
       });
   } catch (error) {
-      console.error('Error inserting health data:', error);
+      console.log('Error inserting health data:', error);
       return res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 });
@@ -419,7 +419,7 @@ router.get('/fetch-rndprequestion', async (req, res) => {
           data: results,
       });
   } catch (error) {
-      console.error('Error fetching Rndprequestion:', error);
+      console.log('Error fetching Rndprequestion:', error);
       return res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 });
