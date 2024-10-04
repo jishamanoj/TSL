@@ -58,8 +58,9 @@ const storage = admin.storage().bucket();
 ///////////////////////////////////////////////////////////
 
 router.post('/login', async (req, res) => {
-  console.log("..................enter...........")
   try {
+    console.log("..................login...........");
+
     console.log("login");
     const { userName, password } = req.body;
     console.log(userName, password);
@@ -95,6 +96,7 @@ router.post('/login', async (req, res) => {
 
 router.get('/register-count', async (req, res) => {
   try {
+    console.log("...............register-count.............");
       const { month, year } = req.query;
 
       // Validate client input
@@ -173,6 +175,7 @@ router.get('/register-count', async (req, res) => {
 
 router.get('/incomePiechart' , async(req, res) =>{
   try{
+    console.log("...............incomePiechart.............");
     const DonationAmt = await donation.sum('amount' );
     const maintenanceAmt = await maintenance.sum('amount');
     const meditationAmt = await meditationFees.sum('amount');
@@ -206,6 +209,7 @@ router.get('/incomePiechart' , async(req, res) =>{
 
 router.get('/expensePiechart' , async(req, res) =>{
   try{
+    console.log("...............expensePiechart.............");
     const coupon = await Distribution.sum('distributed_coupons' );
     const expense = await ashramexpense.sum('amount');
     const total = coupon + expense;
@@ -230,6 +234,8 @@ router.get('/expensePiechart' , async(req, res) =>{
 router.get('/waiting-list', async (req, res) => {
   try {
 
+    console.log("...............waiting-list.............");
+
     const a = 208;
     const result = await reg.count({
       where: {
@@ -248,6 +254,7 @@ router.get('/waiting-list', async (req, res) => {
 
 router.get('/beneficiaries', async (req, res) => {
   try {
+    console.log("...............beneficiaries.............");
     
     const number = 41986;
     const registration  = await reg.count({ where: {user_Status:'ACTIVE'}});
@@ -266,6 +273,7 @@ router.get('/beneficiaries', async (req, res) => {
 
 router.get('/classes', async (req, res) => {
   try {
+    console.log("...............classes.............");
     const classess = 1920;
     const result = await zoom.count({
     });
@@ -280,7 +288,7 @@ router.get('/classes', async (req, res) => {
 
 router.get('/this-month', async (req, res) => {
   try {
-      
+    console.log("...............this-month.............");
       const currentDate = new Date();
      
       const startDateOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
@@ -303,7 +311,7 @@ router.get('/this-month', async (req, res) => {
 
 router.get('/meditation', async (req, res) => {
   try {
-      
+    console.log("...............meditation.............");
       const firstTenUserIds = (await Users.findAll({
           attributes: ['UserId'],
           order: [['UserId', 'ASC']],
@@ -331,6 +339,7 @@ router.get('/meditation', async (req, res) => {
 
 router.post('/add-event', upload.single('image'), async (req, res) => {
   try {
+    console.log("...............add-event..............");
   const { event_name, event_description, priority, place, date ,event_time } = req.body;
   const eventImageFile = req.file;
   
@@ -376,6 +385,7 @@ router.post('/add-event', upload.single('image'), async (req, res) => {
 
 router.get('/events', async (req, res) => {
   try {
+    console.log("...............events.............");
     const page = parseInt(req.query.page) || 1; // Parse page number from query string, default to page 1 if not provided
     const pageSize = parseInt(req.query.pageSize) || 10; // Parse page size from query string, default to 10 if not provided
 
@@ -419,6 +429,7 @@ router.get('/events', async (req, res) => {
 
 router.post('/events-query', async (req, res) => {
   try {
+    console.log("...............events-query.............");
     const queryConditions = req.body.queryConditions;
     const page = req.body.page || 1; // Default to page 1 if not provided
     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
@@ -466,6 +477,7 @@ router.post('/events-query', async (req, res) => {
 
 router.get('/get-event/:id', async (req, res) => {
   try {
+    console.log("...............get-event.............");
     const { id } = req.params;
 
     // Fetch user details by UId from the reg table
@@ -503,6 +515,7 @@ router.get('/get-event/:id', async (req, res) => {
 
 router.put('/update-event/:id', upload.single('image'), async (req, res) => {
   try {
+    console.log("...............register-count.............");
   const id = req.params.id;
   const userData = req.body;
   const eventImageFile = req.file;
@@ -562,6 +575,7 @@ router.put('/update-event/:id', upload.single('image'), async (req, res) => {
 
 router.delete('/delete-events/:eventId', async (req, res) => {
   try {
+    console.log("...............delete-events.............");
       const eventId = req.params.eventId;
       const event = await events.findByPk(eventId);
 
@@ -584,6 +598,7 @@ router.delete('/delete-events/:eventId', async (req, res) => {
 
 router.post('/events-query', async (req, res) => {
   try {
+    console.log("...............events-query..............");
     const queryConditions = req.body.queryConditions;
     const page = req.body.page || 1; // Default to page 1 if not provided
     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
@@ -639,6 +654,7 @@ router.post('/events-query', async (req, res) => {
 
 router.get('/searchfield', async (req, res) => {
   try {
+    console.log("...............searchfield.............");
     const field = req.query.field;
     const value = req.query.value; 
     const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
@@ -685,6 +701,7 @@ router.get('/searchfield', async (req, res) => {
 
 router.post('/coupon-systemDistribute', async (req, res) => {
   try {
+    console.log("...............coupon-systemdistribute.............");
    // console.log("...................enter....................");
     const { totalCoupons, distributedIds } = req.body;
 //console.log("------------------------totalCoupons, distributedIds, description.........",totalCoupons, distributedIds);
@@ -751,7 +768,7 @@ router.post('/coupon-systemDistribute', async (req, res) => {
 
 router.post('/redeem', async (req, res) => {
   try {
-    console.log("entered");
+    console.log("...............redeem.............");
     const { coupons, UIds, description,title } = req.body;
     console.log( "coupons, UIds, description.................:", coupons, UIds, description);
     // Validate input
@@ -831,6 +848,7 @@ const ExcelJS = require('exceljs');
 
 router.get('/download', async (req, res) => {
   try {
+    console.log("...............download.............");
     const UIds = req.query.UIds;
     console.log("UIds: " + UIds)
  
@@ -922,6 +940,7 @@ router.get('/download', async (req, res) => {
 
 router.post('/coupons-cart', async (req, res) => {
   try {
+    console.log("...............coupons-cart.............");
     const { UIds, couponsToDistribute } = req.body;
    // console.log("UIds, couponsToDistribute",UIds, couponsToDistribute);
 
@@ -966,6 +985,7 @@ router.post('/coupons-cart', async (req, res) => {
 
 router.post('/revoke-coupons', async (req, res) => {
   try {
+    console.log("...............revoke-coupons.............");
     const { UIds } = req.body;
 
     // Retrieve coupon distribution details
@@ -1000,6 +1020,7 @@ router.post('/revoke-coupons', async (req, res) => {
 
 router.post('/distributetousers', async (req, res) => {
   try {
+    console.log("...............distributetousers.............");
     const { UIds } = req.body;
 
     const users = await Users.findAll({ where: { UId: UIds } });
@@ -1038,6 +1059,7 @@ router.post('/distributetousers', async (req, res) => {
 
 router.get('/TSL', async (req, res) => {
   try {
+    console.log("...............TSL.............");
     const users = await Users.findAll({
       attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'ban'],
       order: [['UserId', 'ASC']], // Order by UId in ascending order
@@ -1059,6 +1081,7 @@ router.get('/TSL', async (req, res) => {
 
 router.get('/list-meditators', async (req, res) => {
   try {
+    console.log("...............list-meditators.............");
     const page = parseInt(req.query.page) || 1; 
     const limit = parseInt(req.query.limit) || 10; 
     const offset = (page - 1) * limit;
@@ -1098,6 +1121,7 @@ router.get('/list-meditators', async (req, res) => {
 
 router.get('/view-cart', async (req, res) => {
   try {
+    console.log("...............view-cart.............");
     // Fetch all distribution records from the coupondistribution table
     const distributionRecords = await coupondistribution.findAll();
 
@@ -1117,6 +1141,7 @@ router.get('/view-cart', async (req, res) => {
 
 router.get('/total-coupons', async (req, res) => {
   try {
+    console.log("...............total-coupons.............");
     const users = await Users.findAll({
       attributes: ['coupons']
     });
@@ -1134,6 +1159,7 @@ router.get('/total-coupons', async (req, res) => {
 
 router.post('/execute-query', async (req, res) => {
   try {
+    console.log("...............execute-query.............");
     const queryConditions = req.body.queryConditions;
     const page = req.body.page || 1; // Default to page 1 if not provided
     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
@@ -1184,6 +1210,7 @@ router.post('/execute-query', async (req, res) => {
 
 router.post('/copy-users', async (req, res) => {
   try {
+    console.log("...............copy-users.............");
     // Fetch all users
     const users = await Users.findAll();
     
@@ -1238,6 +1265,7 @@ router.post('/copy-users', async (req, res) => {
 
 router.get('/mahadhanam-searchfield', async (req, res) => {
   try {
+    console.log("...............mahadhanam-searchfield.............");
     const field = req.query.field;
     const value = req.query.value; 
     const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
@@ -1284,6 +1312,7 @@ router.get('/mahadhanam-searchfield', async (req, res) => {
 
 router.post('/mahadhanam-coupon-systemDistribute', async (req, res) => {
   try {
+    console.log("...............mahadhanam-coupon-systemDistribute.............");
    // console.log("...................enter....................");
     const { totalCoupons, distributedIds } = req.body;
 //console.log("------------------------totalCoupons, distributedIds, description.........",totalCoupons, distributedIds);
@@ -1350,7 +1379,8 @@ router.post('/mahadhanam-coupon-systemDistribute', async (req, res) => {
 
 router.post('/mahadhanam-redeem', async (req, res) => {
   try {
-    console.log("entered");
+    
+    console.log(".....................mahadhanam-redeem.........................");
     const { coupons, UIds, description,title } = req.body;
     console.log( "coupons, UIds, description.................:", coupons, UIds, description);
     // Validate input
@@ -1430,6 +1460,7 @@ router.post('/mahadhanam-redeem', async (req, res) => {
 
 router.get('/mahadhanam-download', async (req, res) => {
   try {
+    console.log(".........................mahadhanam-download...........................");
     const UIds = req.query.UIds;
     console.log("UIds: " + UIds)
  
@@ -1521,6 +1552,7 @@ router.get('/mahadhanam-download', async (req, res) => {
 
 router.post('/mahadhanam-coupons-cart', async (req, res) => {
   try {
+    console.log("...............mahadhanam-coupon-cart.............");    
     const { UIds, couponsToDistribute } = req.body;
    // console.log("UIds, couponsToDistribute",UIds, couponsToDistribute);
 
@@ -1565,6 +1597,7 @@ router.post('/mahadhanam-coupons-cart', async (req, res) => {
 
 router.post('/mahadhanam-revoke-coupons', async (req, res) => {
   try {
+    console.log("...............mahadhanam-revoke-coupons.............");
     const { UIds } = req.body;
 
     // Retrieve coupon distribution details
@@ -1599,6 +1632,7 @@ router.post('/mahadhanam-revoke-coupons', async (req, res) => {
 
 router.post('/mahadhanam-distributetousers', async (req, res) => {
   try {
+    console.log("...............mahadhanam-distributetousers.............");
     const { UIds } = req.body;
 
     const users = await mahadhanam.findAll({ where: { UId: UIds } });
@@ -1637,6 +1671,7 @@ router.post('/mahadhanam-distributetousers', async (req, res) => {
 
 router.get('/mahadhanam-TSL', async (req, res) => {
   try {
+    console.log("...............mahadhanam-TSL.............");
     const users = await mahadhanam.findAll({
       attributes: ['DOJ', 'firstName', 'secondName', 'UId', 'coupons', 'email', 'phone', 'ban'],
       order: [['UserId', 'ASC']], // Order by UId in ascending order
@@ -1658,6 +1693,7 @@ router.get('/mahadhanam-TSL', async (req, res) => {
 
 router.get('/mahadhanam-list-meditators', async (req, res) => {
   try {
+    console.log("...............mahadhanam-list-meditators.............");
     const page = parseInt(req.query.page) || 1; 
     const limit = parseInt(req.query.limit) || 10; 
     const offset = (page - 1) * limit;
@@ -1697,6 +1733,7 @@ router.get('/mahadhanam-list-meditators', async (req, res) => {
 
 router.get('/mahadhanam-view-cart', async (req, res) => {
   try {
+    console.log("...............mahadhanam-view-cart.............");
     // Fetch all distribution records from the coupondistribution table
     const distributionRecords = await mahadhanamCouponDistribution.findAll();
 
@@ -1716,6 +1753,7 @@ router.get('/mahadhanam-view-cart', async (req, res) => {
 
 router.get('/mahadhanam-total-coupons', async (req, res) => {
   try {
+    console.log("...............mahadhanam-total-coupons.............");
     const users = await mahadhanam.findAll({
       attributes: ['coupons']
     });
@@ -1733,6 +1771,7 @@ router.get('/mahadhanam-total-coupons', async (req, res) => {
 
 router.post('/ban-User', async (req, res) => {
   try {
+    console.log("...............ban-user.............");
     const { UId } = req.body;
 
     // Find user by primary key
@@ -1776,6 +1815,7 @@ router.post('/ban-User', async (req, res) => {
 
 router.post('/mahadhanam-execute-query', async (req, res) => {
   try {
+    console.log("...............mahadhanam-execute-query.............");
     const queryConditions = req.body.queryConditions;
     const page = req.body.page || 1; // Default to page 1 if not provided
     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
@@ -1824,6 +1864,7 @@ router.post('/mahadhanam-execute-query', async (req, res) => {
 
 router.get('/financialconfig', async (req,res) => {
   try {
+    console.log("...............financialconfig.............");
      // console.log("get financialconfig data");
       const finconfig = await financialconfig.findAll();
       
@@ -1836,6 +1877,7 @@ router.get('/financialconfig', async (req,res) => {
 
 router.put('/update-configuration', async (req, res) => {
   try {
+    console.log("...............update-configuration.............");
     const id = req.body.id;
     const configData = req.body;
 
@@ -1863,6 +1905,7 @@ router.put('/update-configuration', async (req, res) => {
 
 router.get('/appconfig',async(req,res) =>{
   try{
+    console.log("...............appconfig...............");
       //console.log("get appconfig data");
       const appconfig = await applicationconfig.findAll({
         where: {
@@ -1881,6 +1924,7 @@ router.get('/appconfig',async(req,res) =>{
 
 router.put('/update-appconfig', async (req, res) => {
   try {
+    console.log("...............update-appconfig.............");
     const id = req.body.id;
     const configData = req.body;
 
@@ -1908,6 +1952,7 @@ router.put('/update-appconfig', async (req, res) => {
 
 router.get('/support',async(req,res) =>{
   try{
+    console.log("...............support.............");
      // console.log('get support');
       const support = await supportcontact.findAll();
       return res.status(200).json({message:'Fetching data successfully',support});
@@ -1920,6 +1965,7 @@ router.get('/support',async(req,res) =>{
 
 router.put('/update-support/:id', async (req, res) => {
   try {
+    console.log("...............update-support.............");
   const id = req.params.id;
   const usersdata = req.body;
 
@@ -1948,6 +1994,7 @@ router.put('/update-support/:id', async (req, res) => {
 
 router.post('/addSupport', async (req, res) => {
   try {
+    console.log("...............addsupport.............");
     const data = req.body;
     const support = await supportcontact.create(data);
     return res.status(200).json({ message: 'Success', support });
@@ -1958,6 +2005,7 @@ router.post('/addSupport', async (req, res) => {
 
 router.put('/questions/:id', async (req, res) => {
   try {
+    console.log("...............questions.............");
     const id = req.params.id;
     const configData = req.body;
 
@@ -1986,6 +2034,7 @@ router.put('/questions/:id', async (req, res) => {
 
 router.get('/list-users', async (req, res) => {
   try {
+    console.log("...............list-users...............");
   const pageSize = parseInt(req.query.pageSize)||10;
   const page = parseInt(req.query.page) || 1;
   const offset = (page - 1) * pageSize;
@@ -2031,6 +2080,7 @@ router.get('/list-users', async (req, res) => {
 
 router.post('/query',async (req, res) => {
   try {
+    console.log("...............query.............");
   const results = await sequelize.query(`${req.body.query}`);
   if(results){
     return res.json({ response: results });
@@ -2043,6 +2093,7 @@ router.post('/query',async (req, res) => {
 
 router.post('/financial-query', async (req, res) => {
   try {
+    console.log("...............financial-query.............");
     const queryConditions = req.body.queryConditions;
     const page = req.body.page || 1; // Default to page 1 if not provided
     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
@@ -2106,6 +2157,7 @@ router.post('/financial-query', async (req, res) => {
 
 router.get('/search', async (req, res) => {
   try {
+    console.log("...............search.............");
     const field = req.query.field; 
     const value = req.query.value; 
     const page = parseInt(req.query.page) || 1; 
@@ -2178,6 +2230,7 @@ router.get('/search', async (req, res) => {
 
 router.get('/list-donation', async (req, res) => {
   try {
+    console.log("...............list-donation.............");
   const pageSize =parseInt(req.query.pageSize) || 10;
   const page = parseInt(req.query.page) || 1;
   const offset = (page - 1) * pageSize;
@@ -2232,6 +2285,7 @@ router.get('/list-donation', async (req, res) => {
  
 router.post('/donation-query', async (req, res) => {
   try {
+    console.log("...............donation-query.............");
     const queryConditions = req.body.queryConditions;
     const page = req.body.page || 1; // Default to page 1 if not provided
     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
@@ -2304,6 +2358,7 @@ router.post('/donation-query', async (req, res) => {
  
 router.get('/donation-search', async (req, res) => {
   try {
+    console.log("...............donation-query.............");
     const field = req.query.field; 
     const value = req.query.value; 
     const page = parseInt(req.query.page) || 1;
@@ -2384,6 +2439,7 @@ router.get('/donation-search', async (req, res) => {
 
 router.get('/list-fees', async (req, res) => {
   try {
+    console.log("...............list-fees.............");
   const pageSize =parseInt(req.query.pageSize) || 10;
   const page = parseInt(req.query.page) || 1;
   const offset = (page - 1) * pageSize;
@@ -2438,6 +2494,7 @@ router.get('/list-fees', async (req, res) => {
  
 router.post('/fees-query', async (req, res) => {
   try {
+    console.log("...............fees-query.............");
     const queryConditions = req.body.queryConditions;
     const page = req.body.page || 1; // Default to page 1 if not provided
     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
@@ -2510,6 +2567,7 @@ router.post('/fees-query', async (req, res) => {
  
 router.get('/fees-search', async (req, res) => {
   try {
+    console.log("...............fees-search.............");
     const field = req.query.field; 
     const value = req.query.value; 
     const page = parseInt(req.query.page) || 1;
@@ -2589,6 +2647,7 @@ router.get('/fees-search', async (req, res) => {
 });
 router.get('/list-operation', async (req, res) => {
   try {
+    console.log("...............list-operation.............");
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10; 
  
@@ -2639,6 +2698,7 @@ router.get('/list-operation', async (req, res) => {
 
 router.post('/operation-query', async (req, res) => {
   try {
+    console.log("...............operation-query.............");
     const queryConditions = req.body.queryConditions;
     const page = req.body.page || 1; // Default to page 1 if not provided
     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
@@ -2690,6 +2750,7 @@ router.post('/operation-query', async (req, res) => {
 
 router.get('/operation-search', async (req, res) => {
   try {
+    console.log("...............operation-search.............");
     const field = req.query.field; // Retrieve the field from query parameters
     const value = req.query.value; // Retrieve the value from query parameters
     const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
@@ -2769,6 +2830,7 @@ router.get('/operation-search', async (req, res) => {
  
 router.get('/list-ashram-appointments', async (req, res) => {
   try {
+    console.log("...............list-ashram-appointments............");
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10; 
  
@@ -2816,6 +2878,7 @@ router.get('/list-ashram-appointments', async (req, res) => {
  
 router.post('/ashram-query', async (req, res) => {
   try {
+    console.log("...............ashram-query.............");
     const queryConditions = req.body.queryConditions;
     const page = req.body.page || 1; 
     const pageSize = req.body.pageSize || 10; 
@@ -2874,6 +2937,7 @@ router.post('/ashram-query', async (req, res) => {
  
 router.get('/ashram-search', async (req, res) => {
   try {
+    console.log("...............ashram-search.............");
     const field = req.query.field; // Retrieve the field from query parameters
     const value = req.query.value; // Retrieve the value from query parameters
     const page = parseInt(req.query.page) || 1;
@@ -2940,6 +3004,7 @@ router.get('/ashram-search', async (req, res) => {
 
 router.get('/list-all-appointment', async (req, res) => {
   try {
+    console.log("...............list-all-appointment.............");
     const page = parseInt(req.query.page) || 1; // Parse page number from query string, default to page 1 if not provided
     const pageSize = parseInt(req.query.pageSize) || 10; // Parse page size from query string, default to 10 if not provided
 
@@ -2990,6 +3055,7 @@ router.get('/list-all-appointment', async (req, res) => {
 
 router.get('/list-appointment-details', async (req, res) => {
   try {
+    console.log("...............list-appointment-details.............");
     // Find all appointments
     const appointments = await Appointment.findAll();
 
@@ -3022,6 +3088,7 @@ const cron = require('node-cron');
 
 router.get('/list-appointment/:id', async (req, res) => {
   try {
+    console.log("...............list-appointment.............");
   const { id } = req.params;
 
 
@@ -3062,6 +3129,7 @@ router.get('/list-appointment/:id', async (req, res) => {
 
 router.put('/update-payment/:id', upload.single('appointmentImage'), async (req, res) => {
   try {
+    console.log("...............update-payment.............");
   console.log('update')
   const id = req.params.id;
   const appointmentData = req.body;
@@ -3120,6 +3188,7 @@ console.log(appointmentImageUrl);
 
 router.put('/discount/:UId', async (req, res) => {
   try {
+    console.log("...............discount.............");
   const { UId } = req.params;
   const { coupon, id } = req.body;
 
@@ -3160,6 +3229,7 @@ router.put('/discount/:UId', async (req, res) => {
 
 router.put('/update-gurujidate', async (req, res) => {
   try {
+    console.log("...............update-gurujidate.............");
     console.log('Updating');
     const id = 11;
     const {  values } = req.body;
@@ -3186,6 +3256,7 @@ router.put('/update-gurujidate', async (req, res) => {
 
 router.post('/appointment-query', async (req, res) => {
   try {
+    console.log("...............appointment-query.............");
     const queryConditions = req.body.queryConditions;
     const page = req.body.page || 1; // Default to page 1 if not provided
     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
@@ -3235,6 +3306,7 @@ router.post('/appointment-query', async (req, res) => {
 
 router.get('/profiledetails/:UId', async (req, res) => {
   try {
+    console.log("...............profiledetails.............");
     const { UId } = req.params;
 //console.log(UId);
     const user = await reg.findOne({ where: { UId }, attributes: ['UId','first_name' ,'last_name' , 'email' ,'phone' , 'DOB' , 'gender' , 'address', 'district','state','pincode','profilePicUrl'] });
@@ -3312,6 +3384,7 @@ router.get('/profiledetails/:UId', async (req, res) => {
 
 router.get('/completeAppointment' , async(req,res) =>{
   try{
+    console.log("...............completeAppointment.............");
     const appointment = await Appointment.findAll({where: {appointment_status:'Completed'}});
     return res.status(200).json(appointment);
   } catch(error){
@@ -3324,6 +3397,7 @@ router.get('/completeAppointment' , async(req,res) =>{
 
 router.post('/admin-messages', async (req, res) => {
   try {
+    console.log("...............admin-messages.............");
     const { message, messageTime,isAdminMessage} = req.body;
     
     // Create a new message entry
@@ -3386,6 +3460,7 @@ router.post('/admin-messages', async (req, res) => {
 
 router.post('/adminglobalMessage', async (req, res) => {
   try {
+    console.log("...............adminglobalmessage.............");
     const page = parseInt(req.body.page) || 1;
     const limit = 10;
 
@@ -3432,7 +3507,7 @@ router.post('/adminglobalMessage', async (req, res) => {
 
 router.post('/gurujimessage', async (req, res) => {
   try {
-    
+    console.log("...............gurujimessage.............");
     const page = parseInt(req.body.page) || 1;
     const limit = 10;
     
@@ -3456,6 +3531,7 @@ router.post('/gurujimessage', async (req, res) => {
 
 router.post('/global-message', async (req, res) => {
   try {
+    console.log("...............global-message.............");
     const {UId, message, messageTime, messageDate,isAdminMessage} = req.body;
 
     // Create a new message entry
@@ -3476,6 +3552,7 @@ router.post('/global-message', async (req, res) => {
 
 router.get('/get-event/:id', async (req, res) => {
   try {
+    console.log("...............get-event.............");
     const { id } = req.params;
 
     // Fetch user details by UId from the reg table
@@ -3516,6 +3593,7 @@ router.get('/get-event/:id', async (req, res) => {
 
 router.post('/expense', upload.array('invoice', 20), async (req, res) => {
   try {
+    console.log("...............expense.............");
   const { Expense_Date, expenseType, amount, description, emp_id, name } = req.body;
   const invoiceFiles = req.files;
 
@@ -3569,7 +3647,7 @@ router.post('/expense', upload.array('invoice', 20), async (req, res) => {
 
 router.post('/get-expense', async (req, res) => {
   try {
-    
+    console.log("...............get-expense.............");
     const page = parseInt(req.body.page) || 1;
     const pageSize = 10;
     const offset = (page - 1) * pageSize;
@@ -3619,6 +3697,7 @@ router.post('/get-expense', async (req, res) => {
 
 router.get('/get-expensebyid/:id', async (req, res) => {
   try {
+    console.log("...............get-expensebyid.............");
     const { id } = req.params;
 
     // Fetch expense details by id from the ashramexpense table
@@ -3662,6 +3741,7 @@ router.get('/get-expensebyid/:id', async (req, res) => {
 
 router.post('/expense-query', async (req, res) => {
   try {
+    console.log("...............expense-query.............");
     const queryConditions = req.body.queryConditions;
     const page = req.body.page || 1; // Default to page 1 if not provided
     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
@@ -3711,6 +3791,7 @@ router.post('/expense-query', async (req, res) => {
 
 router.post('/filter', async (req, res) => {
   try {
+    console.log("...............filter.............");
     
     const page = parseInt(req.body.page) || 1;
     const pageSize = 10;
@@ -3781,6 +3862,7 @@ router.post('/filter', async (req, res) => {
 
 router.post('/expense-excel', async (req, res) => {
   try {
+    console.log("...............expense-excel.............");
     const queryConditions = req.body.queryConditions;
 
     if (!queryConditions || !Array.isArray(queryConditions) || queryConditions.length === 0) {
@@ -3836,6 +3918,7 @@ router.post('/expense-excel', async (req, res) => {
 
 router.post('/operatorCreation', async (req, res) => {
   try {
+    console.log("...............operatorcreation.............");
     const { username,name, role, location, dateOfJoining, password } = req.body;
 
     const existingUser = await Admin.findOne({ where: { username } });
@@ -3875,6 +3958,7 @@ router.post('/operatorCreation', async (req, res) => {
 
 router.put('/updateOperator/:emp_Id', async (req, res) => {
   try {
+    console.log("...............updateoperator.............");
     const emp_Id = req.params.emp_Id;
     const data = req.body;
 
@@ -3903,6 +3987,7 @@ router.put('/updateOperator/:emp_Id', async (req, res) => {
 
 router.get('/operatorList' , async(req,res) =>{
   try{
+    console.log("...............operatorlist.............");
     const page = req.query.page ? parseInt(req.query.page) : 1;
     const limit =10;
     const offset = (page - 1) * limit;
@@ -3926,6 +4011,7 @@ router.get('/operatorList' , async(req,res) =>{
 
 router.get('/operator/:emp_Id' , async(req,res) =>{
   try{
+    console.log("...............operator.............");
     const emp_Id = req.params.emp_Id;
     const operator = await Admin.findOne({where:{emp_Id:emp_Id}});
     if(!operator){
@@ -3939,6 +4025,7 @@ router.get('/operator/:emp_Id' , async(req,res) =>{
 
 router.post('/search-operator', async(req,res) =>{
   try{
+    console.log("...............search-operator.............");
     const {search, value} = req.body;
     if(!search || !value){
       return res.status(404).json('missing values');
@@ -3955,7 +4042,7 @@ router.post('/search-operator', async(req,res) =>{
 
 router.post('/search_users', async (req, res) => {
   try {
-    console.log("searching users");
+    console.log("...............search-users.............");
 
     const { search, page } = req.body;
     const pageSize = 10;
@@ -4006,6 +4093,7 @@ router.post('/search_users', async (req, res) => {
 
 router.post('/add-blog', upload.single('image'), async (req, res) => {
   try {
+    console.log("...............add-blog.............");
   const { blog_name, blog_description,date} = req.body;
   const eventImageFile = req.file;
   console.log(eventImageFile)
@@ -4046,6 +4134,7 @@ router.post('/add-blog', upload.single('image'), async (req, res) => {
 
 router.get('/listblogs', async (req, res) => {
   try {
+    console.log("...............listblogs.............");
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
@@ -4100,6 +4189,7 @@ router.get('/listblogs', async (req, res) => {
 
 router.get('/get-blog/:id', async (req, res) => {
   try {
+    console.log("...............get-blog.............");
     const { id } = req.params;
  
     // Fetch user details by UId from the reg table
@@ -4137,6 +4227,7 @@ router.get('/get-blog/:id', async (req, res) => {
 
 router.put('/update-blog/:id', upload.single('image'), async (req, res) => {
   try {
+    console.log("...............update-blog.............");
   const id = req.params.id;
   const userData = req.body;
   const eventImageFile = req.file;
@@ -4197,6 +4288,7 @@ router.put('/update-blog/:id', upload.single('image'), async (req, res) => {
 
 router.delete('/delete-blogs/:blogId', async (req, res) => {
   try {
+    console.log("...............delete-blogs.............");
       const eventId = req.params.blogId;
       const event = await blogs.findByPk(eventId);
  
@@ -4218,6 +4310,7 @@ router.delete('/delete-blogs/:blogId', async (req, res) => {
 
 router.post('/blogs-query', async (req, res) => {
   try {
+    console.log("...............blogs-query.............");
     const queryConditions = req.body.queryConditions;
     const page = req.body.page || 1; // Default to page 1 if not provided
     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
@@ -4268,6 +4361,7 @@ router.post('/blogs-query', async (req, res) => {
 
 router.post('/add-video', upload.single('playList_image'), async (req, res) => {
   try {
+    console.log("...............add-video.............");
   const { playList_heading, Video_heading, videoLink, category } = req.body;
   const playListImageFile = req.file;
 
@@ -4314,6 +4408,7 @@ router.post('/add-video', upload.single('playList_image'), async (req, res) => {
  
 router.put('/update-video/:id', upload.single('playList_image'), async (req, res) => {
   try {
+    console.log("...............update-video.............");
   const { id } = req.params;
   const { playList_heading, Video_heading, videoLink, category } = req.body;
   const playListImageFile = req.file;
@@ -4370,6 +4465,7 @@ router.put('/update-video/:id', upload.single('playList_image'), async (req, res
 
 router.get('/get-video', async (req, res) => {
   try {
+    console.log("...............get-video.............");
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
@@ -4427,6 +4523,7 @@ router.get('/get-video', async (req, res) => {
 
 router.delete('/delete-video/:id', async (req, res) => {
   try {
+    console.log("...............delete-video.............");
   const { id } = req.params;
  
 
@@ -4469,6 +4566,7 @@ router.post('/add-meditation-time', upload.fields([
   const generalImageFile = req.files['general_image'] ? req.files['general_image'][0] : null;
  
   try {
+    console.log("...............add-meditation-time.............");
     // Create a new meditation time record
     const newMeditationTime = await meditationTime.create({
       country,
@@ -4535,6 +4633,7 @@ router.put('/update-meditation-time/:id', upload.fields([
   { name: 'general_image', maxCount: 1 }
 ]), async (req, res) => {
   try {
+    console.log("...............update-meditation-time.............");
   const { id } = req.params;
   const { country, general_video, morning_time_from, morning_time_to, evening_time_from, evening_time_to, morning_video, evening_video } = req.body;
   const morningImageFile = req.files['morning_image'] ? req.files['morning_image'][0] : null;
@@ -4621,6 +4720,7 @@ router.put('/update-meditation-time/:id', upload.fields([
  
 router.get('/meditation-time', async (req, res) => {
   try {
+    console.log("...............meditation-time.............");
   const {UId}  = req.session;
   const time = req.query.time;
  
@@ -4680,6 +4780,7 @@ router.get('/meditation-time', async (req, res) => {
 
 router.get('/meditationTimeList', async (req, res) => {
   try {
+    console.log("...............meditationtimelist.............");
     // Fetch all meditation time details
     const meditationTimes = await meditationTime.findAll();
 
@@ -4718,6 +4819,7 @@ router.get('/meditationTimeList', async (req, res) => {
 
 router.get('/meditation-time/:id', async (req, res) => {
   try {
+    console.log("...............meditation-time.............");
   const { id } = req.params;
 
 
@@ -4763,6 +4865,7 @@ router.delete('/delete-meditation-time/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
+    console.log("...............delete-meditation-time.............");
     const meditationTimeRecord = await meditationTime.findByPk(id);
 
     if (!meditationTimeRecord) {
@@ -4797,6 +4900,7 @@ router.delete('/delete-meditation-time/:id', async (req, res) => {
 
 router.get('/get-zoomclass', async (req, res) => {
   try {
+    console.log("...............get-zoomclass.............");
     // Fetch all records from the zoom table
     const zoomRecords = await zoom.findAll();
 
@@ -4814,6 +4918,7 @@ router.get('/get-zoomclass', async (req, res) => {
 
 router.delete('/delete-zoom/:zoomId', async (req, res) => {
   try {
+    console.log("...............delete-zoom.............");
       const zoomId = req.params.zoomId;
       const event = await zoom.findByPk(zoomId);
 
@@ -4831,6 +4936,7 @@ router.delete('/delete-zoom/:zoomId', async (req, res) => {
 
 router.get('/list-feedback', async (req, res) => {
   try {
+    console.log("...............list-feedback.............");
       const page = parseInt(req.query.page) || 1;
       const pageSize = parseInt(req.query.pageSize) || 10;
 
@@ -4874,6 +4980,7 @@ router.get('/list-feedback', async (req, res) => {
 
 router.post('/feedback-query', async (req, res) => {
   try {
+    console.log("...............feedback-query.............");
     const queryConditions = req.body.queryConditions;
     const page = req.body.page || 1; // Default to page 1 if not provided
     const pageSize = req.body.pageSize || 10; // Default page size to 10 if not provided
@@ -4934,6 +5041,7 @@ router.post('/feedback-query', async (req, res) => {
 
 router.get('/impNotes' , async(req,res) =>{
   try{
+    console.log("...............impNOtes.............");
     const notes = await globalMessage.findAll({
       order: [['id', 'DESC']],
       where: {
@@ -4961,6 +5069,7 @@ router.get('/impNotes' , async(req,res) =>{
 
 router.get('/videos', async (req, res) => {
   try {
+    console.log("...............videos.............");
       const videos = await Video.findAll();
 
       // Initialize groupedVideos as an empty array
@@ -5010,6 +5119,7 @@ router.get('/videos', async (req, res) => {
 
 router.get('/app-feedback-by-id/:id', async (req, res) => {
   try {
+    console.log("...............app-feedback-by-id.............");
     const { id } = req.params;
      const feedbacks = await feedback.findAndCountAll({ where: { id } });
  
@@ -5040,7 +5150,7 @@ router.get('/app-feedback-by-id/:id', async (req, res) => {
 
 router.get('/get-fees-sum', async (req,res) => {
   try {
-   
+    console.log("...............get-fees-sum.............");
     const totalAmount = await Appointment.sum('payment');
 
     return res.status(200).json({totalAmount});
@@ -5052,6 +5162,7 @@ router.get('/get-fees-sum', async (req,res) => {
 
 router.post('/payOperator', upload.single('image'), async (req,res) => {
   try{
+    console.log("...............payoperator.............");
   const { emp_Id,emp_Name,amount,date} = req.body;
   console.log("amount", amount);
   const bill_image = req.file;
@@ -5098,6 +5209,7 @@ const adminRecord = await Admin.findOne({ where: { emp_Id: emp_Id } });
 
 router.get('/getFundById', async (req, res) => {
   try {
+    console.log("...............getfundbyid.............");
     const { emp_Id } = req.query;
 
     // Fetch user details by UId from the reg table
@@ -5138,6 +5250,7 @@ router.get('/getFundById', async (req, res) => {
 
 router.get('/list-admin',async(req,res) =>{
   try{
+    console.log("...............list-admin.............");
     const admins = await Admin.findAll({where:{
       id:{[Op.ne]:1}
     }});
@@ -5151,6 +5264,7 @@ router.get('/list-admin',async(req,res) =>{
 
 router.get('/get-balance', async (req, res) => {
   try {
+    console.log("...............get-balance.............");
       const { emp_Id } = req.query;
 
 
@@ -5176,7 +5290,7 @@ router.get('/get-balance', async (req, res) => {
 
 router.delete('/global-Delete/:id' , async (req, res) =>{
   try{
-    
+    console.log("...............global-delete.............");
     const  id  = req.params.id;
     console.log(id);
     const message = await globalMessage.findOne({ where: { id }});
@@ -5194,6 +5308,7 @@ router.delete('/global-Delete/:id' , async (req, res) =>{
 
 router.get('/appointmentFeedback', async (req, res) => {
   try {
+    console.log("...............appointmentFeedback.............");
     const page = parseInt(req.query.page) || 1; // Changed to query parameters
     const limit = 10;
 
@@ -5231,6 +5346,7 @@ router.get('/appointmentFeedback', async (req, res) => {
 
 router.get('/check-payment-flag',async(req,res) =>{
   try{
+    console.log("...............check-payment-flag.............");
     const UId = req.query.UId;
 
     const user = await meditationFees.findOne({
@@ -5253,6 +5369,8 @@ router.get('/check-payment-flag',async(req,res) =>{
 
 router.get('/waitingListDetails', async (req, res) => {
   try {
+    console.log("...............waitingListDetails.............");
+
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
@@ -5280,6 +5398,8 @@ router.get('/waitingListDetails', async (req, res) => {
 
 router.get('/thisMonthDetails', async (req, res) => {
   try {
+    console.log("...............thisMonthDetails.............");
+
       const currentDate = new Date();
       const startDateOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
       const endDateOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
@@ -5410,6 +5530,8 @@ router.get('/thisMonthDetails', async (req, res) => {
 
 router.get('/beneficiariesDetails', async (req, res) => {
   try {
+    console.log("...............beneficiariesDetails.............");
+
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
     const offset = (page - 1) * limit;
@@ -5448,6 +5570,8 @@ router.get('/beneficiariesDetails', async (req, res) => {
 
 router.get('/paymentDetails', async (req, res) => {
   try {
+    console.log("...............paymentDetails.............");
+
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
@@ -5481,6 +5605,8 @@ router.get('/paymentDetails', async (req, res) => {
 
 router.get('/searchUser', async (req, res) => {
   try {
+    console.log("...............searchUser.............");
+
     const field = req.query.field;
     const value = req.query.value; 
     const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
@@ -5527,6 +5653,8 @@ router.get('/searchUser', async (req, res) => {
 
 router.put('/update-user-status', async (req, res) => {
   try {
+    console.log("...............update-user-status.............");
+
     // Update user_Status from null to 'ACTIVE'
     const [affectedRows] = await reg.update(
       { user_Status: 'ACTIVE' },
@@ -5559,10 +5687,13 @@ router.put('/update-user-status', async (req, res) => {
 
 router.post('/addDepartments', async (req, res) => {
   try {
+    console.log("...............addDepartments.............");
+
     const data = req.body; 
     await departments.create(data); 
     return res.status(200).json('Department added successfully');
   } catch (error) {
+    console.log("error");
     return res.status(500).json({ error: error.message }); 
   }
 });
@@ -5570,10 +5701,13 @@ router.post('/addDepartments', async (req, res) => {
  
 router.get('/listDepartments',async(req,res) =>{
   try{
+    console.log("...............listDepartments.............");
+
       const departmentsList = await departments.findAll();
       return res.status(200).json({message:'Fetching data successfully',departmentsList});
  
   } catch (error) {
+    console.log(error);
       return res.status(500).json({message:'internal server error'});
   }
 });
@@ -5581,17 +5715,22 @@ router.get('/listDepartments',async(req,res) =>{
  
 router.put('/updateDepartments',async(req,res) =>{
   try{
+    console.log("...............updateDepartments.............");
+
     const id = req.body.id;
     const updatedData = req.body;
     await departments.update(updatedData,{where:{id}});
     return res.status(200).json('Department updated successfully');
   } catch (error) {
+    console.log(error);
     return res.status(500).json({ error: error.message });
   }
 });
  
 router.delete('/deleteDepartments/:id', async (req, res) => {
   try {
+    console.log("...............deleteDepartments.............");
+
     const id = req.params.id; 
     const department = await departments.findByPk(id); 
  
@@ -5602,6 +5741,7 @@ router.delete('/deleteDepartments/:id', async (req, res) => {
     await department.destroy(); 
     return res.status(200).json('Department deleted successfully');
   } catch (error) {
+    console.log(error);
     return res.status(500).json({ error: error.message });
   }
 });
@@ -5609,6 +5749,8 @@ router.delete('/deleteDepartments/:id', async (req, res) => {
  
 router.post('/addContact' , async (req,res) =>{
   try{
+    console.log("...............addContact.............");
+
     const {departments,name,contact} = req.body;
     const newdata= await supportandcontact.create({
       departments,
@@ -5617,6 +5759,7 @@ router.post('/addContact' , async (req,res) =>{
     });
     return res.status(200).json('Contact added successfully');
   } catch (error) {
+    console.log(error);
     return res.status(500).json({ error: error.message });
   }
 });
@@ -5624,16 +5767,22 @@ router.post('/addContact' , async (req,res) =>{
  
 router.get('/listContacts' , async (req,res) =>{
   try{
+    console.log("...............listContacts.............");
+
     const list = await supportandcontact.findAll();
     return res.status(200).json({message:'Fetching data successfully',list});
   } catch(error) {
+    console.log(error);
     return res.status(500).json({message:'internal server error'});
   }
 });
  
 router.put('/updateContacts', async (req,res) =>{
-  console.log('enter');
   try{
+  console.log("...............updateContacts.............");
+
+ // console.log('enter');
+
    // const id = req.body.id;
     const {id,departments,name,contact} =req.body
     console.log(id,departments,name,contact);
@@ -5652,6 +5801,7 @@ router.put('/updateContacts', async (req,res) =>{
  
 router.delete('/deleteContact/:id' , async (req, res) =>{
   try{
+    console.log("...............deletecontact.............");
     const id = req.params.id;
     await supportandcontact.destroy({where:{id}});
     return res.status(200).json('Contact deleted successfully');
@@ -5662,6 +5812,8 @@ router.delete('/deleteContact/:id' , async (req, res) =>{
  
 router.get('/searchContact/:value', async (req, res) => {
   try {
+    console.log("..............searchContact..............");
+
     const value = req.params.value;
  
     if (!value) {
@@ -5686,12 +5838,15 @@ router.get('/searchContact/:value', async (req, res) => {
  
     return res.status(200).json({ message: 'Search results', result });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
 
 router.get('/contact/:id' , async(req,res) =>{
   try{
+    console.log("..............contact..............");
+
     const id = req.params.id;
     if(!id){
       return res.status(400).json('Id is required');  
@@ -5702,12 +5857,14 @@ router.get('/contact/:id' , async(req,res) =>{
     }
     return res.status(200).json({message:'Fetching data successfully',contact});
   } catch (error){
+    console.log(error);
     return res.status(500).json({message:'internal server error'});
   }
 });
 
 router.get('/department/:id' , async(req,res) =>{
   try{
+    console.log("..............department..............");
     const id = req.params.id;
     if(!id){
       return res.status(400).json('Id is required');  
@@ -5718,6 +5875,7 @@ router.get('/department/:id' , async(req,res) =>{
     }
     return res.status(200).json({message:'Fetching data successfully',contact});
   } catch (error){
+    console.log(error);
     return res.status(500).json({message:'internal server error'});
   }
 });
@@ -5726,4 +5884,4 @@ module.exports = router;
 
 
 
-    
+  
