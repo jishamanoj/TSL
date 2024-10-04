@@ -45,6 +45,7 @@ const blogs = require('../model/blogs');
 
 router.get('/getAllUsers', async (req, res) => {
   try {
+    console.log(".............................getAllUsers...................................");
     // Fetch all users from the reg table
     const users = await reg.findAll();
  
@@ -79,6 +80,8 @@ router.get('/getAllUsers', async (req, res) => {
  
 router.post('/countries', async (req, res) => {
   try{
+    console.log(".............................countries...................................");
+
     const data = req.body; // Assuming req.body is an array of objects
  
     if (Array.isArray(data)) {
@@ -95,12 +98,15 @@ router.post('/countries', async (req, res) => {
         res.status(400).send({ message: "Invalid data format. Please send an array of objects." });
     }}
     catch (error) {
+      console.log(error);
       res.status(500).send({ message: "internal server error"});
     }
 });
  
 router.get('/countrieslist', async (req, res) => {
     try {
+      console.log(".............................countrieslist...................................");
+
       const countries = await Country.findAll({
         order: [['name', 'ASC']], // Order by the 'name' field in ascending order
       });
@@ -117,7 +123,7 @@ const { verify } = require('crypto');
 
 router.post('/registerUser', async (req, res) => { 
   try {
-  console.log("..................enter...................");
+  console.log("..................registerUser...................");
   const { email, phone, country } = req.body;
   console.log(email, phone, country);
 
@@ -175,9 +181,7 @@ async function sendOTP(email,phone,country,res) {
       headers: {
         Accept: 'application/json',
       },
-      // data: {
-      //   otp_message: `Your OTP is {{otp}}. @otp-autofill.vercel.app #.`
-      // }
+      
     };
 
     // Await OTP response
@@ -277,6 +281,8 @@ function generateOTP() {
 router.get('/displayDataFromRedis/:key', async (req, res) => {
   
   try {
+    console.log("..................displayDataFromRedis...................");
+
     const key = req.params.key;
  
         // Retrieve data from Redis using the provided key
@@ -450,6 +456,8 @@ function calculateExpirationDate() {
  
 router.get('/listName/:UId', async (req, res) => {
   try {
+    console.log(".............................listName...................................");
+
     const { UId } = req.params;
     console.log("UId: " + UId)
  
@@ -496,7 +504,7 @@ router.get('/listName/:UId', async (req, res) => {
  
 router.get('/rulesAndConditions', async (req, res) => {
   try {
-    // Extract the questionId from the request parameters
+    console.log(".............................rulesAndConditions...................................");
     const  questionId  = 1;
  
     // Fetch the question from the database by questionId
@@ -520,6 +528,8 @@ router.get('/rulesAndConditions', async (req, res) => {
  
 router.post('/send-otp', async (req, res) => {
   try {
+    console.log(".............................send-otp...................................");
+
   const { email,phone,country} = req.body;
 console.log("email:"+email);
 
@@ -559,6 +569,8 @@ sendOTP(email,phone,country,res);
 
 router.post('/verify-userotp', async (req, res) => {
   try {
+    console.log(".............................verify-userotp...................................");
+
     const { otp, email,phone,country } = req.body;
     console.log('otp:'+otp,"email:"+email);
 
@@ -676,6 +688,8 @@ router.post('/verify-userotp', async (req, res) => {
 
 router.post("/register", upload.single('profilePic'), async (req, res) => {
   try{
+    console.log("..................register...................");
+
     const { first_name, last_name, email, DOB, gender, country, phone, reference, ref_id, languages, remark} = req.body;
     console.log("first_name: " + first_name, "last_name: " + last_name, "email: "+ email, "DOB: "+ DOB, "gender: "+ gender, "country: "+ country, "phone: "+ phone, "reference:"+reference, "ref_id: "+ ref_id, "languages:"+languages, "remark:"+ remark);
     
@@ -780,6 +794,8 @@ try{
 
   router.post('/logout', (req, res) => {
     try{
+      console.log("..................logout...................");
+
     req.session.destroy(err => {
       if (err) {
         console.log('Error destroying session:', err);
@@ -790,12 +806,15 @@ try{
     });
   }
   catch (error) {
+    console.log(error)
     res.status(500).json({ message: 'Internal server error'});
   }
   });
   
 router.get('/getUserById', async (req, res) => {
   try {
+    console.log("..................getUserById...................");
+
     if(req.session.UId) {
       console.log("session is..............", req.session.UId);
   
@@ -856,7 +875,7 @@ router.get('/getUserById', async (req, res) => {
 
 router.get('/flag', async (req, res) => {
   try {
-    // Retrieve UId from the session
+    console.log("..................flag...................");
     const UId = req.session.UId;
     console.log(UId);
 
@@ -904,6 +923,8 @@ router.get('/flag', async (req, res) => {
  
 router.post('/meditation-data', async (req, res) => {
     try {
+      console.log("..................meditation-data...................");
+
       if(req.session.UId) {
           console.log("session is..............", req.session.UId);
 
@@ -946,6 +967,8 @@ router.post('/meditation-data', async (req, res) => {
 
 router.get('/reference', async (req, res) => {
   try {
+    console.log("..................reference...................");
+
   const UId = req.session.UId;
   console.log(req.session.UId);
  
@@ -969,6 +992,8 @@ router.get('/reference', async (req, res) => {
  
 router.get('/list-questions', async (req, res) => {
     try {
+      console.log("..................list-questions...................");
+
       const Questions = await questions.findAll();
       res.json(Questions);
     } catch (error) {
@@ -979,6 +1004,8 @@ router.get('/list-questions', async (req, res) => {
  
 router.get('/user-details', async (req, res) => {
   try {
+    console.log("..................user-details...................");
+
   if(req.session.UId) {
     console.log("session is..............", req.session.UId);
 
@@ -1016,6 +1043,8 @@ router.get('/user-details', async (req, res) => {
  
 router.delete('/delete-user/:phone', async (req, res) => {
   try {
+    console.log("..................user-details...................");
+
     const phone = req.params.phone;
     console.log(req.params.phone)
  
@@ -1062,6 +1091,8 @@ router.delete('/delete-user/:phone', async (req, res) => {
 
 router.post('/meditation', async (req, res) => {
   try {
+    console.log("..................meditation...................");
+
     const { UId } = req.session;
     const { startdatetime, stopdatetime, morning_meditation, evening_meditation } = req.body;
 
@@ -1169,6 +1200,8 @@ router.post('/meditation', async (req, res) => {
 
 router.get('/guruji-date', async (req, res) => {
   try {
+    console.log("..................guruji-date...................");
+
     const  id  = 11;
  
     // Find the application config record by ID
@@ -1189,6 +1222,8 @@ router.get('/guruji-date', async (req, res) => {
 
  router.post("/appointment", async (req, res) => {
   try {
+    console.log("..................appointment...................");
+
    const UId = req.session.UId;
    console.log('UId: ', UId);
     if (!UId) {
@@ -1256,6 +1291,8 @@ router.get('/guruji-date', async (req, res) => {
  
 router.put('/rating', async (req, res) => {
   try {
+    console.log("..................rating...................");
+
   const id = req.body.id;
   console.log(id);
   const {rating , feedback}= req.body;
@@ -1278,6 +1315,8 @@ router.put('/rating', async (req, res) => {
 
 router.get('/list-appointment', async (req, res) => {
   try {
+    console.log("..................list-appointment...................");
+
     const  UId = req.session.UId;
     console.log(req.session.UId);
  
@@ -1308,6 +1347,7 @@ router.get('/list-appointment', async (req, res) => {
  
 router.put('/updateAppointment/:id', async (req, res) => {
   try {
+    console.log(".................updateAppointmen..............");
     const { id } = req.params;
     console.log(id);
     const updateFields = req.body;
@@ -1359,6 +1399,8 @@ router.put('/updateAppointment/:id', async (req, res) => {
  
 router.delete('/delete-appointment', async (req, res) => {
   try {
+    console.log(".................delete-appointment..............");
+
   const { id } = req.query;
   console.log(id)
   const UId = req.session.UId; // Assuming UId is stored in req.session
@@ -1397,6 +1439,8 @@ router.delete('/delete-appointment', async (req, res) => {
 
 router.delete('/group-members/:id', async (req, res) => {
   try {
+    console.log(".................group-members..............");
+
   const { id } = req.params;
  
   
@@ -1421,6 +1465,8 @@ router.delete('/group-members/:id', async (req, res) => {
  
 router.post('/send-email', async (req, res) => {
   try {
+    console.log("................send-email..............");
+
     const {first_name,last_name,UId,DOJ,expiredDate} = req.body
     const to = req.body.to
     const config = await applicationconfig.findOne(); // Retrieve a single row from the table
@@ -1727,6 +1773,8 @@ router.post('/send-email', async (req, res) => {
 
 router.get('/meditation-detail', async (req, res) => {
   try {
+    console.log("................meditation-detail..............");
+
        const { UId } = req.session;
        console.log(UId);
       //const UId = req.body.UId;
@@ -1752,6 +1800,8 @@ router.get('/meditation-detail', async (req, res) => {
  
 router.get('/get-messages', async (req, res) => {
   try {
+    console.log("................get-messages..............");
+
       const  { UId } = req.session;
       console.log(UId);
  
@@ -1777,6 +1827,8 @@ router.get('/get-messages', async (req, res) => {
  
 router.get('/meditation-date', async (req, res) => {
   try {
+    console.log("................meditation-date..............");
+
     const { UId } = req.session;
     if (!UId) {
       return res.status(401).json({ error: 'User not authenticated' });
@@ -1834,6 +1886,8 @@ router.get('/meditation-date', async (req, res) => {
  
 router.post('/addBankDetails', async (req, res) => {
   try {
+    console.log("................addBankDetails..............");
+
     const UId = req.session.UId;
     console.log(req.session.UId);
     const { AadarNo, bankName, IFSCCode, branchName, accountName, accountNo } = req.body;
@@ -1873,6 +1927,8 @@ router.post('/addBankDetails', async (req, res) => {
 
 router.get('/getBankDetails', async (req, res) => {
   try {
+    console.log("................getBankDetails..............");
+
     const { UId } = req.session;
     console.log(UId);
  
@@ -1889,6 +1945,8 @@ router.get('/getBankDetails', async (req, res) => {
  
 router.put('/updteBankDetails', async (req, res) => {
   try {
+    console.log("................updteBankDetails..............");
+
     const { UId } = req.session;
     console.log(UId)
     const bankdetails = req.body;
@@ -1917,17 +1975,23 @@ router.put('/updteBankDetails', async (req, res) => {
 
 router.get('/reg-confiq', async (req, res) => {
 try{
+  console.log("................reg-confiq..............");
+
 const config = await applicationconfig.findAll();
 res.json({ config });
 }
 catch (error) {
+  console.log(error);
   return res.status(500).json({ error: 'Internal server error' });
+  
 }
 });
  
 router.get('/show', async (req, res) => {
 try {
  
+  console.log("................show..............");
+
     const config = await applicationconfig.findOne(); // Retrieve a single row from the table
     const prompt = config ? config.reg_email_prompt : null; // Access the reg_email_prompt property
     console.log(prompt);
@@ -1940,6 +2004,8 @@ try {
 
 router.get('/fetch-details', async (req, res) => {
   try {
+    console.log("................fetch-details..............");
+
       const { UId } = req.session;
       console.log(UId);
  
@@ -1980,6 +2046,8 @@ router.get('/fetch-details', async (req, res) => {
 
 router.put('/appointment-feedback/:id', async (req, res) => {
   try {
+    console.log("................appointment-feedback..............");
+
   const id = req.params.id;  // Corrected to access the ID from the parameters
   console.log(req.params.id);
   const feedback = req.body.feedback;
@@ -2011,6 +2079,8 @@ router.put('/appointment-feedback/:id', async (req, res) => {
 
 router.put('/maintances-fee', async (req, res) => {
   try {
+    console.log("................maintances-fee..............");
+
   const UId = req.session.UId;
   console.log(req.session.UId);
   const maintanance_fee = req.body.maintanance_fee;
@@ -2045,6 +2115,8 @@ router.put('/maintances-fee', async (req, res) => {
 
 router.post('/messages', async (req, res) => {
   try {
+    console.log("................messages..............");
+
       const UId = req.session.UId
       console.log(req.session.UId);
       const { message, messageTime,isAdminMessage, messagetype,messageDate} = req.body;
@@ -2102,6 +2174,8 @@ else{
 
 router.get('/validate-session', async (req, res) => {
     try{
+      console.log("................validate-session..............");
+
       const { UId } = req.session;
       console.log(UId);
       if(!UId) {
@@ -2111,12 +2185,16 @@ router.get('/validate-session', async (req, res) => {
         return res.status(200).json('session is valid');
       }
     } catch (error) {
+      console.log(error);
       return res.status(500).json({ error: 'Internal Server Error'}); 
+      
     }
   })
 
 router.get('/privateMessage/:page' , async(req, res) =>{
   try{
+    console.log("................privateMessage..............");
+
     const { UId } = req.session;
     console.log(UId)
    // const UId = req.query.UId;
@@ -2157,6 +2235,8 @@ router.get('/globalMessage/:page', async (req, res) => {
   //   if(!UId){
   //     return res.status(401).json('User not Authenticated');
   //   }
+  console.log("................globalMessage..............");
+
 
     const page = parseInt(req.params.page) || 1;
     const limit = 100;
@@ -2200,7 +2280,8 @@ router.get('/globalMessage/:page', async (req, res) => {
 
 router.get('/gurujimessage/:page', async (req, res) => {
   try {
-    
+    console.log(".............................gurujimessage...................................");
+
     const page = parseInt(req.params.page) || 1;
     const limit = 100;
     
@@ -2224,6 +2305,8 @@ router.get('/gurujimessage/:page', async (req, res) => {
  
 router.put('/updateUserDetails', async (req, res) => {
   try {
+    console.log(".............................updateUserDetails...................................");
+
   const UId = req.session.UId
   console.log(req.session.UId);
   const userData = req.body;
@@ -2257,6 +2340,8 @@ router.put('/updateUserDetails', async (req, res) => {
 
 router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
   try {
+    console.log(".............................updateUser...................................");
+
   const UId = req.session.UId
   console.log(req.body.UId);
 //  const userData = req.body;
@@ -2318,6 +2403,8 @@ router.put('/updateUser', upload.single('profilePic'), async (req, res) => {
 
 router.post('/appFeedback' , async( req, res) => {
   try{
+    console.log("..................appFeedback...................");
+
   const UId = req.session.UId;
   console.log(req.session.UId);
   const { feedback, rating } = req.body;
@@ -2344,6 +2431,8 @@ router.post('/appFeedback' , async( req, res) => {
  
 router.get('/listevents', async (req, res) => {
   try {
+    console.log("..................listevents...................");
+
     const currentDate = new Date();
 
     currentDate.setHours(0, 0, 0, 0);
@@ -2392,6 +2481,8 @@ router.get('/listevents', async (req, res) => {
  
 router.get('/rewardList', async (req, res) => {
   try {
+    console.log("..................rewardList...................");
+
     const { UId } = req.session;
     console.log(UId);
     if (!UId) {
@@ -2425,6 +2516,8 @@ router.get('/rewardList', async (req, res) => {
 
 router.get('/transaction_summary', async (req, res) => {
   try {
+    console.log("..................transaction_summary...................");
+
     const { UId } = req.session;
     console.log(UId);
     if (!UId) {
@@ -2466,6 +2559,8 @@ router.get('/transaction_summary', async (req, res) => {
 
 router.get('/transaction_list', async (req, res) => {
   try {
+    console.log("..................transaction_list...................");
+
     const { UId } = req.session;
     console.log(UId);
     if (!UId) {
@@ -2499,6 +2594,8 @@ router.get('/transaction_list', async (req, res) => {
  
 router.get('/broadcasts', async (req, res) => {
   try {
+    console.log("..................broadcasts...................");
+
       const broadcasts = await Broadcast.findAll();
       return res.status(200).json(broadcasts);
   } catch (error) {
@@ -2509,6 +2606,8 @@ router.get('/broadcasts', async (req, res) => {
 
 router.get('/playlists', async (req, res) => {
   try {
+    console.log("..................playlists...................");
+
     // Fetch distinct playList_headings
     const playLists = await Video.findAll({
       attributes: [
@@ -2575,6 +2674,8 @@ router.get('/playlists', async (req, res) => {
 
 router.get('/videos-by-playlist', async (req, res) => {
   try {
+    console.log("..................videos-by-playlist...................");
+
   const playList_heading = req.query.playList_heading;
 
   console.log(playList_heading);
@@ -2616,6 +2717,8 @@ router.get('/videos-by-playlist', async (req, res) => {
 
 router.get('/meditation-time', async (req, res) => {
   try {
+    console.log("..................registerUser...................");
+
   const { UId} = req.session;
   const { time } = req.query;
   console.log(time, UId);
@@ -2665,6 +2768,8 @@ router.get('/meditation-time', async (req, res) => {
 
 router.get('/meditationTimeDetails', async (req, res) => {
   try {
+    console.log("..................meditationTimeDetails...................");
+
   const { UId } = req.session;
   console.log( UId);
   
@@ -2695,6 +2800,8 @@ router.get('/meditationTimeDetails', async (req, res) => {
 
 router.post('/zoom_Records', async(req,res)=>{
   try{
+    console.log(".............................zoom_Records...................................");
+
     const {UId} = req.session;
     const {zoom_date,zoom_time} = req.body;
     console.log(UId, zoom_date, zoom_time);
@@ -2713,12 +2820,15 @@ router.post('/zoom_Records', async(req,res)=>{
        });
       return res.status(200).json({message:'zoom record created successfully'}); 
   } catch(error){
+    console.log(error);
     return res.status(500).json('internal server error' , error);
   }
 });
 
 router.post('/zoom', async (req, res) => {
   try {
+    console.log("..................zoom...................");
+
   const { zoomdateto,zoomdatefrom, zoomStartTime, zoomStopTime, zoomLink,languages,daysOfWeek } = req.body;
   console.log(zoomdateto,zoomdatefrom, zoomStartTime, zoomStopTime, zoomLink,languages);
 
@@ -2743,6 +2853,8 @@ router.post('/zoom', async (req, res) => {
 
 router.get('/get-zoomclass', async (req, res) => {
   try {
+    console.log(".............................get-zoomclass...................................");
+
     const { UId } = req.session;
     console.log(`UId: ${UId}`);
     const { currentDate, currentDay } = req.query;
@@ -2798,6 +2910,8 @@ router.get('/get-zoomclass', async (req, res) => {
 
 router.post('/button-block', async (req, res) => {
   try {
+    console.log("..................button-block...................");
+
     const { date } = req.body;
     console.log(date);
 
@@ -2852,6 +2966,8 @@ router.post('/button-block', async (req, res) => {
 
 router.get('/meditation-date', async (req, res) => {
   try {
+    console.log("..................meditation-date...................");
+
     const { UId } = req.body;
     console.log(UId);
     if (!UId) {
@@ -2902,7 +3018,8 @@ console.log(user);
 
 router.get('/listblogs', async (req, res) => {
   try {
-     
+    console.log("..................listblogs...................");
+
     const upcomingEvents = await blogs.findAll({
       order: [['id', 'DESC']],
     });
@@ -2944,6 +3061,8 @@ router.get('/listblogs', async (req, res) => {
 
 router.post('/global' , async(req,res)=>{
   try{
+    console.log("..................global...................");
+
     const UId = req.session.UId;
     console.log(req.session.UId);
     const { message, messageTime,isAdminMessage,messageDate} = req.body;
@@ -2979,7 +3098,8 @@ router.post('/global' , async(req,res)=>{
 
 router.delete('/deleteMsg/:id' , async (req, res) =>{
   try{
-    
+    console.log("..................deleteMsg...................");
+ 
     const  id  = req.params.id;
     console.log(id);
     const message = await globalMessage.findOne({
@@ -3001,6 +3121,8 @@ router.delete('/deleteMsg/:id' , async (req, res) =>{
 
 router.delete('/delete-user', async (req, res) => {
   try {
+    console.log("..................delete-user...................");
+
   const { UId } = req.session;
   console.log(UId);
   if (!UId) {

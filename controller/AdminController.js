@@ -21,6 +21,7 @@ const meditationFees = require('../model/meditationFees');
 router.put('/processPayment', async (req, response) => {
   try {
   // const userId = req.session.userId;
+  console.log("......................processPayment.......................")
   const UId = req.body.UId;
  
   console.log("...............................",UId);
@@ -193,17 +194,20 @@ const userReg = await reg.findOne({
 
 router.get('/findall',async(request,response)=>{
     try {
+      console.log('......................findall...................');
         const user_list = await Users.findAll();
         if(user_list){
             return response.json({status:"success",user_list})
         }
     } catch (error) {
+      console.log('Error:', error);
         return response.json({status:"failed",error})
     }
 })
 
 router.post('/findrefs',async (request,response)=>{
   try{
+    console.log("...................findrefs................")
 const {UserId} = request.body;
     
 const participant = await Users.findByPk(UserId);
@@ -265,6 +269,7 @@ return response.json({status:"success",refs:refs})
 
 router.post('/closeuser', async (req, res) => {
   try {
+    console.log("...................closeuser...............");
     const { UId } = req.body;
 
     // Find user by primary key
@@ -309,6 +314,7 @@ router.post('/closeuser', async (req, res) => {
 
 router.get('/search', async (req, res) => {
     try {
+      console.log("......................search....................");
       const { userlevel, usernode } = req.query;
   
       let whereClause = {};
@@ -346,6 +352,7 @@ router.get('/search', async (req, res) => {
 
   router.post('/admin', async (req, res) => {
       try {
+        console.log("...................admin..................")
           const { username, role, password } = req.body;
   
           // Validate request body
@@ -368,6 +375,7 @@ router.get('/search', async (req, res) => {
 
   router.put('/admin-changepassword', async (req, res) => {
     try {
+      console.log('...................admin-changepassword...................');
       const { username, newPassword } = req.body;
   
       // Validate request body
@@ -398,6 +406,7 @@ router.get('/search', async (req, res) => {
   
   router.post('/meditation-flag', async (req, res) => {
     try {
+      console.log('..................meditation-flag..................');
     const { UId,amount,payment_date,payment_time} = req.body;
   
     
