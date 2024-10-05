@@ -334,7 +334,9 @@ router.post('/save-token', async (req, res) => {
   try {
    const { UId } = req.body;
     const { token } = req.body;
-
+    if (!UId || !token) {
+      return res.status(400).json({ error: 'UId and token are required' });
+    }
     const existingRecord = await Notification.findOne({ where: { UId } });
 
     if (existingRecord) {
@@ -372,34 +374,35 @@ async function sendNotificationToUser(UId, title, message) {
   }
 }
  
-const notificationCronJob = cron.schedule('0 0 * * *', async () => {
-  try {
-    const currentDate = moment().format('YYYY-MM-DD');
+// const notificationCronJob = cron.schedule('0 0 * * *', async () => {
+//   try {
+//     const currentDate = moment().format('YYYY-MM-DD');
 
-    const appointments = await Appointment.findAll({
-      where: {
-        appointmentDate: {
-          [Op.between]: [
-            currentDate,
-            moment(currentDate).add(3, 'days').format('YYYY-MM-DD')
-          ]
-        }
-      }
-    });
+//     const appointments = await Appointment.findAll({
+//       where: {
+//         appointmentDate: {
+//           [Op.between]: [
+//             currentDate,
+//             moment(currentDate).add(3, 'days').format('YYYY-MM-DD')
+//           ]
+//         }
+//       }
+//     });
 
-    appointments.forEach(async (appointment) => {
-      const UId = appointment.UId;
-      const title = 'Reminder: Upcoming Appointment';
-      const message = `You have an appointment scheduled for ${appointment.appointmentDate}. Please be on time.`;
-      await sendNotificationToUser(UId, title, message);
-    });
-  } catch (error) {
-    console.log('Error in cron job:', error);
-  }
-});
+//     appointments.forEach(async (appointment) => {
+//       const UId = appointment.UId;
+//       const title = 'Reminder: Upcoming Appointment';
+//       const message = `You have an appointment scheduled for ${appointment.appointmentDate}. Please be on time.`;
+//       await sendNotificationToUser(UId, title, message);
+//     });
+//   } catch (error) {
+//     console.log('Error in cron job:', error);
+//   }
+// });
 
-notificationCronJob.start();
+// notificationCronJob.start();
  
+
 router.get('/list-users', async(req,res)=>{
  
   try{
@@ -532,39 +535,39 @@ router.get('/get-notificationbyid/:id', async (req, res) => {
 });
  
 
-async function updateMaintenanceStatus() {
-  try {
-      const currentDate = new Date();
-      const uniqueUIds = await maintenance.findAll({
-          attributes: [
-              [Sequelize.fn('DISTINCT', Sequelize.col('UId')), 'UId'],
-          ],
-      });
+// async function updateMaintenanceStatus() {
+//   try {
+//       const currentDate = new Date();
+//       const uniqueUIds = await maintenance.findAll({
+//           attributes: [
+//               [Sequelize.fn('DISTINCT', Sequelize.col('UId')), 'UId'],
+//           ],
+//       });
 
-      for (let record of uniqueUIds) {
-          const { UId } = record.dataValues;
+//       for (let record of uniqueUIds) {
+//           const { UId } = record.dataValues;
       
-          const latestPayment = await maintenance.findOne({
-              where: { UId },
-              order: [['id', 'DESC']],
-          });
+//           const latestPayment = await maintenance.findOne({
+//               where: { UId },
+//               order: [['id', 'DESC']],
+//           });
 
-          if (latestPayment) {
-              const paymentDate = new Date(latestPayment.payment_date);
-              const daysSincePayment = (currentDate - paymentDate) / (1000 * 60 * 60 * 24);
+//           if (latestPayment) {
+//               const paymentDate = new Date(latestPayment.payment_date);
+//               const daysSincePayment = (currentDate - paymentDate) / (1000 * 60 * 60 * 24);
 
-              if (daysSincePayment > 30 && latestPayment.maintenance_payment_status === true) {
-                  await latestPayment.update({ maintenance_payment_status: false });
-                  console.log(`Updated maintenance_payment_status for UId: ${UId}`);
-              }
-          }
-      }
-  } catch (error) {
-      console.log('Error updating maintenance payment status:', error);
-  }
-}
+//               if (daysSincePayment > 30 && latestPayment.maintenance_payment_status === true) {
+//                   await latestPayment.update({ maintenance_payment_status: false });
+//                   console.log(`Updated maintenance_payment_status for UId: ${UId}`);
+//               }
+//           }
+//       }
+//   } catch (error) {
+//       console.log('Error updating maintenance payment status:', error);
+//   }
+// }
 
 
-cron.schedule('0 0 * * *', updateMaintenanceStatus);
+// cron.schedule('0 0 * * *', updateMaintenanceStatus);
  
 module.exports = router;
