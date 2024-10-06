@@ -127,7 +127,7 @@ router.post('/registerUser', async (req, res) => {
   const { email, phone, country } = req.body;
   console.log(email, phone, country);
 
-    const existingUser = await reg.findOne({
+    const existingUser = await reg.findAll({
       where: {
         [Op.or]: [{ email }, { phone }],
       },
@@ -534,7 +534,7 @@ router.post('/send-otp', async (req, res) => {
 console.log("email:"+email);
 
     // Find the user with the provided email
-    const user = await reg.findOne({
+    const user = await reg.findAll({
       where: {
         [Op.or]: [
           { email: email }, // Check by email
@@ -575,7 +575,7 @@ router.post('/verify-userotp', async (req, res) => {
     console.log('otp:'+otp,"email:"+email);
 
     // Fetch user from the database using email
-    const regUser = await reg.findOne({
+    const regUser = await reg.findAll({
       where: {
         [Op.or]: [
           { email: email }, // Check by email
@@ -693,7 +693,7 @@ router.post("/register", upload.single('profilePic'), async (req, res) => {
     const { first_name, last_name, email, DOB, gender, country, phone, reference, ref_id, languages, remark} = req.body;
     console.log("first_name: " + first_name, "last_name: " + last_name, "email: "+ email, "DOB: "+ DOB, "gender: "+ gender, "country: "+ country, "phone: "+ phone, "reference:"+reference, "ref_id: "+ ref_id, "languages:"+languages, "remark:"+ remark);
     
-    const existingUser = await reg.findOne({
+    const existingUser = await reg.findAll({
       where: {
         [Op.or]: [{ email }, { phone }],
       },
