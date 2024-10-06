@@ -127,7 +127,7 @@ router.post('/registerUser', async (req, res) => {
   const { email, phone, country } = req.body;
   console.log(email, phone, country);
 
-    const existingUser = await reg.findAll({
+    const existingUser = await reg.findOne({
       where: {
         [Op.or]: [{ email }, { phone }],
       },
@@ -540,8 +540,7 @@ console.log("email:"+email);
           { email: email }, // Check by email
           { phone: phone }  // Check by phone
         ]
-      },
-      order: [['createdAt', 'DESC']], 
+      }
     });
 
     if (!user) {
@@ -698,7 +697,6 @@ router.post("/register", upload.single('profilePic'), async (req, res) => {
       where: {
         [Op.or]: [{ email }, { phone }],
       },
-      order: [['createdAt', 'DESC']],
     });
 
     if (existingUser) {
