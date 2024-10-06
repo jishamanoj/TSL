@@ -2229,12 +2229,7 @@ router.get('/privateMessage/:page' , async(req, res) =>{
  
 router.get('/globalMessage/:page', async (req, res) => {
   try {
-  //  const { UId } = req.body;
-  //  console.log(UId);
-  //  // const UId = req.query.UId;
-  //   if(!UId){
-  //     return res.status(401).json('User not Authenticated');
-  //   }
+
   console.log("................globalMessage..............");
 
 
@@ -2257,8 +2252,14 @@ router.get('/globalMessage/:page', async (req, res) => {
     const messageData = await Promise.all(messages.map(async (message) => {
       const userData = await Users.findOne({ where: { UId: message.UId }, 
         attributes: ['firstName', 'secondName'] });
-      console.log("userData.............",userData);
-      const userName = `${userData.firstName} ${userData.secondName}`;
+     // console.log("userData.............",userData);
+     let userName;
+     if(userName){
+       userName = `${userData.firstName} ${userData.secondName}`;
+     }
+     else{
+      userName = 'Meditation fee is pending'
+     }
       return { 
         ...message.toJSON(), 
         userName 
