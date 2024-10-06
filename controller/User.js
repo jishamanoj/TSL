@@ -534,13 +534,14 @@ router.post('/send-otp', async (req, res) => {
 console.log("email:"+email);
 
     // Find the user with the provided email
-    const user = await reg.findAll({
+    const user = await reg.findOne({
       where: {
         [Op.or]: [
           { email: email }, // Check by email
           { phone: phone }  // Check by phone
         ]
-      }
+      },
+      order: [['createdAt', 'DESC']], 
     });
 
     if (!user) {
@@ -693,7 +694,7 @@ router.post("/register", upload.single('profilePic'), async (req, res) => {
     const { first_name, last_name, email, DOB, gender, country, phone, reference, ref_id, languages, remark} = req.body;
     console.log("first_name: " + first_name, "last_name: " + last_name, "email: "+ email, "DOB: "+ DOB, "gender: "+ gender, "country: "+ country, "phone: "+ phone, "reference:"+reference, "ref_id: "+ ref_id, "languages:"+languages, "remark:"+ remark);
     
-    const existingUser = await reg.findAll({
+    const existingUser = await reg.findOne({
       where: {
         [Op.or]: [{ email }, { phone }],
       },
