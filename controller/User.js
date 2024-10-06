@@ -697,6 +697,7 @@ router.post("/register", upload.single('profilePic'), async (req, res) => {
       where: {
         [Op.or]: [{ email }, { phone }],
       },
+      order: [['createdAt', 'DESC']],
     });
 
     if (existingUser) {
@@ -3167,5 +3168,38 @@ router.delete('/delete-user', async (req, res) => {
   }
 });
 
+
+router.get('/recent-videos', async (req, res) => {
+  try {
+    const videos = await Video.findAll({
+      attributes: ['Video_heading', 'videoLink'],
+      order: [['id', 'DESC']],
+    });
+
+    if (!videos.length) {
+      return res.status(404).json({ error: 'No videos found for the provided playList_heading' });
+    }
+
+    const response = [];
+
+    videos.forEach(video => {
+      const headings = video.Video_heading;
+      const links = video.videoLink;
+
+      // Reverse the order of headings and links arrays for each video object
+      for (let i = headings.length - 1; i >= 0; i--) {
+        response.push({
+          Video_heading: headings[i],
+          videoLink: links[i]
+        });
+      }
+    });
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Error fetching videos:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 module.exports = router;
