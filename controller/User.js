@@ -2254,7 +2254,7 @@ router.get('/globalMessage/:page', async (req, res) => {
         attributes: ['firstName', 'secondName'] });
      // console.log("userData.............",userData);
      let userName;
-     if(userName){
+     if(userData){
        userName = `${userData.firstName} ${userData.secondName}`;
      }
      else{
