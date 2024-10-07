@@ -890,6 +890,7 @@ router.post('/verify-userotp', async (req, res) => {
 
 router.post("/register", upload.single('profilePic'), async (req, res) => {
   try {
+    console.log(".............register...............................................................");
     const { first_name, last_name, email, DOB, gender, country, phone, reference, ref_id, languages, remark } = req.body;
 
     const existingUser = await reg.findOne({
