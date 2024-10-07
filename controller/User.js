@@ -636,7 +636,8 @@ console.log("email:"+email);
           { email: email }, // Check by email
           { phone: phone }  // Check by phone
         ]
-      }
+      },
+      order: [['UserId', 'DESC']],
     });
 
     if (!user) {
