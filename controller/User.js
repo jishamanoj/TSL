@@ -168,12 +168,112 @@ router.post('/registerUser', async (req, res) => {
   }
 });
 
-async function sendOTP(email,phone,country,res) {
-  console.log('send otp')
+// async function sendOTP(email,phone,country,res) {
+//   console.log('send otp')
+//   try{
+//   if (country === 'India') {
+//   console.log('send otp if india ')
+
+//     // Send OTP via the external service
+//     const otpRequest = {
+//       method: 'post',
+//       url: `https://control.msg91.com/api/v5/otp?otp_expiry=1&template_id=66cdab06d6fc0538413b7392&mobile=91${phone}&authkey=${process.env.MSG91_AUTH_KEY}&realTimeResponse=`,
+//       headers: {
+//         Accept: 'application/json',
+//       },
+      
+//     };
+
+//     // Await OTP response
+//     const otpResponse = await axios(otpRequest);
+
+//     // Check if the OTP was sent successfully based on the response from the API
+//     if (otpResponse.data.type === 'success') {
+//       return res.status(200).json({ message: "OTP sent successfully", status: 'true',verify: true });
+//     } else {
+//       // Log the reason if OTP was not successful (msg91 provides a response message)
+//       console.log('OTP sending failed:', otpResponse.data);
+//       return res.status(400).json({ message: "Failed to send OTP", status: 'false', details: otpResponse.data.message });
+//     }
+//   } else {
+
+//   console.log('send otp else india')
+
+//     // For other countries, generate a random OTP
+//     const otp = Math.floor(1000 + Math.random() * 9000).toString();
+//     const redisKey = `otp:${phone}`;
+//     await redis.setex(redisKey, 600, otp); // Store OTP in Redis with an expiry time of 10 minutes
+
+//     // Setup Nodemailer to send the OTP email
+//     const transporter = nodemailer.createTransport({
+//       service: 'gmail',
+//       auth: {
+//         user: 'thasmai2016@gmail.com', // Use environment variables for sensitive data
+//         pass: 'bwaz sgbn oalp heik', // Securely manage this via environment variables
+//       },
+//     });
+
+//     // Email options
+//     const mailOptions = {
+//       from: 'thasmai2016@gmail.com',
+//       to: email, // User's email address
+//       subject: 'Thasmai Star Life: OTP for Registration',
+//       html: `
+//       <head>
+//         <meta charset="UTF-8">
+//         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+//         <style>
+//             body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+//             .email-container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+//             .header { text-align: center; padding: 20px; background-color: #2c3e50; border-radius: 8px 8px 0 0; color: #ffffff; }
+//             .header h1 { margin: 0; font-size: 24px; }
+//             .content { padding: 20px; text-align: center; }
+//             .content h2 { color: #333333; font-size: 20px; margin-bottom: 10px; }
+//             .content p { color: #666666; font-size: 16px; margin-bottom: 20px; }
+//             .otp { display: inline-block; background-color: #27ae60; color: white !important; font-size: 24px; padding: 10px 20px; border-radius: 5px; text-decoration: none; margin-bottom: 20px; }
+//             .footer { text-align: center; padding: 20px; color: #999999; font-size: 14px; }
+//         </style>
+//       </head>
+//       <body>
+//         <div class="email-container">
+//             <div class="header">
+//                 <h1>Thasmai Starlife Registration</h1>
+//             </div>
+//             <div class="content">
+//                 <h2>Your OTP for Registration</h2>
+//                 <p>Thank you for registering with Thasmai Starlife. Please use the following OTP to confirm your registration:</p>
+//                 <p class="otp">${otp}</p>
+//                 <p>If you did not request this OTP, please ignore this email.</p>
+//             </div>
+//             <div class="footer">
+//                 <p>&copy; 2024 Thasmai Starlife. All rights reserved.</p>
+//             </div>
+//         </div>
+//       </body>
+//       `,
+//     };
+
+//     // Send the email
+//     transporter.sendMail(mailOptions, (error, info) => {
+//       if (error) {
+//         console.log('Error sending email:', error);
+//         return res.status(500).json({ message: 'Failed to send email', status: 'false' });
+//       } else {
+//         console.log('Email sent:', info.response);
+//         return res.status(200).json({ message: 'OTP sent successfully via email', status: 'true',verify: true, redisKey });
+//       }
+//     });
+//   }
+// }
+// catch (error) {
+//   console.log(error);
+//   return res.status(500).json({ message:"something failed"});
+// }
+// }
+
+async function sendOTP(email,phone,country) {
   try{
   if (country === 'India') {
-  console.log('send otp if india ')
-
     // Send OTP via the external service
     const otpRequest = {
       method: 'post',
@@ -181,41 +281,37 @@ async function sendOTP(email,phone,country,res) {
       headers: {
         Accept: 'application/json',
       },
-      
     };
-
+ 
     // Await OTP response
     const otpResponse = await axios(otpRequest);
-
+ 
     // Check if the OTP was sent successfully based on the response from the API
     if (otpResponse.data.type === 'success') {
-      return res.status(200).json({ message: "OTP sent successfully", status: 'true',verify: true });
+      return ({ message: "OTP sent successfully", status: true });
     } else {
       // Log the reason if OTP was not successful (msg91 provides a response message)
-      console.log('OTP sending failed:', otpResponse.data);
-      return res.status(400).json({ message: "Failed to send OTP", status: 'false', details: otpResponse.data.message });
+      console.error('OTP sending failed:', otpResponse.data);
+      return ({ message: "Failed to send OTP", status: false, details: otpResponse.data.message });
     }
   } else {
-
-  console.log('send otp else india')
-
     // For other countries, generate a random OTP
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     const redisKey = `otp:${phone}`;
     await redis.setex(redisKey, 600, otp); // Store OTP in Redis with an expiry time of 10 minutes
-
+ 
     // Setup Nodemailer to send the OTP email
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: 'thasmai2016@gmail.com', // Use environment variables for sensitive data
-        pass: 'bwaz sgbn oalp heik', // Securely manage this via environment variables
+        user: 'thasmaistarlife@gmail.com', // Use environment variables for sensitive data
+        pass: 'ndkj dxdq kxca zplg', // Securely manage this via environment variables
       },
     });
-
+ 
     // Email options
     const mailOptions = {
-      from: 'thasmai2016@gmail.com',
+      from: 'thasmaistarlife@gmail.com',
       to: email, // User's email address
       subject: 'Thasmai Star Life: OTP for Registration',
       html: `
@@ -252,15 +348,15 @@ async function sendOTP(email,phone,country,res) {
       </body>
       `,
     };
-
+ 
     // Send the email
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        console.log('Error sending email:', error);
+        console.error('Error sending email:', error);
         return res.status(500).json({ message: 'Failed to send email', status: 'false' });
       } else {
         console.log('Email sent:', info.response);
-        return res.status(200).json({ message: 'OTP sent successfully via email', status: 'true',verify: true, redisKey });
+        return res.status(200).json({ message: 'OTP sent successfully via email', status: 'true', redisKey });
       }
     });
   }
@@ -686,17 +782,121 @@ router.post('/verify-userotp', async (req, res) => {
   }
 });
 
-router.post("/register", upload.single('profilePic'), async (req, res) => {
-  try{
-    console.log("..................register...................");
+// router.post("/register", upload.single('profilePic'), async (req, res) => {
+//   try{
+//     console.log("..................register...................");
 
-    const { first_name, last_name, email, DOB, gender, country, phone, reference, ref_id, languages, remark} = req.body;
-    console.log("first_name: " + first_name, "last_name: " + last_name, "email: "+ email, "DOB: "+ DOB, "gender: "+ gender, "country: "+ country, "phone: "+ phone, "reference:"+reference, "ref_id: "+ ref_id, "languages:"+languages, "remark:"+ remark);
+//     const { first_name, last_name, email, DOB, gender, country, phone, reference, ref_id, languages, remark} = req.body;
+//     console.log("first_name: " + first_name, "last_name: " + last_name, "email: "+ email, "DOB: "+ DOB, "gender: "+ gender, "country: "+ country, "phone: "+ phone, "reference:"+reference, "ref_id: "+ ref_id, "languages:"+languages, "remark:"+ remark);
     
+//     const existingUser = await reg.findOne({
+//       where: {
+//         [Op.or]: [{ email }, { phone }],
+//       },
+//     });
+
+//     if (existingUser) {
+//       if (existingUser.email === email && existingUser.user_Status === 'ACTIVE') {
+//         return res.status(400).json({ message: "Email already exists", status: 'false', flag: 'email' });
+//       }
+
+//       if (existingUser.phone === phone && existingUser.user_Status === 'ACTIVE') {
+//         return res.status(400).json({ message: "Phone number already exists", status: 'false', flag: 'phone' });
+//       }
+//     }
+        
+//     const hashedPassword = await bcrypt.hash(phone, 10);
+
+//     // Get the next User ID
+//     const maxUserId = await reg.max('UId');
+//     const UId = maxUserId + 1;
+//     const currentDate = new Date().toISOString().split('T')[0]; // Get the current date in "YYYY-MM-DD" format
+
+//     let profilePicUrl = '';
+
+//     // Handle profile picture upload if provided
+//     if (req.file) {
+//       const profilePicPath = `profile_pictures/${UId}/${req.file.originalname}`;
+// try{
+//       // Upload the profile picture to your storage service
+//       await storage.upload(req.file.path, {
+//         destination: profilePicPath,
+//         metadata: {
+//           contentType: req.file.mimetype
+//         }
+//       });
+
+//       profilePicUrl = `gs://${storage.name}/${profilePicPath}`;
+
+//       // Optionally, delete the temporary file after upload
+//       fs.unlink(req.file.path, (err) => {
+//         if (err) console.log("Error deleting temporary file:", err);
+//       });
+//     }
+//     catch (uploadError) {
+//       console.log("Error uploading profile picture:", uploadError);
+//       return res.status(500).json({ message: "Profile picture upload failed" });
+//     }
+//   }
+//     // Create the user record in the database
+//     const user = await reg.create({
+//       first_name,
+//       last_name,
+//       email,
+//       DOB,
+//       gender,
+//       phone,
+//       country,
+//       reference,
+//       ref_id,
+//       languages,
+//       remark,
+//       UId,
+//       DOJ: currentDate,
+//       expiredDate: calculateExpirationDate(),
+//       password: hashedPassword,
+//       verify: 'true',
+//       user_Status: 'ACTIVE',
+//       profilePicUrl
+//     });
+
+//     // Create a record in the BankDetails table for the new user
+//     await BankDetails.create({
+//       AadarNo: "",
+//       IFSCCode: "",
+//       branchName: "",
+//       accountName: "",
+//       accountNo: "",
+//       UId: user.UId
+//     });
+//     sendOTP(email,phone,country,res);
+  
+//     return res.status(200).json({
+//       message: "Success",
+//       data: {
+//         id: user.UserId,
+//         first_name: user.first_name,
+//         last_name: user.last_name,
+//         DOJ: user.DOJ,
+//         expiredDate: user.expiredDate,
+//         UId: user.UId
+//       }
+//     });
+// } catch (error) {
+//   console.log("Error during user creation:", error);
+//   return res.status(500).json({ message: "An error occurred during user creation" });
+// }
+// });
+
+router.post("/register", upload.single('profilePic'), async (req, res) => {
+  try {
+    const { first_name, last_name, email, DOB, gender, country, phone, reference, ref_id, languages, remark } = req.body;
+
     const existingUser = await reg.findOne({
       where: {
         [Op.or]: [{ email }, { phone }],
       },
+      order: [['UserId', 'DESC']],
     });
 
     if (existingUser) {
@@ -708,41 +908,34 @@ router.post("/register", upload.single('profilePic'), async (req, res) => {
         return res.status(400).json({ message: "Phone number already exists", status: 'false', flag: 'phone' });
       }
     }
-        
+
     const hashedPassword = await bcrypt.hash(phone, 10);
 
-    // Get the next User ID
     const maxUserId = await reg.max('UId');
     const UId = maxUserId + 1;
-    const currentDate = new Date().toISOString().split('T')[0]; // Get the current date in "YYYY-MM-DD" format
+    const currentDate = new Date().toISOString().split('T')[0];
 
     let profilePicUrl = '';
 
-    // Handle profile picture upload if provided
     if (req.file) {
       const profilePicPath = `profile_pictures/${UId}/${req.file.originalname}`;
-try{
-      // Upload the profile picture to your storage service
-      await storage.upload(req.file.path, {
-        destination: profilePicPath,
-        metadata: {
-          contentType: req.file.mimetype
-        }
-      });
-
-      profilePicUrl = `gs://${storage.name}/${profilePicPath}`;
-
-      // Optionally, delete the temporary file after upload
-      fs.unlink(req.file.path, (err) => {
-        if (err) console.log("Error deleting temporary file:", err);
-      });
+      try {
+        await storage.upload(req.file.path, {
+          destination: profilePicPath,
+          metadata: {
+            contentType: req.file.mimetype
+          }
+        });
+        profilePicUrl = `gs://${storage.name}/${profilePicPath}`;
+        fs.unlink(req.file.path, (err) => {
+          if (err) console.log("Error deleting temporary file:", err);
+        });
+      } catch (uploadError) {
+        console.log("Error uploading profile picture:", uploadError);
+        return res.status(500).json({ message: "Profile picture upload failed" });
+      }
     }
-    catch (uploadError) {
-      console.log("Error uploading profile picture:", uploadError);
-      return res.status(500).json({ message: "Profile picture upload failed" });
-    }
-  }
-    // Create the user record in the database
+
     const user = await reg.create({
       first_name,
       last_name,
@@ -764,7 +957,6 @@ try{
       profilePicUrl
     });
 
-    // Create a record in the BankDetails table for the new user
     await BankDetails.create({
       AadarNo: "",
       IFSCCode: "",
@@ -773,8 +965,13 @@ try{
       accountNo: "",
       UId: user.UId
     });
-    sendOTP(email,phone,country,res);
-  
+
+    // Send OTP without using res object
+    const otpResponse = await sendOTP(email, phone, country);
+    if (!otpResponse.status) {
+      return res.status(500).json({ message: otpResponse.message });
+    }
+
     return res.status(200).json({
       message: "Success",
       data: {
@@ -786,10 +983,11 @@ try{
         UId: user.UId
       }
     });
-} catch (error) {
-  console.log("Error during user creation:", error);
-  return res.status(500).json({ message: "An error occurred during user creation" });
-}
+
+  } catch (error) {
+    console.log("Error during user creation:", error);
+    return res.status(500).json({ message: "An error occurred during user creation" });
+  }
 });
 
   router.post('/logout', (req, res) => {
