@@ -89,17 +89,17 @@ router.post('/countries', async (req, res) => {
             // Use Sequelize to bulk create the data in the database
             await Country.bulkCreate(data);
  
-            res.status(200).send({ message: "Countries added to the database successfully" });
+            return res.status(200).send({ message: "Countries added to the database successfully" });
         } catch (error) {
             console.log(error);
-            res.status(500).send({ message: "An error occurred while adding countries to the database" });
+            return res.status(500).send({ message: "An error occurred while adding countries to the database" });
         }
     } else {
-        res.status(400).send({ message: "Invalid data format. Please send an array of objects." });
+        return res.status(400).send({ message: "Invalid data format. Please send an array of objects." });
     }}
     catch (error) {
       console.log(error);
-      res.status(500).send({ message: "internal server error"});
+      return res.status(500).send({ message: "internal server error"});
     }
 });
  
@@ -111,10 +111,10 @@ router.get('/countrieslist', async (req, res) => {
         order: [['name', 'ASC']], // Order by the 'name' field in ascending order
       });
  
-      res.json(countries);
+      return res.json(countries);
     } catch (error) {
       console.log(error);
-      res.status(500).send({ message: 'An error occurred while fetching countries' });
+      return res.status(500).send({ message: 'An error occurred while fetching countries' });
     }
   });
 
@@ -387,13 +387,13 @@ router.get('/displayDataFromRedis/:key', async (req, res) => {
         if (data) {
             // If data exists, parse it and send it in the response
             const parsedData = JSON.parse(data);
-            res.status(200).json(parsedData);
+            return res.status(200).json(parsedData);
         } else {
-            res.status(404).json({ message: 'Data not found in Redis' });
+            return res.status(404).json({ message: 'Data not found in Redis' });
         }
     } catch (error) {
         console.log('Error retrieving data from Redis:', error);
-        res.status(500).json({ message: 'Internal Server Error' });
+        return res.status(500).json({ message: 'Internal Server Error' });
     }
 });
 
@@ -586,10 +586,10 @@ router.get('/listName/:UId', async (req, res) => {
       name: `${user.first_name} ${user.last_name}`,
     }));
  
-    res.status(200).json(processedData);
+    return res.status(200).json(processedData);
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'An error occurred' });
+    return res.status(500).json({ error: 'An error occurred' });
   }
 });
 
@@ -1010,7 +1010,7 @@ router.post("/register", upload.single('profilePic'), async (req, res) => {
   }
   catch (error) {
     console.log(error)
-    res.status(500).json({ message: 'Internal server error'});
+    return res.status(500).json({ message: 'Internal server error'});
   }
   });
   
@@ -1186,10 +1186,10 @@ router.get('/reference', async (req, res) => {
       }
  
       const fullName = `${user.first_name} ${user.last_name}`.trim();
-      res.json({ full_name: fullName });
+      return res.json({ full_name: fullName });
   } catch (error) {
       console.log('Error:', error);
-      res.status(500).json({ message: 'Internal Server Error' });
+      return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
  
@@ -1198,10 +1198,10 @@ router.get('/list-questions', async (req, res) => {
       console.log("..................list-questions...................");
 
       const Questions = await questions.findAll();
-      res.json(Questions);
+      return res.json(Questions);
     } catch (error) {
       console.log('Error:', error);
-      res.status(500).json({ message: 'Internal Server Error' });
+      return res.status(500).json({ message: 'Internal Server Error' });
     }
   });
  
@@ -1237,10 +1237,10 @@ router.get('/user-details', async (req, res) => {
           bankDetails: bankDetails ? bankDetails.toJSON() : null,
       };
  
-      res.json(combinedData);
+      return res.json(combinedData);
   } catch (error) {
       console.log('Error:', error);
-      res.status(500).json({ message: 'Internal Server Error' });
+      return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
  
@@ -1596,7 +1596,7 @@ router.put('/updateAppointment/:id', async (req, res) => {
     return res.status(200).json({ message: 'Appointment and GroupMembers updated successfully' });
   } catch (error) {
     console.log('Error updating appointment and group members:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
  
@@ -2181,7 +2181,7 @@ try{
   console.log("................reg-confiq..............");
 
 const config = await applicationconfig.findAll();
-res.json({ config });
+return res.json({ config });
 }
 catch (error) {
   console.log(error);
@@ -3454,10 +3454,10 @@ router.get('/recent-videos', async (req, res) => {
       }
     });
 
-    res.status(200).json(response);
+    return res.status(200).json(response);
   } catch (error) {
     console.error('Error fetching videos:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 

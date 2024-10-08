@@ -64,12 +64,12 @@ router.post('/meditation-checkout', async (req, res) => {
 
   try {
     const order = await instance.orders.create(options);
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       order,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message,
     });
@@ -203,12 +203,12 @@ router.post('/dekshina-checkout',async (req, res) => {
   };
   try {
     const order = await instance1.orders.create(options);
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       order,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message
     });
@@ -243,17 +243,17 @@ router.post('/dekshina-paymentVerification', async (req, res) => {
         dekshina_payment_status:true
       });
       
-      res.status(200).json({success:true})
+      return res.status(200).json({success:true})
       await sendNotificationToUser(UId, 'Payment Successful', "This is a gentle reminder to pay your Guru Dakshina. Your contribution honors our Guru's guidance and supports our community.");
 
     } catch (error) {
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: error.message
       });
     }
   } else {
-    res.status(400).json({
+    return res.status(400).json({
       success: false,
       error: "Invalid signature"
     });
@@ -458,7 +458,7 @@ router.post('/send-notification', async (req, res) => {
  
     await sendNotificationToUsers(userIds, title, message);
  
-    res.json({ message: 'Specific notification sent successfully'});
+    return res.json({ message: 'Specific notification sent successfully'});
   } catch (error) {
     console.log('Error sending specific notification:', error);
     return res.status(500).json({ error: 'An error occurred while sending specific notification' });
@@ -485,7 +485,7 @@ router.post('/send-broadcast-notification', async (req, res) => {
       title
     })
  
-    res.json({ message: 'Broadcast notification sent successfully',notification });
+    return res.json({ message: 'Broadcast notification sent successfully',notification });
   } catch (error) {
     console.log('Error sending broadcast notification:', error);
     return res.status(500).json({ error: 'An error occurred while sending broadcast notification' });

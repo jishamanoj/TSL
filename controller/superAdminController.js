@@ -166,7 +166,7 @@ router.get('/register-count', async (req, res) => {
           return dbItem ? dbItem.dataValues : item;
       });
 
-      res.json(result);
+      return res.json(result);
   } catch (error) {
       console.log(error);
       return res.status(500).json({ message: 'Internal server error' });
@@ -245,7 +245,7 @@ router.get('/waiting-list', async (req, res) => {
 
     const list = a+result;
 
-    res.json({list});
+    return res.json({list});
   } catch (err) {
     console.log(err);
     return res.status(500).json({ error: 'Internal Server Error' });
@@ -264,7 +264,7 @@ router.get('/beneficiaries', async (req, res) => {
     // });
 
      const list = number + registration;
-    res.json({list});
+    return res.json({list});
   } catch (err) {
     console.log(err);
     return res.status(500).json({ error: 'Internal Server Error' });
@@ -278,7 +278,7 @@ router.get('/classes', async (req, res) => {
     const result = await zoom.count({
     });
      const list = classess+result
-    res.json({list});
+    return res.json({list});
   } catch (err) {
     console.log(err);
     return res.status(500).json({ error: 'Internal Server Error' });
@@ -302,7 +302,7 @@ router.get('/this-month', async (req, res) => {
           }
       });
 
-      res.json({ count: userCount });
+      return res.json({ count: userCount });
   } catch (error) {
       console.log('Error:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
@@ -468,7 +468,7 @@ router.post('/events-query', async (req, res) => {
 
     const [queryResults, metadata] = await sequelize.query(sql);
 
-    res.json({ queryResults, totalPages });
+    return res.json({ queryResults, totalPages });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
@@ -641,7 +641,7 @@ router.post('/events-query', async (req, res) => {
     const totalPages = Math.ceil(totalCount / pageSize);
     
     // Assuming sequelize returns an array of rows in the first element of the results array
-    res.json({ Results ,totalPages});
+    return res.json({ Results ,totalPages});
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
@@ -683,7 +683,7 @@ router.get('/searchfield', async (req, res) => {
 
     const totalPages = Math.ceil(count / limit);
 
-    res.json({
+    return res.json({
       message: 'Success',
       data: userDetails,
       pagination: {
@@ -759,7 +759,7 @@ router.post('/coupon-systemDistribute', async (req, res) => {
     }));
 
     // Send response after all updates are complete
-    res.json({ message: 'Coupons distributed successfully', updatedCoupons });
+    return res.json({ message: 'Coupons distributed successfully', updatedCoupons });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
@@ -837,7 +837,7 @@ router.post('/redeem', async (req, res) => {
       };
     }));
 
-    res.json({ message: 'Coupons reduced successfully for specified users.',distributionDetails: updatedUsers});
+    return res.json({ message: 'Coupons reduced successfully for specified users.',distributionDetails: updatedUsers});
     } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
@@ -1070,7 +1070,7 @@ router.get('/TSL', async (req, res) => {
 
     const totalCoupons = users.reduce((sum, user) => sum + user.coupons, 0);
 
-    res.json({ users, totalCoupons });
+    return res.json({ users, totalCoupons });
 
    // res.json(users);
   } catch (error) {
@@ -1105,7 +1105,7 @@ router.get('/list-meditators', async (req, res) => {
       },
     });
 
-    res.json({
+    return res.json({
       users,
       totalCoupons,
       currentPage: page,
@@ -1196,7 +1196,7 @@ router.post('/execute-query', async (req, res) => {
 
     const [queryResults, metadata] = await sequelize.query(sql);
 
-    res.json({ queryResults, totalPages });
+    return res.json({ queryResults, totalPages });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
@@ -1294,7 +1294,7 @@ router.get('/mahadhanam-searchfield', async (req, res) => {
 
     const totalPages = Math.ceil(count / limit);
 
-    res.json({
+    return res.json({
       message: 'Success',
       data: userDetails,
       pagination: {
@@ -1370,7 +1370,7 @@ router.post('/mahadhanam-coupon-systemDistribute', async (req, res) => {
     }));
 
     // Send response after all updates are complete
-    res.json({ message: 'Coupons distributed successfully', updatedCoupons });
+    return res.json({ message: 'Coupons distributed successfully', updatedCoupons });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
@@ -1449,7 +1449,7 @@ router.post('/mahadhanam-redeem', async (req, res) => {
       };
     }));
 
-    res.json({ message: 'Coupons reduced successfully for specified users.',distributionDetails: updatedUsers});
+    return res.json({ message: 'Coupons reduced successfully for specified users.',distributionDetails: updatedUsers});
     } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
@@ -1682,7 +1682,7 @@ router.get('/mahadhanam-TSL', async (req, res) => {
 
     const totalCoupons = users.reduce((sum, user) => sum + user.coupons, 0);
 
-    res.json({ users, totalCoupons });
+    return res.json({ users, totalCoupons });
 
    // res.json(users);
   } catch (error) {
@@ -1717,7 +1717,7 @@ router.get('/mahadhanam-list-meditators', async (req, res) => {
       },
     });
 
-    res.json({
+    return res.json({
       users,
       totalCoupons,
       currentPage: page,
@@ -1852,7 +1852,7 @@ router.post('/mahadhanam-execute-query', async (req, res) => {
 
     const [queryResults, metadata] = await sequelize.query(sql);
 
-    res.json({ queryResults, totalPages });
+    return res.json({ queryResults, totalPages });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
@@ -2066,7 +2066,7 @@ router.get('/list-users', async (req, res) => {
       };
     });
 
-    res.json({ 
+    return res.json({ 
       users: mergedResults,
       totalUsers: totalUsers,
       totalPages: Math.ceil(totalUsers / pageSize),
@@ -2148,7 +2148,7 @@ router.post('/financial-query', async (req, res) => {
       };
     });
 
-    res.json({ results: mergedResults,totalPages });
+    return res.json({ results: mergedResults,totalPages });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
@@ -2212,7 +2212,7 @@ router.get('/search', async (req, res) => {
     // Calculate the total number of pages
     const totalPages = Math.ceil(totalUsers / limit);
 
-    res.json({ 
+    return res.json({ 
       message: 'Success', 
       data: mergedResults,
       pagination: {
@@ -2271,7 +2271,7 @@ router.get('/list-donation', async (req, res) => {
       };
     });
  
-    res.json({ 
+    return res.json({ 
       users: mergedResults,
       totalUsers: totalUsers,
       totalPages: Math.ceil(totalUsers / pageSize),
@@ -2349,7 +2349,7 @@ router.post('/donation-query', async (req, res) => {
       };
     });
  
-    res.json({ results: mergedResults,totalPages });
+    return res.json({ results: mergedResults,totalPages });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
@@ -2421,7 +2421,7 @@ router.get('/donation-search', async (req, res) => {
     // Calculate the total number of pages
     const totalPages = Math.ceil(totalUsers / limit);
 
-    res.json({ 
+    return res.json({ 
       message: 'Success', 
       data: mergedResults,
       pagination: {
@@ -2480,7 +2480,7 @@ router.get('/list-fees', async (req, res) => {
       };
     });
  
-    res.json({ 
+    return res.json({ 
       users: mergedResults,
       totalUsers: totalUsers,
       totalPages: Math.ceil(totalUsers / pageSize),
@@ -2558,7 +2558,7 @@ router.post('/fees-query', async (req, res) => {
       };
     });
  
-    res.json({ results: mergedResults,totalPages });
+    return res.json({ results: mergedResults,totalPages });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
@@ -2630,7 +2630,7 @@ router.get('/fees-search', async (req, res) => {
     // Calculate the total number of pages
     const totalPages = Math.ceil(totalUsers / limit);
 
-    res.json({ 
+    return res.json({ 
       message: 'Success', 
       data: mergedResults,
       pagination: {
@@ -2741,7 +2741,7 @@ router.post('/operation-query', async (req, res) => {
 
     const [queryResults, metadata] = await sequelize.query(sql);
 
-    res.json({ queryResults, totalPages });
+    return res.json({ queryResults, totalPages });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
@@ -2812,7 +2812,7 @@ router.get('/operation-search', async (req, res) => {
 
     const totalPages = Math.ceil(count / limit);
 
-    res.json({
+    return res.json({
       message: 'Success',
       data: everyEvents,
       pagination: {
@@ -2928,7 +2928,7 @@ router.post('/ashram-query', async (req, res) => {
       };
     }));
  
-    res.json({ queryResults: detailedResults, totalPages });
+    return res.json({ queryResults: detailedResults, totalPages });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
@@ -2982,7 +2982,7 @@ router.get('/ashram-search', async (req, res) => {
     // Calculate the total number of pages
     const totalPages = Math.ceil(totalAppointments / limit);
 
-    res.json({ 
+    return res.json({ 
       message: 'Success', 
       data: resultsWithCoupons,
       pagination: {
@@ -3045,7 +3045,7 @@ router.get('/list-all-appointment', async (req, res) => {
       };
     });
 
-    res.json({ appointments: mergedResults, totalPages });
+    return res.json({ appointments: mergedResults, totalPages });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
@@ -3297,7 +3297,7 @@ router.post('/appointment-query', async (req, res) => {
     console.log(results[0]);
     
     // Assuming sequelize returns an array of rows in the first element of the results array
-    res.json({ results: results[0], totalPages });
+    return res.json({ results: results[0], totalPages });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
@@ -3782,7 +3782,7 @@ router.post('/expense-query', async (req, res) => {
     console.log(results[0]);
     
     // Assuming sequelize returns an array of rows in the first element of the results array
-    res.json({ results: results[0], totalPages });
+    return res.json({ results: results[0], totalPages });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
@@ -3853,7 +3853,7 @@ router.post('/filter', async (req, res) => {
       };
     }));
 
-    res.json({ expenses: expensesWithImages, totalPages: totalPages });
+    return res.json({ expenses: expensesWithImages, totalPages: totalPages });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -4349,7 +4349,7 @@ router.post('/blogs-query', async (req, res) => {
 
     const [queryResults, metadata] = await sequelize.query(sql);
 
-    res.json({ queryResults, totalPages });
+    return res.json({ queryResults, totalPages });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
@@ -4770,7 +4770,7 @@ router.get('/meditation-time', async (req, res) => {
       image = await getSignedUrl(meditationTimeDetails.general_image);
     }
  
-    res.json({ video, image });
+    return res.json({ video, image });
  
   } catch (error) {
     console.log(error);
@@ -4889,10 +4889,10 @@ router.delete('/delete-meditation-time/:id', async (req, res) => {
     await deleteFile(meditationTimeRecord.general_image);
     await meditationTimeRecord.destroy();
 
-    res.status(200).json({ message: 'Meditation time record and associated images deleted successfully.' });
+    return res.status(200).json({ message: 'Meditation time record and associated images deleted successfully.' });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -5032,7 +5032,7 @@ router.post('/feedback-query', async (req, res) => {
       };
     }));
  
-    res.json({ queryResults: feedbackWithUsernames, totalPages });
+    return res.json({ queryResults: feedbackWithUsernames, totalPages });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Internal server error.' });
@@ -5110,7 +5110,7 @@ router.get('/videos', async (req, res) => {
           }
       }));
 
-      res.json(groupedVideos);
+      return res.json(groupedVideos);
   } catch (error) {
       console.log(error);
       return res.status(500).json({ error: 'Internal Server Error' });
@@ -5419,7 +5419,7 @@ router.get('/thisMonthDetails', async (req, res) => {
           limit
       });
  
-      res.json({
+      return res.json({
           totalItems: count,
           totalPages: Math.ceil(count / limit),
           currentPage: page,
@@ -5635,7 +5635,7 @@ router.get('/searchUser', async (req, res) => {
 
     const totalPages = Math.ceil(count / limit);
 
-    res.json({
+    return res.json({
       message: 'Success',
       data: userDetails,
       pagination: {
