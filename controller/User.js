@@ -678,7 +678,8 @@ router.post('/verify-userotp', async (req, res) => {
           { email: email }, 
           { phone: phone }  
         ]
-      }
+      },
+      order: [['UserId', 'DESC']],
     });
 
     if (regUser) {
@@ -888,6 +889,8 @@ router.post('/verify-userotp', async (req, res) => {
 //   return res.status(500).json({ message: "An error occurred during user creation" });
 // }
 // });
+
+
 
 router.post("/register", upload.single('profilePic'), async (req, res) => {
   try {
