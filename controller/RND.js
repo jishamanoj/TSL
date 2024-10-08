@@ -404,19 +404,19 @@ router.get('/fetch-rndprequestion', async (req, res) => {
   try {
       const UId = req.session.UId; // Get UId from session
 
-      const results = await healthDetail.findOne({
+      const result = await healthDetail.findOne({
           where: { UId },
           attributes: ['Rndprequestion'], 
       });
 
-      // Check if any results were found
-      if (results.length === 0) {
+      // Check if a result was found
+      if (!result) {
           return res.status(404).json({ message: 'No records found for the provided UId.' });
       }
 
       return res.status(200).json({
           message: 'Rndprequestion retrieved successfully!',
-          data: results,
+          data: result, // Return the result directly
       });
   } catch (error) {
       console.log('Error fetching Rndprequestion:', error);
