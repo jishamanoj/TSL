@@ -18,12 +18,6 @@ const sessionMiddleware = session({
   });
  
   app.use(sessionMiddleware);
-  // app.use(function(){
-  //   console.log('session is ....',req.session)  })
-// app.use((req, res, next) => {
-//     console.log(".......................",req.session,"url",req.url);
-// next()
-// })
 app.use('/api/v1', require('./router/routing')); // Corrected the router path
 
 const httpServer = http.createServer(app)

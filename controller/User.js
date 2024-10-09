@@ -353,17 +353,17 @@ async function senduserOTP(email,phone,country) {
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error('Error sending email:', error);
-        return res.status(500).json({ message: 'Failed to send email', status: 'false' });
+        return { message: 'Failed to send email', status: 'false' };
       } else {
         console.log('Email sent:', info.response);
-        return res.status(200).json({ message: 'OTP sent successfully via email', status: 'true', redisKey });
+        return { message: 'OTP sent successfully via email', status: 'true', redisKey };
       }
     });
   }
 }
 catch (error) {
   console.log(error);
-  return res.status(500).json({ message:"something failed"});
+  return { message:"something failed"};
 }
 }
 
@@ -2517,7 +2517,6 @@ router.put('/updateUserDetails', async (req, res) => {
   console.log(userData);
  
 
-    // Check if the user is authenticated
     if (!UId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
