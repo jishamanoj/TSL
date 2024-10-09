@@ -118,8 +118,6 @@ router.get('/countrieslist', async (req, res) => {
     }
   });
 
-const { v4: uuidv4 } = require('uuid');
-const { verify } = require('crypto');
 
 router.post('/registerUser', async (req, res) => { 
   try {
@@ -271,100 +269,83 @@ catch (error) {
 }
 }
 
-async function senduserOTP(email,phone,country) {
-  try{
-  if (country === 'India') {
-    // Send OTP via the external service
-    const otpRequest = {
-      method: 'post',
-      url: `https://control.msg91.com/api/v5/otp?otp_expiry=1&template_id=66cdab06d6fc0538413b7392&mobile=91${phone}&authkey=${process.env.MSG91_AUTH_KEY}&realTimeResponse=`,
-      headers: {
-        Accept: 'application/json',
-      },
-    };
+async function senduserOTP(email, phone, country) {
+  try {
+    if (country === 'India') {
+      const otpRequest = {
+        method: 'post',
+        url: `https://control.msg91.com/api/v5/otp?otp_expiry=1&template_id=66cdab06d6fc0538413b7392&mobile=91${phone}&authkey=${process.env.MSG91_AUTH_KEY}&realTimeResponse=`,
+        headers: { Accept: 'application/json' },
+      };
  
-    // Await OTP response
-    const otpResponse = await axios(otpRequest);
- 
-    // Check if the OTP was sent successfully based on the response from the API
-    if (otpResponse.data.type === 'success') {
-      return ({ message: "OTP sent successfully", status: true });
-    } else {
-      // Log the reason if OTP was not successful (msg91 provides a response message)
-      console.error('OTP sending failed:', otpResponse.data);
-      return ({ message: "Failed to send OTP", status: false, details: otpResponse.data.message });
-    }
-  } else {
-    // For other countries, generate a random OTP
-    const otp = Math.floor(1000 + Math.random() * 9000).toString();
-    const redisKey = `otp:${phone}`;
-    await redis.setex(redisKey, 600, otp); // Store OTP in Redis with an expiry time of 10 minutes
- 
-    // Setup Nodemailer to send the OTP email
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: 'thasmaistarlife@gmail.com', // Use environment variables for sensitive data
-        pass: 'ndkj dxdq kxca zplg', // Securely manage this via environment variables
-      },
-    });
- 
-    // Email options
-    const mailOptions = {
-      from: 'thasmaistarlife@gmail.com',
-      to: email, // User's email address
-      subject: 'Thasmai Star Life: OTP for Registration',
-      html: `
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-            body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
-            .email-container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
-            .header { text-align: center; padding: 20px; background-color: #2c3e50; border-radius: 8px 8px 0 0; color: #ffffff; }
-            .header h1 { margin: 0; font-size: 24px; }
-            .content { padding: 20px; text-align: center; }
-            .content h2 { color: #333333; font-size: 20px; margin-bottom: 10px; }
-            .content p { color: #666666; font-size: 16px; margin-bottom: 20px; }
-            .otp { display: inline-block; background-color: #27ae60; color: white !important; font-size: 24px; padding: 10px 20px; border-radius: 5px; text-decoration: none; margin-bottom: 20px; }
-            .footer { text-align: center; padding: 20px; color: #999999; font-size: 14px; }
-        </style>
-      </head>
-      <body>
-        <div class="email-container">
-            <div class="header">
-                <h1>Thasmai Starlife Registration</h1>
-            </div>
-            <div class="content">
-                <h2>Your OTP for Registration</h2>
-                <p>Thank you for registering with Thasmai Starlife. Please use the following OTP to confirm your registration:</p>
-                <p class="otp">${otp}</p>
-                <p>If you did not request this OTP, please ignore this email.</p>
-            </div>
-            <div class="footer">
-                <p>&copy; 2024 Thasmai Starlife. All rights reserved.</p>
-            </div>
-        </div>
-      </body>
-      `,
-    };
- 
-    // Send the email
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.error('Error sending email:', error);
-        return { message: 'Failed to send email', status: 'false' };
+      const otpResponse = await axios(otpRequest);
+      if (otpResponse.data.type === 'success') {
+        return { message: "OTP sent successfully", status: true };
       } else {
-        console.log('Email sent:', info.response);
-        return { message: 'OTP sent successfully via email', status: 'true', redisKey };
+        console.error('OTP sending failed:', otpResponse.data);
+        return { message: "Failed to send OTP", status: false, details: otpResponse.data.message };
       }
-    });
+    } else {
+      // For other countries, generate a random OTP
+      const otp = Math.floor(1000 + Math.random() * 9000).toString();
+      const redisKey = `otp:${phone}`;
+      await redis.setex(redisKey, 600, otp); // Store OTP in Redis with an expiry time of 10 minutes
+ 
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: "thasmai2016@gmail.com",
+          pass: "bwaz sgbn oalp heik", // Use environment variables for credentials
+        },
+      });
+ 
+      const mailOptions = {
+        from: "thasmai2016@gmail.com",
+        to: email,
+        subject: 'Thasmai Star Life: OTP for Registration',
+        html: `
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+                .email-container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+                .header { text-align: center; padding: 20px; background-color: #2c3e50; border-radius: 8px 8px 0 0; color: #ffffff; }
+                .header h1 { margin: 0; font-size: 24px; }
+                .content { padding: 20px; text-align: center; }
+                .content h2 { color: #333333; font-size: 20px; margin-bottom: 10px; }
+                .content p { color: #666666; font-size: 16px; margin-bottom: 20px; }
+                .otp { display: inline-block; background-color: #27ae60; color: white !important; font-size: 24px; padding: 10px 20px; border-radius: 5px; text-decoration: none; margin-bottom: 20px; }
+                .footer { text-align: center; padding: 20px; color: #999999; font-size: 14px; }
+            </style>
+          </head>
+          <body>
+            <div class="email-container">
+                <div class="header">
+                    <h1>Thasmai Starlife Registration</h1>
+                </div>
+                <div class="content">
+                    <h2>Your OTP for Registration</h2>
+                    <p>Thank you for registering with Thasmai Starlife. Please use the following OTP to confirm your registration:</p>
+                    <p class="otp">${otp}</p>
+                    <p>If you did not request this OTP, please ignore this email.</p>
+                </div>
+                <div class="footer">
+                    <p>&copy; 2024 Thasmai Starlife. All rights reserved.</p>
+                </div>
+            </div>
+          </body>
+        `,
+      };
+ 
+      // Send the email and handle the response correctly
+      await transporter.sendMail(mailOptions);
+      return { message: "OTP sent successfully via email", status: true, redisKey };
+    }
+  } catch (error) {
+    console.error('Error sending OTP:', error);
+    return { message: "Failed to send OTP", status: false };
   }
-}
-catch (error) {
-  console.log(error);
-  return { message:"something failed"};
-}
 }
 
 function generateOTP() {
@@ -894,7 +875,6 @@ router.post('/verify-userotp', async (req, res) => {
 
 router.post("/register", upload.single('profilePic'), async (req, res) => {
   try {
-    console.log(".............register...............................................................");
     const { first_name, last_name, email, DOB, gender, country, phone, reference, ref_id, languages, remark } = req.body;
 
     const existingUser = await reg.findOne({
