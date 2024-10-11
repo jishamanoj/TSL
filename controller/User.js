@@ -418,7 +418,7 @@ router.post("/verify_otp", upload.single('profilePic'), async (req, res) => {
 
     } else {
       // Retrieve the stored OTP from Redis
-      const redisKey = `otp:${phone}`;
+      const redisKey = `otp:${email}`;
       const storedOTP = await redis.get(redisKey);
 
       if (!storedOTP) {
