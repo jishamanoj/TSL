@@ -1149,30 +1149,44 @@ router.post('/meditation-data', async (req, res) => {
     }
   });
 
-router.get('/reference', async (req, res) => {
-  try {
-    console.log("..................reference...................");
-
-  const UId = req.session.UId;
-  console.log(req.session.UId);
- 
- 
+  router.get('/reference', async (req, res) => {
+    try {
+      console.log("..................reference...................");
+  
+      const UId = req.session.UId;
+      console.log(UId);
+  if(!UId){
+    return res.status(404).json({ error: 'UId is required' });
+  }
       const user = await reg.findOne({
-          where: { UId },
-          attributes: ['first_name', 'last_name'],
+        where: { UId },
+        attributes: ['ref_id'],  // Select only the ref_id field
       });
- 
+  
       if (!user) {
-          return res.status(401).json({ message: 'User not found' });
+        return res.status(401).json({ message: 'User not found' });
       }
- 
-      const fullName = `${user.first_name} ${user.last_name}`.trim();
-      return res.json({ full_name: fullName });
-  } catch (error) {
+  
+      // Find the referred user using the ref_id
+      const refUser = await reg.findOne({
+        where: { UId: user.ref_id }, 
+        attributes: ['first_name', 'last_name'],  
+      });
+  
+      if (!refUser) {
+        return res.status(404).json({ message: 'Referred user not found' });  // Use 404 for not found
+      }
+  
+      // Combine first name and last name
+      const fullName = `${refUser.first_name} ${refUser.last_name}`.trim();
+      return res.json({ full_name: fullName,UId:user.ref_id });
+      
+    } catch (error) {
       console.log('Error:', error);
       return res.status(500).json({ message: 'Internal Server Error' });
-  }
-});
+    }
+  });
+  
  
 router.get('/list-questions', async (req, res) => {
     try {
