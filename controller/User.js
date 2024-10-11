@@ -129,6 +129,7 @@ router.post('/registerUser', async (req, res) => {
       where: {
         [Op.or]: [{ email }, { phone }],
       },
+      order: [['UserId', 'DESC']],
     });
 
     if (existingUser) {
@@ -1176,9 +1177,13 @@ router.get('/reference', async (req, res) => {
 router.get('/list-questions', async (req, res) => {
     try {
       console.log("..................list-questions...................");
-
-      const Questions = await questions.findAll();
+   const Questions = await questions.findAll();
+   if(Questions){  
       return res.json(Questions);
+}
+else{
+  return res.status(404).json({ message: 'questions not found' });
+}
     } catch (error) {
       console.log('Error:', error);
       return res.status(500).json({ message: 'Internal Server Error' });
@@ -2487,7 +2492,42 @@ router.get('/gurujimessage/:page', async (req, res) => {
   }
 });
  
+// router.put('/updateUserDetails', async (req, res) => {
+//   try {
+//     console.log(".............................updateUserDetails...................................");
+
+//   const UId = req.session.UId
+//   console.log(req.session.UId);
+//   const userData = req.body;
+//   console.log(userData);
+ 
+
+//     if (!UId) {
+//       return res.status(401).json({ error: 'Unauthorized' });
+//     }
+ 
+//     // Find the user by UId
+//     const user = await reg.findOne({ where: { UId } });
+ 
+//     // Update user details
+//     if (user) {
+//       // Update all fields provided in the request, excluding the profilePic field
+//       await user.update(userData);
+ 
+//       // Fetch current profile picture URL
+ 
+//       return res.status(200).json({ message: 'User details updated successfully' });
+//     } else {
+//       return res.status(404).json({ error: 'User not found' });
+//     }
+//   } catch (error) {
+//     console.log(error);
+//     return res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// });
+
 router.put('/updateUserDetails', async (req, res) => {
+  
   try {
     console.log(".............................updateUserDetails...................................");
 
@@ -2495,28 +2535,46 @@ router.put('/updateUserDetails', async (req, res) => {
   console.log(req.session.UId);
   const userData = req.body;
   console.log(userData);
- 
 
+    // Check if the user is authenticated
     if (!UId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
- 
-    // Find the user by UId
-    const user = await reg.findOne({ where: { UId } });
- 
-    // Update user details
-    if (user) {
-      // Update all fields provided in the request, excluding the profilePic field
-      await user.update(userData);
- 
-      // Fetch current profile picture URL
- 
-      return res.status(200).json({ message: 'User details updated successfully' });
+
+    // Find the user in the `reg` table by UId
+    const regUser = await reg.findOne({ where: { UId } });
+    const userRecord = await Users.findOne({ where: { UId } });
+
+    // If the user exists in both tables, proceed with the update
+    if (regUser && userRecord) {
+      // Update the `reg` table with the new details
+      await regUser.update({
+        first_name: userData.first_name || regUser.first_name,
+        last_name: userData.last_name || regUser.last_name,
+        DOB: userData.DOB || regUser.DOB,
+        email: userData.email || regUser.email,
+        phone: userData.phone || regUser.phone,
+        state: userData.state || regUser.state,
+        district: userData.district || regUser.district,
+      });
+
+      // Update the `Users` table with the necessary fields
+      await userRecord.update({
+        firstName: userData.first_name || userRecord.firstName,
+        secondName: userData.last_name || userRecord.secondName,
+        DOB: userData.DOB || userRecord.DOB,
+        email: userData.email || userRecord.email,
+        phone: userData.phone || userRecord.phone,
+        state: userData.state || userRecord.state,
+        district: userData.district || userRecord.district,
+      });
+
+      return res.status(200).json({ message: 'User details updated successfully.' });
     } else {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: 'User not found in one or both tables.' });
     }
   } catch (error) {
-    console.log(error);
+    console.error('Error updating user details:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -2900,7 +2958,7 @@ router.get('/videos-by-playlist', async (req, res) => {
 
 router.get('/meditation-time', async (req, res) => {
   try {
-    console.log("..................registerUser...................");
+    console.log("..................meditation-time...................");
 
   const { UId} = req.session;
   const { time } = req.query;
@@ -3379,10 +3437,10 @@ router.delete('/delete-user', async (req, res) => {
     await user.save();
 
     const validUser = await Users.findOne({ where: { UId } });
-    if (!validUser) {
-      return res.status(404).json({ message: 'User not found in Users table' });
-    }
-
+    // if (!validUser) {
+    //   return res.status(404).json({ message: 'User not found in Users table' });
+    // }
+if(validUser){
     // Update the user's ban status before deleting
     validUser.ban = true;
     validUser.user_Status = 'DELETED';
@@ -3396,7 +3454,7 @@ router.delete('/delete-user', async (req, res) => {
 
     validUser.coupons = 0;
     await validUser.save();
-
+  }
     await BankDetails.destroy({ where: { UId } });
    //await user.destroy();
 
