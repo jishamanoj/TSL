@@ -200,7 +200,7 @@ async function sendOTP(email,phone,country,res) {
 
     // For other countries, generate a random OTP
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
-    const redisKey = `otp:${phone}`;
+    const redisKey = `otp:${email}`;
     await redis.setex(redisKey, 600, otp); // Store OTP in Redis with an expiry time of 10 minutes
 
     // Setup Nodemailer to send the OTP email
@@ -721,7 +721,7 @@ router.post('/verify-userotp', async (req, res) => {
       }
     } else {
       // Handle OTP verification for countries other than India
-      const redisKey = `otp:${phone}`;
+      const redisKey = `otp:${email}`;
       const storedOTP = await redis.get(redisKey);
 
       if (!storedOTP) {
