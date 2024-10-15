@@ -93,7 +93,7 @@ router.post('/login', async (req, res) => {
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
+///reg///
 router.get('/register-count', async (req, res) => {
   try {
     console.log("...............register-count.............");
